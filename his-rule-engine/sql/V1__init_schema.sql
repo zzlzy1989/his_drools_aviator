@@ -327,13 +327,5 @@ VALUES
 ON DUPLICATE KEY UPDATE `group_name` = VALUES(`group_name`);
 
 -- ============================================================
--- 创建索引优化 (针对高频查询)
--- ============================================================
-
--- 结算查询高频索引
-CREATE INDEX IF NOT EXISTS `idx_settlement_patient_date` ON `settlement_result`(`tenant_id`, `patient_id`, `create_time`);
-CREATE INDEX IF NOT EXISTS `idx_audit_log_date_range` ON `audit_log`(`tenant_id`, `create_time`, `action`);
-
--- ============================================================
 -- 文档结束
 -- ============================================================

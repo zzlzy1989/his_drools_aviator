@@ -8,6 +8,22 @@
 
 ---
 
+## 0. 项目上下文
+
+### 0.1 文档目的
+根据 PRD.md 制定详细的 V1.0 版本开发指导，明确开发步骤、交付物标准和时间节点，确保开发过程可追踪、可验证。
+
+### 0.2 项目背景
+传统 HIS 系统业务规则硬编码导致规则变更周期长达 2~4 周，本项目旨在通过 Drools + Aviator 混合架构实现规则的灵活编排和热更新，将变更周期缩短至分钟级。
+
+### 0.3 当前状态
+- 项目处于**早期开发阶段**，仅完成基础骨架
+- `his-common-core` 已实现 7 个核心类（ISkill, SkillContext, SkillResult, SettlementFact, ResultLevel, ErrorCode, HisEventType）
+- 所有 7 个微服务仅有 Application 启动类
+- `his-common-drools` 和 `his-common-aviator` 为空骨架
+
+---
+
 ## 1. 版本范围
 
 ### 1.1 V1.0 包含功能（P0 + P1）
@@ -35,33 +51,23 @@
 
 ## 2. 系统架构设计
 
-### 2.1 整体架构图
+### 2.1 高层架构图
 
 ```
-                    ┌─────────────────────────────────────────────────────┐
-                    │                    前端管理后台                        │
-                    │              (Vue3 + Element Plus)                   │
-                    └────────────────────────┬────────────────────────────┘
-                                             │ HTTP/HTTPS
-                                             ▼
-                    ┌─────────────────────────────────────────────────────┐
-                    │              API Gateway (9000)                      │
-                    │  JWT 鉴权 │ 路由转发 │ 限流熔断 │ 日志记录 │ CORS    │
-                    └──────┬──────┬──────┬──────┬──────┬──────┬───────────┘
-                           │      │      │      │      │      │
-              ┌────────────┘      │      │      │      │      └────────────┐
-              ▼                   ▼      ▼      ▼      ▼                   ▼
-     ┌─────────────┐    ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-     │Rule Service │    │Formula Svc  │ │Settlement   │ │  Drug Svc   │
-     │   (9001)    │    │   (9002)    │ │   (9003)    │ │   (9004)    │
-     └──────┬──────┘    └──────┬──────┘ └──────┬──────┘ └──────┬──────┘
-            │                  │                │                │
-            ▼                  ▼                ▼                ▼
-     ┌─────────────┐    ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-     │Quality Svc  │    │  DRG Svc    │ │  MySQL 8.0  │ │   Nacos     │
-     │   (9005)    │    │   (9006)    │ │  (规则/公式  │ │  配置中心   │
-     └─────────────┘    └─────────────┘ │  /结算数据)  │ │  注册中心   │
-                                         └─────────────┘ └─────────────┘
+[前端管理后台]
+    │ HTTP/HTTPS
+    ▼
+[API Gateway :9000] ─ JWT 鉴权 ─ 路由转发 ─ 限流熔断
+    │
+    ├── /api/v1/rules/*    ──→ [Rule Service :9001]      ──→ MySQL + Drools
+    ├── /api/v1/formulas/* ──→ [Formula Service :9002]  ──→ MySQL + Nacos + Aviator
+    ├── /api/v1/settlements/* → [Settlement Service :9003] → Drools 编排 + Aviator 计算
+    ├── /api/v1/drugs/*    ──→ [Drug Service :9004]     ──→ Drools 规则 + Aviator 公式
+    ├── /api/v1/quality/*  ──→ [Quality Service :9005]   ──→ Drools 规则引擎
+    └── /api/v1/drg/*     ──→ [DRG Service :9006]       ──→ Drools 分组 + Aviator 权重
+
+[Nacos :8848] ─ 配置中心 + 服务注册
+[MySQL :3306]  ─ 规则/公式/结算数据持久化
 ```
 
 ### 2.2 技术选型（已确定）
@@ -85,47 +91,42 @@
 ### 2.3 模块依赖关系
 
 ```
-his-gateway
-    └── (无内部依赖，仅依赖 Spring Cloud Gateway)
+his-gateway (无内部依赖)
+his-rule-service → his-common-core + his-common-web + his-common-drools
+his-formula-service → his-common-core + his-common-web + his-common-aviator
+his-settlement-service → his-common-core + his-common-web + his-common-drools + his-common-aviator
+his-drug-service → his-common-core + his-common-web + his-common-drools + his-common-aviator
+his-quality-service → his-common-core + his-common-web + his-common-drools + his-common-aviator
+his-drg-service → his-common-core + his-common-web + his-common-drools + his-common-aviator
+```
 
-his-rule-service
-    ├── his-common-core
-    ├── his-common-web
-    └── his-common-drools
+### 2.4 Skill Pipeline 架构
 
-his-formula-service
-    ├── his-common-core
-    ├── his-common-web
-    └── his-common-aviator
+核心设计：每个业务能力实现 `ISkill<T>` 接口，通过 `SkillPipelineExecutor` 统一调度。
 
-his-settlement-service
-    ├── his-common-core
-    ├── his-common-web
-    ├── his-common-drools
-    └── his-common-aviator
+```
+[SettlementRequest] → [SkillContext] → [Skill Pipeline]
+                                          │
+                    ┌─────────────────────┼─────────────────────┐
+                    ▼                     ▼                     ▼
+            [InsuranceIdentitySkill] [DeductibleSkill] [ReimburseRatioSkill]
+                    │                     │                     │
+                    └─────────────────────┼─────────────────────┘
+                                          ▼
+                                [hasBlock()?] ─ NO → 继续
+                                          │
+                                         YES → 管道终止
+                                          │
+                    ┌─────────────────────┼─────────────────────┐
+                    ▼                     ▼                     ▼
+            [CatalogLimitSkill] [ReimburseAmountSkill] [DuplicateValidator]
+```
 
-his-drug-service
-    ├── his-common-core
-    ├── his-common-web
-    ├── his-common-drools
-    └── his-common-aviator
+### 2.5 规则状态机
 
-his-quality-service
-    ├── his-common-core
-    ├── his-common-web
-    ├── his-common-drools
-    └── his-common-aviator
-
-his-drg-service
-    ├── his-common-core
-    ├── his-common-web
-    └── his-common-aviator
-
-his-common (公共模块)
-    ├── his-common-core      ← 所有服务依赖
-    ├── his-common-web       ← 所有服务依赖
-    ├── his-common-drools    ← 需要 Drools 的服务依赖
-    └── his-common-aviator   ← 需要 Aviator 的服务依赖
+```
+draft → validated → active → inactive → deleted
+         (校验)     (发布)   (停用)
 ```
 
 ---
@@ -434,9 +435,22 @@ com.his.{module}
 └── skill/               # Skill 实现（用药/质控服务）
 ```
 
-### 5.2 编码规范
+### 5.2 强制约束
 
-#### 5.2.1 类命名
+| 约束 | 说明 |
+|------|------|
+| **BigDecimal** | 所有金额/比例字段必须使用 `BigDecimal`，禁止 `double`/`float` |
+| **统一响应** | 所有 Controller 返回 `Result<T>` |
+| **日志记录** | 使用 `@Slf4j`，使用 `{}` 占位符，禁止 `System.out.println` |
+| **租户隔离** | 所有查询必须过滤 `tenant_id` |
+| **审计日志** | 所有写操作记录 `audit_log` |
+| **表达式缓存** | Aviator 表达式必须通过 `ExpressionCache` 缓存 |
+| **DRL 安全** | 规则发布前必须通过 `DrlValidator` 校验 |
+| **异常处理** | Skill 执行时捕获异常，添加 WARN 结果，不向上抛出 |
+
+### 5.3 编码规范
+
+#### 5.3.1 类命名
 
 | 类型 | 命名规则 | 示例 |
 |------|---------|------|
@@ -451,7 +465,7 @@ com.his.{module}
 | Exception | `{Type}Exception` | `FormulaException` |
 | Skill | `{Business}Skill` | `RationalDrugUseSkill` |
 
-#### 5.2.2 强制规则
+#### 5.3.2 强制规则
 
 1. 金额计算必须使用 `BigDecimal`，禁止使用 `double`/`float`
 2. 所有 Controller 方法返回 `Result<T>`
@@ -462,7 +476,7 @@ com.his.{module}
 7. 所有写操作必须记录审计日志
 8. 单个 Java 文件不超过 500 行
 
-### 5.3 Git 提交规范
+### 5.4 Git 提交规范
 
 遵循 Conventional Commits 规范：
 
@@ -490,301 +504,458 @@ com.his.{module}
 
 ### 6.1 阶段总览
 
-| 阶段 | 名称 | 周期 | 核心交付 |
-|------|------|------|---------|
-| Phase 0 | 基础设施 | W1 | 数据库、Nacos、公共模块 |
-| Phase 1 | 规则与公式 | W2-W3 | 规则管理、公式管理 |
-| Phase 2 | 结算与用药 | W4-W5 | 医保结算、合理用药 |
-| Phase 3 | 质控与 DRG | W6 | 质控、DRG 分组 |
-| Phase 4 | 网关与集成 | W7 | API 网关、联调测试 |
-| Phase 5 | 测试与优化 | W8 | 性能测试、安全测试、文档 |
+| 阶段 | 名称 | 周期 | 核心交付 | 关键技术挑战 |
+|------|------|------|---------|--------------|
+| Phase 0 | 基础设施 | W1 | 数据库、Nacos、公共模块 | Nacos + MySQL 环境搭建 |
+| Phase 1 | 规则与公式 | W2-W3 | 规则管理、公式管理 | Drools 规则编译、Aviator 语法校验 |
+| Phase 2 | 结算与用药 | W4-W5 | 医保结算、合理用药 | Skill 管道编排、Drools+Aviator 混合调用 |
+| Phase 3 | 质控与 DRG | W6 | 质控、DRG 分组 | DRG 分组算法、权重公式计算 |
+| Phase 4 | 网关与集成 | W7 | API 网关、联调测试 | JWT 鉴权、全链路测试 |
+| Phase 5 | 测试与优化 | W8 | 性能测试、安全测试、文档 | 性能压测、安全扫描 |
 
 ### 6.2 Phase 0: 基础设施（W1）
 
-**目标**: 搭建开发环境，完成公共模块和数据库初始化
+**目标**: 公共模块可用，数据库初始化完成
 
-| 步骤 | 任务 | 交付物 | 验收标准 |
-|------|------|--------|---------|
-| 0.1 | 安装 Nacos Server | Nacos 运行在 8848 端口 | 控制台可访问 |
-| 0.2 | 创建 MySQL 数据库 | 执行建表脚本 | 10 张表创建成功 |
-| 0.3 | his-common-core 开发 | 枚举、异常、Fact 对象 | 编译通过，单元测试通过 |
-| 0.4 | his-common-web 开发 | 统一响应、异常处理、Swagger | 编译通过 |
-| 0.5 | his-common-drools 开发 | Drools 会话管理、规则加载 | 编译通过，可加载 DRL |
-| 0.6 | his-common-aviator 开发 | Aviator 执行器、Caffeine 缓存 | 编译通过，表达式执行正常 |
+#### Step 0.1: 环境准备
 
-**详细任务分解**:
+| 项目 | 内容 |
+|------|------|
+| 负责人 | 运维/架构师 |
+| 交付物 | Nacos 2.x 运行中、MySQL 8.0 运行中 |
+| 验收标准 | Nacos 控制台可访问 (http://localhost:8848)、MySQL 连接成功 |
 
-#### 0.3 his-common-core 开发
+#### Step 0.2: 数据库初始化
 
-```
-文件清单:
-├── ErrorCode.java              # 错误码枚举
-├── ResultLevel.java            # PASS/WARN/BLOCK
-├── HisEventType.java           # 事件类型常量
-├── SettlementFact.java         # 结算事实对象
-├── ISkill.java                 # Skill 接口
-├── SkillContext.java           # 执行上下文
-├── SkillResult.java            # 执行结果
-├── exception/
-│   ├── HisBaseException.java   # 基础异常
-│   ├── BusinessException.java  # 业务异常
-│   ├── FormulaException.java   # 公式异常
-│   └── SettlementException.java # 结算异常
-└── constant/
-    └── RuleConstants.java      # 规则常量
+```sql
+-- 核心表（按优先级）
+CREATE TABLE rule_definition (...);    -- 规则定义表
+CREATE TABLE aviator_formula (...);    -- 公式定义表
+CREATE TABLE formula_param (...);      -- 公式参数表
+CREATE TABLE settlement_result (...);  -- 结算结果表
+CREATE TABLE audit_log (...);          -- 审计日志表
+CREATE TABLE rule_group (...);         -- 规则分组表
+CREATE TABLE formula_history (...);     -- 公式历史表
+CREATE TABLE rule_history (...);       -- 规则历史表
+CREATE TABLE drug_interaction (...);    -- 药品配伍表
+CREATE TABLE drg_definition (...);     -- DRG 分组定义表
 ```
 
-#### 0.4 his-common-web 开发
+| 项目 | 内容 |
+|------|------|
+| 负责人 | DBA |
+| 交付物 | 10 张表创建成功，DDL 脚本存档 |
+| 验收标准 | 所有表创建成功，外键约束正确，索引已建立 |
+
+#### Step 0.3: his-common-web 完善
 
 ```
-文件清单:
-├── config/
-│   ├── WebMvcConfig.java       # Web MVC 配置
-│   └── SwaggerConfig.java      # SpringDoc 配置
-├── interceptor/
-│   └── TenantContextFilter.java # 租户上下文过滤器
-├── handler/
-│   └── GlobalExceptionHandler.java # 全局异常处理
+src/main/java/com/his/common/web/
 ├── result/
-│   ├── Result.java             # 统一响应
-│   └── PageResult.java         # 分页响应
-└── annotation/
-    └── RequireTenant.java      # 租户校验注解
+│   ├── Result.java              # 统一响应封装
+│   └── PageResult.java          # 分页响应
+├── exception/
+│   ├── HisException.java        # 基础异常
+│   ├── BusinessException.java   # 业务异常
+│   └── GlobalExceptionHandler.java
+├── context/
+│   └── TenantContext.java       # 租户上下文获取
+└── util/
+    └── DesensitizeUtil.java     # 敏感数据脱敏
 ```
 
-#### 0.5 his-common-drools 开发
+| 项目 | 内容 |
+|------|------|
+| 负责人 | 后端开发 |
+| 交付物 | 编译通过的 common-web 模块 |
+| 验收标准 | `Result.success()` 和 `Result.fail()` 可正常调用，异常处理器可正确捕获 HisException |
+
+#### Step 0.4: his-common-drools 开发
 
 ```
-文件清单:
+src/main/java/com/his/common/drools/
 ├── config/
-│   └── DroolsConfig.java       # KieContainer 配置
+│   └── DroolsConfig.java          # KieContainer 配置，规则分组加载
 ├── engine/
-│   ├── DroolsEngine.java       # Drools 执行封装
-│   └── KieSessionManager.java  # KieSession 管理
-└── helper/
-    └── DrlValidator.java       # DRL 语法校验
-```
-
-#### 0.6 his-common-aviator 开发
-
-```
-文件清单:
-├── config/
-│   └── AviatorConfig.java      # Aviator 初始化
-├── engine/
-│   ├── AviatorEngine.java      # Aviator 执行封装
-│   └── ExpressionCache.java    # Caffeine 缓存
+│   ├── DroolsEngine.java         # execute(fact), setGlobal(), fireAllRules()
+│   └── KieSessionManager.java    # 按租户缓存会话，规则热更新
 ├── helper/
-│   ├── AviatorHelper.java      # 公式执行工具
-│   └── FormulaValidator.java   # 公式语法校验
+│   └── DrlValidator.java         # DRL 语法校验 + 安全检查
+│                                # 禁止: System./, java., new java.
+└── cache/
+    └── RuleCache.java            # 规则编译结果缓存
+```
+
+**DrlValidator 安全规则**:
+- 禁止 `System.out` / `System.err`
+- 禁止 `java.lang.Runtime` / `java.lang.ProcessBuilder`
+- 禁止 `new java.` 实例化
+- 仅允许 `import` 预定义包（`com.his.common.*`）
+
+| 项目 | 内容 |
+|------|------|
+| 负责人 | 后端开发 |
+| 交付物 | 可加载 DRL 文件的 Drools 封装 |
+| 验收标准 | 加载示例 DRL 文件并正确执行 fireAllRules() |
+
+#### Step 0.5: his-common-aviator 开发
+
+```
+src/main/java/com/his/common/aviator/
+├── config/
+│   └── AviatorConfig.java         # AviatorEvaluator 初始化
+│                                    # ALWAYS_PARSE_FLOATING_POINT_NUMBER_INTO_BIGDECIMAL = true
+├── engine/
+│   ├── AviatorEngine.java         # executeFormula(formula, env)
+│   └── ExpressionCache.java       # Caffeine 缓存, maxSize=5000, expire=30min
+├── helper/
+│   ├── AviatorHelper.java         # 公式执行工具方法
+│   └── FormulaValidator.java      # 语法校验 + 变量白名单
 └── function/
-    └── HisAviatorFunctions.java # 自定义函数注册
+    └── HisAviatorFunctions.java   # 自定义函数
 ```
 
-### 6.3 Phase 1: 规则与公式管理（W2-W3）
-
-**目标**: 实现规则管理和公式管理的完整 CRUD + 发布流程
-
-| 步骤 | 任务 | 交付物 | 验收标准 |
-|------|------|--------|---------|
-| 1.1 | 规则 Entity/Mapper | RuleDefinition Entity + Mapper XML | 数据库 CRUD 正常 |
-| 1.2 | 规则 Service | RuleDefinitionService | 状态流转正确 |
-| 1.3 | 规则 Controller | RuleDefinitionController | API 可调用，Swagger 可见 |
-| 1.4 | 规则校验逻辑 | DRL 语法校验、命名冲突检测 | 错误规则被拦截 |
-| 1.5 | 规则发布逻辑 | 状态变更 + 版本递增 + 审计日志 | 发布后规则生效 |
-| 1.6 | 公式 Entity/Mapper | AviatorFormula Entity + Mapper | 数据库 CRUD 正常 |
-| 1.7 | 公式 Service | FormulaService | 状态流转正确 |
-| 1.8 | 公式 Controller | FormulaController | API 可调用 |
-| 1.9 | 公式语法校验 | Aviator 编译验证 | 错误公式被拦截 |
-| 1.10 | 公式发布 + Nacos 同步 | 发布后写入 Nacos | Nacos 配置可查询 |
-| 1.11 | 公式参数管理 | FormulaParam CRUD | 参数关联正确 |
-| 1.12 | 审计日志 | AuditLog 记录所有写操作 | 日志表有记录 |
-
-**详细任务分解**:
-
-#### 1.1-1.5 规则管理模块
-
+**Aviator 关键配置**:
+```java
+AviatorEvaluatorInstance instance = AviatorEvaluator.getInstance();
+instance.setOption(Options.ALWAYS_PARSE_FLOATING_POINT_NUMBER_INTO_BIGDECIMAL, true);
+instance.setOption(Options.ALWAYS_PARSE_INTEGRAL_NUMBER_INTO_BIGDECIMAL, true);
 ```
-his-rule-service/
-├── entity/
-│   └── RuleDefinition.java
-├── mapper/
-│   └── RuleDefinitionMapper.java
+
+| 项目 | 内容 |
+|------|------|
+| 负责人 | 后端开发 |
+| 交付物 | 可执行 Aviator 表达式的封装模块 |
+| 验收标准 | `executeFormula("round((totalFee - deductible) * ratio, 2)", env)` 返回正确 BigDecimal 结果 |
+
+**Phase 0 里程碑检查点**: M0 - 基础设施就绪
+
+---
+
+### 6.3 Phase 1: 规则管理 + 公式管理（W2-W3）
+
+**目标**: 规则和公式的完整 CRUD 和发布流程
+
+#### Step 1.1: his-rule-service 完整实现
+
+**模块结构**:
+```
+src/main/java/com/his/rule/
+├── controller/
+│   └── RuleDefinitionController.java    # REST API
 ├── service/
 │   ├── RuleDefinitionService.java
-│   └── impl/
-│       └── RuleDefinitionServiceImpl.java
-├── controller/
-│   └── RuleDefinitionController.java
+│   └── impl/RuleDefinitionServiceImpl.java
+├── mapper/
+│   └── RuleDefinitionMapper.java
+├── entity/
+│   └── RuleDefinition.java
 ├── dto/
 │   ├── RuleCreateDTO.java
 │   ├── RuleUpdateDTO.java
 │   ├── RuleQueryDTO.java
-│   ├── RuleVO.java
-│   └── RuleValidateResult.java
-└── config/
-    └── RuleEngineConfig.java
+│   └── RuleVO.java
+└── engine/
+    └── RulePublisher.java               # 规则发布逻辑
 ```
 
-#### 1.6-1.11 公式管理模块
+**核心功能**:
+| 功能 | API 端点 | 说明 |
+|------|----------|------|
+| 规则列表 | GET `/api/v1/rules` | 分页查询，按 category/status/keyword 筛选 |
+| 规则详情 | GET `/api/v1/rules/{id}` | 获取单条规则 |
+| 创建规则 | POST `/api/v1/rules` | 创建草稿状态规则 |
+| 更新规则 | PUT `/api/v1/rules/{id}` | 仅允许草稿状态更新 |
+| 删除规则 | DELETE `/api/v1/rules/{id}` | 软删除 |
+| 校验规则 | POST `/api/v1/rules/{id}/validate` | DRL 语法校验 |
+| 发布规则 | POST `/api/v1/rules/{id}/publish` | 发布生效，版本递增 |
+| 停用规则 | POST `/api/v1/rules/{id}/deactivate` | 状态变更为 inactive |
+| 版本历史 | GET `/api/v1/rules/{id}/versions` | 查看历史版本 |
+| 回滚规则 | POST `/api/v1/rules/{id}/rollback/{version}` | 回滚到指定版本 |
 
+| 项目 | 内容 |
+|------|------|
+| 负责人 | 后端开发 |
+| 交付物 | 完整的规则管理微服务 |
+| 验收标准 | 规则 CRUD 功能正常，发布流程完整，DRL 校验通过 |
+
+#### Step 1.2: his-formula-service 完整实现
+
+**模块结构**:
 ```
-his-formula-service/
-├── entity/
-│   ├── AviatorFormula.java
-│   └── FormulaParam.java
+src/main/java/com/his/formula/
+├── controller/
+│   └── FormulaController.java
+├── service/
+│   ├── FormulaService.java
+│   └── impl/FormulaServiceImpl.java
 ├── mapper/
 │   ├── AviatorFormulaMapper.java
 │   └── FormulaParamMapper.java
-├── service/
-│   ├── FormulaService.java
-│   └── impl/
-│       └── FormulaServiceImpl.java
-├── controller/
-│   └── FormulaController.java
+├── entity/
+│   ├── AviatorFormula.java
+│   └── FormulaParam.java
 ├── dto/
 │   ├── FormulaCreateDTO.java
 │   ├── FormulaUpdateDTO.java
 │   ├── FormulaQueryDTO.java
 │   ├── FormulaVO.java
-│   ├── FormulaParamDTO.java
-│   ├── FormulaParamVO.java
 │   ├── FormulaTestDTO.java
-│   ├── FormulaTestResult.java
-│   └── FormulaValidateResult.java
-├── listener/
-│   └── NacosFormulaSyncListener.java
-└── config/
-    └── NacosConfig.java
-```
-
-### 6.4 Phase 2: 结算与用药（W4-W5）
-
-**目标**: 实现医保结算核心流程和合理用药审核
-
-| 步骤 | 任务 | 交付物 | 验收标准 |
-|------|------|--------|---------|
-| 2.1 | 结算 Entity/Mapper | SettlementResult Entity + Mapper | 数据库 CRUD 正常 |
-| 2.2 | 结算 Service | SettlementService | 结算流程可执行 |
-| 2.3 | 结算 Controller | SettlementController | API 可调用 |
-| 2.4 | 身份校验 Skill | InsuranceIdentitySkill | 身份缺失返回 BLOCK |
-| 2.5 | 起付线 Skill | DeductibleSkill | 正确设置起付线 |
-| 2.6 | 报销比例 Skill | ReimburseRatioSkill | 正确设置报销比例 |
-| 2.7 | 报销金额计算 | 调用 Aviator 公式 | 计算结果正确 |
-| 2.8 | 目录限制校验 | CatalogLimitSkill | 不在目录返回 WARN |
-| 2.9 | 重复结算拦截 | DuplicateSettlementValidator | 重复结算被拦截 |
-| 2.10 | 用药 Entity/Mapper | PrescriptionRecord Entity + Mapper | 数据库 CRUD 正常 |
-| 2.11 | 用药 Service | DrugCheckService | 处方审核可执行 |
-| 2.12 | 用药 Controller | DrugController | API 可调用 |
-| 2.13 | 配伍禁忌 Skill | DrugCompatibilitySkill | 禁忌药品返回 BLOCK |
-| 2.14 | 极量检查 Skill | DrugDosageLimitSkill | 超量返回 WARN |
-| 2.15 | 过敏史检查 Skill | DrugAllergySkill | 过敏返回 BLOCK |
-
-**详细任务分解**:
-
-#### 2.1-2.9 医保结算模块
-
-```
-his-settlement-service/
-├── entity/
-│   └── SettlementResult.java
-├── mapper/
-│   └── SettlementResultMapper.java
-├── service/
-│   ├── SettlementService.java
-│   └── impl/
-│       └── SettlementServiceImpl.java
-├── controller/
-│   └── SettlementController.java
-├── dto/
-│   ├── SettlementRequestDTO.java
-│   ├── SettlementDetailDTO.java
-│   ├── SettlementResultVO.java
-│   └── SettlementAmountsVO.java
-├── skill/
-│   ├── InsuranceIdentitySkill.java
-│   ├── DeductibleSkill.java
-│   ├── ReimburseRatioSkill.java
-│   ├── ReimburseAmountSkill.java
-│   ├── CatalogLimitSkill.java
-│   └── DuplicateSettlementValidator.java
+│   └── FormulaTestResult.java
 ├── config/
-│   └── SettlementEngineConfig.java
-└── validator/
-    └── SettlementValidator.java
+│   └── NacosConfig.java
+└── listener/
+    └── NacosFormulaSyncListener.java
 ```
 
-#### 2.10-2.15 合理用药模块
+**核心功能**:
+| 功能 | API 端点 | 说明 |
+|------|----------|------|
+| 公式列表 | GET `/api/v1/formulas` | 分页查询 |
+| 创建公式 | POST `/api/v1/formulas` | 创建草稿 |
+| 更新公式 | PUT `/api/v1/formulas/{id}` | 更新草稿 |
+| 语法校验 | POST `/api/v1/formulas/{id}/validate` | Aviator 编译校验 |
+| 发布公式 | POST `/api/v1/formulas/{id}/publish` | 发布并同步 Nacos |
+| 测试公式 | POST `/api/v1/formulas/test` | 执行测试 |
+| 参数管理 | GET/POST/PUT/DELETE `/api/v1/formulas/{id}/params` | 参数 CRUD |
 
+**Nacos 同步机制**:
+- 发布时写入 Nacos 配置中心
+- 通过 `@RefreshScope` 实现自动刷新
+- 变更时调用 `ExpressionCache.invalidate()` 刷新缓存
+
+| 项目 | 内容 |
+|------|------|
+| 负责人 | 后端开发 |
+| 交付物 | 完整的公式管理微服务 |
+| 验收标准 | 公式 CRUD 正常，语法校验正确，Nacos 同步生效 |
+
+**Phase 1 里程碑检查点**: M1 - 规则公式就绪
+
+---
+
+### 6.4 Phase 2: 医保结算 + 合理用药（W4-W5）
+
+**目标**: 核心业务链路打通
+
+#### Step 2.1: his-settlement-service 实现
+
+**Skill 实现**（核心混合架构）:
+```java
+// InsuranceIdentitySkill.java - 身份校验
+@Skill(eventType = "EVENT_SETTLEMENT_EXECUTE", order = 1)
+public class InsuranceIdentitySkill implements ISkill<SettlementFact> {
+    public void execute(SkillContext<SettlementFact> context) {
+        if (context.hasBlock()) return;
+        SettlementFact fact = context.getPayload();
+        if (fact.getPatientType() == null) {
+            context.addResult(new SkillResult(ResultLevel.BLOCK,
+                "InsuranceIdentitySkill", "患者身份信息缺失"));
+        }
+    }
+}
+
+// DeductibleSkill.java - 起付线计算
+@Skill(eventType = "EVENT_SETTLEMENT_EXECUTE", order = 2)
+public class DeductibleSkill implements ISkill<SettlementFact> {
+    public void execute(SkillContext<SettlementFact> context) {
+        if (context.hasBlock()) return;
+        // 根据 patientType + hospitalLevel 确定起付线
+    }
+}
+
+// ReimburseRatioSkill.java - 报销比例
+@Skill(eventType = "EVENT_SETTLEMENT_EXECUTE", order = 3)
+public class ReimburseRatioSkill implements ISkill<SettlementFact> {
+    public void execute(SkillContext<SettlementFact> context) {
+        if (context.hasBlock()) return;
+        // 根据 patientType 确定报销比例
+    }
+}
+
+// ReimburseAmountSkill.java - Aviator 计算报销金额（关键混合点）
+@Skill(eventType = "EVENT_SETTLEMENT_EXECUTE", order = 4)
+public class ReimburseAmountSkill implements ISkill<SettlementFact> {
+    @Autowired private AviatorHelper aviatorHelper;
+
+    public void execute(SkillContext<SettlementFact> context) {
+        if (context.hasBlock()) return;
+        SettlementFact fact = context.getPayload();
+
+        String formula = "round((totalFee - deductible) * ratio, 2)";
+        Map<String, Object> env = Map.of(
+            "totalFee", fact.getTotalFee(),
+            "deductible", fact.getDeductible(),
+            "ratio", fact.getRatio()
+        );
+
+        BigDecimal amount = aviatorHelper.executeFormula(formula, env);
+        fact.setFinalAmount(amount);
+    }
+}
 ```
-his-drug-service/
-├── entity/
-│   └── PrescriptionRecord.java
-├── mapper/
-│   └── PrescriptionRecordMapper.java
-├── service/
-│   ├── DrugCheckService.java
-│   └── impl/
-│       └── DrugCheckServiceImpl.java
-├── controller/
-│   └── DrugController.java
-├── dto/
-│   ├── PrescriptionCheckDTO.java
-│   ├── PrescriptionItemDTO.java
-│   ├── DrugCheckResultVO.java
-│   └── DrugCheckDetailVO.java
-├── skill/
-│   ├── DrugCompatibilitySkill.java
-│   ├── DrugDosageLimitSkill.java
-│   └── DrugAllergySkill.java
-├── config/
-│   └── DrugEngineConfig.java
-└── constant/
-    └── DrugConstants.java
+
+**Skill Pipeline 执行器**:
+```java
+@Service
+public class SkillPipelineExecutor {
+    @Autowired private List<ISkill> skills;
+
+    public SkillContext execute(String eventType, Object payload, String tenantId) {
+        SkillContext context = new SkillContext();
+        context.setTenantId(tenantId);
+        context.setEventType(eventType);
+        context.setPayload(payload);
+
+        List<ISkill> matchedSkills = skills.stream()
+            .filter(s -> s.supportEvent().equals(eventType))
+            .sorted(Comparator.comparingInt(ISkill::getOrder))
+            .toList();
+
+        for (ISkill skill : matchedSkills) {
+            try {
+                skill.execute(context);
+                if (context.hasBlock()) break;
+            } catch (Exception e) {
+                log.error("Skill execution error: {}", e.getMessage());
+                context.addResult(new SkillResult(ResultLevel.WARN,
+                    skill.getClass().getSimpleName(), e.getMessage()));
+            }
+        }
+        return context;
+    }
+}
 ```
 
-### 6.5 Phase 3: 质控与 DRG（W6）
+**API 端点**:
+| 功能 | API 端点 | 说明 |
+|------|----------|------|
+| 执行结算 | POST `/api/v1/settlements` | 构建 SettlementFact，执行 Skill Pipeline |
+| 结算详情 | GET `/api/v1/settlements/{settlementId}` | 获取结算结果 |
+| 结算历史 | GET `/api/v1/settlements` | 按 patientId/date 查询 |
 
-**目标**: 实现质控检查和 DRG 分组
+| 项目 | 内容 |
+|------|------|
+| 负责人 | 后端开发 |
+| 交付物 | 可执行的医保结算服务 |
+| 验收标准 | 结算请求返回正确报销金额，Skill Pipeline 正确执行 |
 
-| 步骤 | 任务 | 交付物 | 验收标准 |
-|------|------|--------|---------|
-| 3.1 | 质控 Entity/Mapper | QualityRecord Entity + Mapper | 数据库 CRUD 正常 |
-| 3.2 | 质控 Service | QualityCheckService | 质控检查可执行 |
-| 3.3 | 质控 Controller | QualityController | API 可调用 |
-| 3.4 | 院感规则 Skill | InfectionControlSkill | 院感违规返回 BLOCK |
-| 3.5 | 质控规则 Skill | QualityRuleSkill | 质控规则可执行 |
-| 3.6 | DRG Entity/Mapper | DrgGroupRecord Entity + Mapper | 数据库 CRUD 正常 |
-| 3.7 | DRG Service | DrgGroupService | DRG 分组可执行 |
-| 3.8 | DRG Controller | DrgController | API 可调用 |
-| 3.9 | DRG 分组 Skill | DrgGroupingSkill | 分组结果正确 |
-| 3.10 | 权重计算 | 调用 Aviator 公式 | 权重计算正确 |
+#### Step 2.2: his-drug-service 实现
 
-### 6.6 Phase 4: 网关与集成（W7）
+**Skill 实现**:
+```java
+// DrugCompatibilitySkill.java - 配伍禁忌
+@Skill(eventType = "EVENT_DRUG_PRESCRIBE", order = 1)
+public class DrugCompatibilitySkill implements ISkill<PrescriptionFact> {
+    public void execute(SkillContext<PrescriptionFact> context) {
+        if (context.hasBlock()) return;
+        // 检查配伍禁忌
+    }
+}
 
-**目标**: 完成 API 网关配置和全链路联调
+// DrugDosageLimitSkill.java - 极量检查（调用 Aviator）
+@Skill(eventType = "EVENT_DRUG_PRESCRIBE", order = 2)
+public class DrugDosageLimitSkill implements ISkill<PrescriptionFact> {
+    @Autowired private AviatorHelper aviatorHelper;
 
-| 步骤 | 任务 | 交付物 | 验收标准 |
-|------|------|--------|---------|
-| 4.1 | 网关路由配置 | Gateway 路由到所有服务 | 请求正确转发 |
-| 4.2 | JWT 鉴权 | Token 校验拦截器 | 无 Token 返回 401 |
-| 4.3 | CORS 配置 | 跨域支持 | 前端可跨域访问 |
-| 4.4 | 日志记录 | 请求日志过滤器 | 日志表有记录 |
-| 4.5 | 全链路联调 | 端到端测试 | 结算流程可完整执行 |
-| 4.6 | 限流配置 | Sentinel 限流规则 | 超限请求被拦截 |
+    public void execute(SkillContext<PrescriptionFact> context) {
+        if (context.hasBlock()) return;
+        // 调用 Aviator 检查极量
+    }
+}
 
-### 6.7 Phase 5: 测试与优化（W8）
+// DrugAllergySkill.java - 过敏史检查
+@Skill(eventType = "EVENT_DRUG_PRESCRIBE", order = 3)
+public class DrugAllergySkill implements ISkill<PrescriptionFact> {
+    public void execute(SkillContext<PrescriptionFact> context) {
+        if (context.hasBlock()) return;
+        // 检查过敏史
+    }
+}
+```
 
-**目标**: 完成测试、性能优化和文档
+**API 端点**:
+| 功能 | API 端点 | 说明 |
+|------|----------|------|
+| 处方审核 | POST `/api/v1/drugs/check` | 返回 PASS/WARN/BLOCK 结果 |
 
-| 步骤 | 任务 | 交付物 | 验收标准 |
-|------|------|--------|---------|
-| 5.1 | 单元测试 | 各模块单元测试 | 覆盖率达标 |
-| 5.2 | 集成测试 | Controller 层集成测试 | API 测试通过 |
-| 5.3 | 性能测试 | JMeter 压测报告 | 满足 NFR-P01~P08 |
-| 5.4 | 安全测试 | 安全扫描报告 | 无高危漏洞 |
-| 5.5 | API 文档 | SpringDoc 自动生成的文档 | 所有接口有文档 |
-| 5.6 | 部署文档 | Docker 部署指南 | 可一键部署 |
+| 项目 | 内容 |
+|------|------|
+| 负责人 | 后端开发 |
+| 交付物 | 可执行的合理用药审核服务 |
+| 验收标准 | 含禁忌处方返回 BLOCK，配伍警告返回 WARN |
+
+**Phase 2 里程碑检查点**: M2 - 结算用药就绪
+
+---
+
+### 6.5 Phase 3: 质控 + DRG 分组（W6）
+
+#### Step 3.1: his-quality-service 实现
+- InfectionControlSkill - 院感规则检查
+- QualityRuleSkill - 抗菌药物使用率等
+
+#### Step 3.2: his-drg-service 实现
+- DrgGroupingSkill - DRG 分组（核心算法）
+- DrgWeightCalcSkill - 权重计算（调用 Aviator）
+- DrgStandardScoreSkill - 标准分值计算
+
+| 项目 | 内容 |
+|------|------|
+| 负责人 | 后端开发 |
+| 交付物 | 质控和 DRG 分组服务 |
+| 验收标准 | DRG 分组正确，权重计算准确 |
+
+**Phase 3 里程碑检查点**: M3 - 全功能就绪
+
+---
+
+### 6.6 Phase 4: API 网关 + 联调（W7）
+
+#### Step 4.1: his-gateway 完善
+- JWT Token 校验
+- 权限拦截（@PreAuthorize）
+- 限流熔断（Sentinel）
+- 请求日志记录
+
+#### Step 4.2: 全链路联调
+- 服务间调用（OpenFeign）
+- 分布式事务
+- 链路追踪（traceId）
+
+| 项目 | 内容 |
+|------|------|
+| 负责人 | 后端开发 |
+| 交付物 | 可运行的完整系统 |
+| 验收标准 | 所有 API 可调用，网关路由正常 |
+
+**Phase 4 里程碑检查点**: M4 - 集成测试通过
+
+---
+
+### 6.7 Phase 5: 测试 + 优化（W8）
+
+#### Step 5.1: 单元测试
+| 层级 | 覆盖率目标 |
+|------|------------|
+| 核心规则（Drools） | 100% |
+| 公式（Aviator） | 100% |
+| Service 层 | ≥ 90% |
+| Controller 层 | ≥ 70% |
+
+#### Step 5.2: 集成测试
+- 全链路流程测试
+- Skill Pipeline 测试
+- Nacos 配置刷新测试
+
+#### Step 5.3: 性能压测
+| 指标 | 目标值 |
+|------|--------|
+| 结算流程 P99 | < 50ms |
+| 并发支持 | ≥ 500 TPS |
+| 缓存命中率 | ≥ 95% |
+
+**Phase 5 里程碑检查点**: M5 - 发布就绪
 
 ---
 

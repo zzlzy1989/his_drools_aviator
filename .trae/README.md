@@ -1,5 +1,5 @@
 # Harness 工程 - HIS Drools+Aviator 规则引擎
-
+是
 > AI Agent 的工作框架，规范化 HIS 规则引擎开发流程
 
 ---
@@ -16,48 +16,79 @@ Harness 是一个 AI Agent 工程框架，通过结构化的规范、命令、�
 
 ```
 .trae/
-├── agent.md               # Agent 项目说明书 (核心)
-├── MEMORY.md              # 长期记忆
+├── agent.md               # AI 行为规范（身份/约束/流程/计划检查）
+├── MEMORY.md              # 项目事实知识（技术栈/目录/API/环境）
+├── settings.local.json    # 权限配置 + 计划管理设置
 │
 ├── commands/              # 自定义快捷命令
-│   ├── README.md
-│   ├── health-check.md    # ((command:health))
-│   ├── show-context.md    # ((command:context))
-│   ├── project-status.md  # ((command:status))
-│   ├── analyze-task.md    # ((command:analyze-task))
-│   ├── check-memory.md    # ((command:check-memory))
-│   └── summarize.md       # ((command:summarize))
+│   ├── README.md          # 命令清单 + 使用说明
+│   ├── health-check.md    # ((command:health)) 环境检查
+│   ├── show-context.md    # ((command:context)) 任务上下文
+│   ├── project-status.md  # ((command:status)) 项目状态
+│   ├── analyze-task.md    # ((command:analyze-task)) 任务分析
+│   ├── check-memory.md    # ((command:check-memory)) 记忆检查
+│   ├── summarize.md       # ((command:summarize)) 会话总结
+│   ├── review.md          # ((command:review)) 代码审查
+│   ├── knowledge-writeback.md  # ((command:knowledge-writeback)) 知识回写
+│   └── plan.md            # ((command:plan)) 计划管理
 │
 ├── rules/                 # 模块化规范文件
-│   ├── README.md          # 规则说明
-│   ├── code-style.md      # Java/Spring/Drools 编码风格
-│   ├── testing.md         # 测试规范（JUnit5/MockMvc/DRL测试）
-│   ├── security.md        # 安全检查（SQL注入/表达式注入）
-│   ├── api-design.md      # REST API 设计
-│   ├── database.md        # 数据库设计（MySQL表结构）
-│   ├── error-handling.md  # 错误处理（ErrorCode体系）
-│   ├── workflow.md        # 工作流程（7步+3阻塞节点）
-│   ├── docker-deploy.md   # Docker 部署
-│   ├── documentation.md   # 文档规范（DRL/Aviator注释）
-│   └── performance.md     # 性能优化（缓存/并发）
+│   ├── README.md          # 规则索引 + 触发场景速查
+│   ├── workflow.md        # 7 步强制工作流程 + 3 阻塞节点
+│   ├── code-style.md      # Java/Spring/Drools/Aviator 编码规范
+│   ├── testing.md         # JUnit5/MockMvc/DRL 规则测试规范
+│   ├── security.md        # SQL 注入/XSS/Aviator 表达式注入防护
+│   ├── api-design.md      # REST API 设计规范
+│   ├── database.md        # MySQL 表结构/查询优化/索引规范
+│   ├── error-handling.md  # ErrorCode 体系/异常层级/日志规范
+│   ├── docker-deploy.md   # Docker 多阶段构建/JVM 优化/服务编排
+│   ├── performance.md     # Caffeine 缓存/KieBase 分组/并发控制
+│   ├── documentation.md   # DRL 规则/Aviator 公式注释规范
+│   └── git-commit-message.md  # Conventional Commits 提交规范
 │
-├── hooks/                 # 事件驱动拦截
-│   ├── README.md          # Hook 配置说明
-│   ├── pre-execute-shell.sh
-│   ├── post-execute-shell.sh
-│   ├── pre-write-file.sh
-│   └── ...
+├── hooks/                 # 事件驱动拦截脚本
+│   ├── README.md          # Hook 配置说明 + 与 agent.md 关系
+│   ├── pre-execute-shell.sh    # Shell 执行前 - 危险命令拦截
+│   ├── post-execute-shell.sh   # Shell 执行后 - 日志记录
+│   ├── pre-write-file.sh       # 文件写入前 - 受保护文件确认
+│   ├── post-read-file.sh       # 文件读取后 - 敏感信息提醒
+│   ├── pre-browser.sh          # 浏览器启动前 - CDP 提示
+│   ├── pre-search.sh           # 搜索前 - 敏感词过滤
+│   ├── pre-task-start.sh       # 任务开始前 - 计划检查/创建提示
+│   ├── post-task-complete.sh   # 任务完成后 - 知识回写 + 计划状态检查
+│   └── post-plan-update.sh     # 计划变更后 - 索引更新 + 变更日志
 │
-├── domain/                # 业务知识库
-│   ├── README.md
-│   ├── glossary.md        # HIS/规则引擎术语表
-│   ├── rules.md           # 业务规则（医保结算等）
-│   ├── state-machines.md  # 状态机（规则生命周期/结算流程）
-│   ├── edge-cases.md      # 边界情况（BigDecimal精度等）
-│   └── decisions.md       # 决策记录（20条）
+├── domain/                # 业务知识库（持续积累）
+│   ├── README.md          # 知识库索引
+│   ├── glossary.md        # HIS/Drools/Aviator 术语表
+│   ├── rules.md           # 医保结算/费用校验业务规则
+│   ├── state-machines.md  # 规则生命周期/结算流程状态机
+│   ├── edge-cases.md      # BigDecimal 精度/规则冲突边界
+│   ├── decisions.md       # 架构/数据/集成决策记录
+│   └── modules/           # 模块概述（6 个微服务）
+│       ├── config/overview.md
+│       ├── formulas/overview.md
+│       ├── rules/overview.md
+│       ├── settlements/overview.md
+│       ├── skills/overview.md
+│       └── tenants/overview.md
 │
-└── memory/                # 每日笔记
-    └── TEMPLATE.md
+├── workflow-plans/        # 计划生成与跟踪系统
+│   ├── README.md          # 使用指南
+│   ├── TEMPLATE.md        # 计划模板
+│   ├── INDEX.md           # 计划跟踪索引（自动更新）
+│   ├── plan.sh            # 计划管理 CLI 工具
+│   ├── active/            # 活跃计划（pending/in_progress）
+│   ├── completed/         # 已完成计划
+│   └── archived/          # 已归档计划（7 天后自动归档）
+│
+├── memory/                # 日记系统
+│   ├── README.md          # 日记使用说明
+│   └── TEMPLATE.md        # 日记模板
+│
+├── CHANGELOG.md           # Harness 配置变更历史
+├── SUMMARY.md             # 实施总结
+└── MIGRATION_GUIDE.md     # Harness 工程跨项目迁移指南
 ```
 
 ---

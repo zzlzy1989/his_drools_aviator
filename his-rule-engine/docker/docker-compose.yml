@@ -1,0 +1,211 @@
+version: '3.8'
+
+services:
+  # ===== HIS 网关 (9000) =====
+  his-gateway:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: his-gateway
+    ports:
+      - "9000:9000"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - NACOS_ADDR=192.168.1.105:8848
+      - MYSQL_HOST=192.168.1.105
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-testhub123}
+      - MYSQL_DB=his_rule_engine
+      - REDIS_HOST=192.168.1.105
+      - REDIS_PORT=63790
+      - JAVA_OPTS=-Xms256m -Xmx512m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./logs/gateway:/app/logs
+    networks:
+      - his-net
+    restart: unless-stopped
+    entrypoint: ["sh", "-c", "java $JAVA_OPTS -jar gateway.jar"]
+
+  # ===== HIS 规则服务 (9001) =====
+  his-rule-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: his-rule-service
+    ports:
+      - "9001:9001"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - NACOS_ADDR=192.168.1.105:8848
+      - MYSQL_HOST=192.168.1.105
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-testhub123}
+      - MYSQL_DB=his_rule_engine
+      - REDIS_HOST=192.168.1.105
+      - REDIS_PORT=63790
+      - SERVER_PORT=9001
+      - JAVA_OPTS=-Xms256m -Xmx512m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./logs/rule-service:/app/logs
+    networks:
+      - his-net
+    restart: unless-stopped
+    entrypoint: ["sh", "-c", "java $JAVA_OPTS -jar rule-service.jar"]
+
+  # ===== HIS 公式服务 (9002) =====
+  his-formula-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: his-formula-service
+    ports:
+      - "9002:9002"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - NACOS_ADDR=192.168.1.105:8848
+      - MYSQL_HOST=192.168.1.105
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-testhub123}
+      - MYSQL_DB=his_rule_engine
+      - REDIS_HOST=192.168.1.105
+      - REDIS_PORT=63790
+      - SERVER_PORT=9002
+      - JAVA_OPTS=-Xms256m -Xmx512m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./logs/formula-service:/app/logs
+    networks:
+      - his-net
+    restart: unless-stopped
+    entrypoint: ["sh", "-c", "java $JAVA_OPTS -jar formula-service.jar"]
+
+  # ===== HIS 结算服务 (9003) =====
+  his-settlement-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: his-settlement-service
+    ports:
+      - "9003:9003"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - NACOS_ADDR=192.168.1.105:8848
+      - MYSQL_HOST=192.168.1.105
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-testhub123}
+      - MYSQL_DB=his_rule_engine
+      - REDIS_HOST=192.168.1.105
+      - REDIS_PORT=63790
+      - SERVER_PORT=9003
+      - JAVA_OPTS=-Xms256m -Xmx512m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./logs/settlement-service:/app/logs
+    networks:
+      - his-net
+    restart: unless-stopped
+    entrypoint: ["sh", "-c", "java $JAVA_OPTS -jar settlement-service.jar"]
+
+  # ===== HIS 药品服务 (9004) =====
+  his-drug-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: his-drug-service
+    ports:
+      - "9004:9004"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - NACOS_ADDR=192.168.1.105:8848
+      - MYSQL_HOST=192.168.1.105
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-testhub123}
+      - MYSQL_DB=his_rule_engine
+      - REDIS_HOST=192.168.1.105
+      - REDIS_PORT=63790
+      - SERVER_PORT=9004
+      - JAVA_OPTS=-Xms256m -Xmx512m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./logs/drug-service:/app/logs
+    networks:
+      - his-net
+    restart: unless-stopped
+    entrypoint: ["sh", "-c", "java $JAVA_OPTS -jar drug-service.jar"]
+
+  # ===== HIS 质控服务 (9005) =====
+  his-quality-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: his-quality-service
+    ports:
+      - "9005:9005"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - NACOS_ADDR=192.168.1.105:8848
+      - MYSQL_HOST=192.168.1.105
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-testhub123}
+      - MYSQL_DB=his_rule_engine
+      - REDIS_HOST=192.168.1.105
+      - REDIS_PORT=63790
+      - SERVER_PORT=9005
+      - JAVA_OPTS=-Xms256m -Xmx512m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./logs/quality-service:/app/logs
+    networks:
+      - his-net
+    restart: unless-stopped
+    entrypoint: ["sh", "-c", "java $JAVA_OPTS -jar quality-service.jar"]
+
+  # ===== HIS DRG服务 (9006) =====
+  his-drg-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: his-drg-service
+    ports:
+      - "9006:9006"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - NACOS_ADDR=192.168.1.105:8848
+      - MYSQL_HOST=192.168.1.105
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-testhub123}
+      - MYSQL_DB=his_rule_engine
+      - REDIS_HOST=192.168.1.105
+      - REDIS_PORT=63790
+      - SERVER_PORT=9006
+      - JAVA_OPTS=-Xms256m -Xmx512m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./logs/drg-service:/app/logs
+    networks:
+      - his-net
+    restart: unless-stopped
+    entrypoint: ["sh", "-c", "java $JAVA_OPTS -jar drg-service.jar"]
+
+networks:
+  his-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
