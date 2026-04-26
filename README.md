@@ -15,21 +15,22 @@
 
 | 组件 | 版本 | 用途 |
 |:---|:---|:---|
-| Spring Boot | 2.7.x | 基础框架 |
-| Spring Cloud Alibaba | 2021.0.5.0 | 微服务生态（Nacos 配置中心） |
-| Nacos | 2.2.0 | 配置中心（存储公式/规则参数） |
-| Drools | 7.73.0 | 规则引擎（规则流编排） |
-| Aviator | 5.4.3 | 高性能表达式求值（负责公式计算） |
-| Caffeine | 2.9.3 | 本地缓存（缓存编译后的表达式） |
+| Spring Boot | 3.5.x | 基础框架 |
+| Spring Cloud Alibaba | 2025.1.0.0 | 微服务生态（Nacos 配置中心） |
+| Nacos Client (配置中心) | 2.5.0 | 配置管理（存储公式/规则参数），与服务器版本独立演进 |
+| Nacos | 3.2.0 | 配置中心（存储公式/规则参数） |
+| Drools | 8.44.0.Final | 规则引擎（规则流编排） |
+| Aviator | 5.2.6 | 高性能表达式求值（负责公式计算） |
+| Caffeine | 3.2.3 | 本地缓存（缓存编译后的表达式） |
 | MySQL | 8.0+ | 存储规则定义、事实数据（可选） |
-| Maven | 3.8+ | 构建工具 |
+| Maven | 3.9+ | 构建工具 |
 
 ---
 
 ## 📦 环境要求
 
 - JDK 11 或更高版本  
-- Maven 3.8+  
+- Maven 3.9+    
 - Nacos Server 2.2.0（[下载地址](https://github.com/alibaba/nacos/releases)）  
 - MySQL 8.0（仅当需要持久化规则库时）  
 - Git  
@@ -41,7 +42,7 @@
 ### 1. 克隆项目
 
 ```bash
-git clone https://github.com/gaoxu1990/his_drools_aviator.git
+git clone https://github.com/zzlzy1989/his_drools_aviator.git
 cd his_drools_aviator
 ```
 
@@ -49,7 +50,7 @@ cd his_drools_aviator
 
 ```bash
 # 解压并启动
-unzip nacos-server-2.2.0.zip
+unzip nacos-server-3.2.0.zip
 cd nacos/bin
 # Linux/Mac
 sh startup.sh -m standalone
