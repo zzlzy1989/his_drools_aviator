@@ -1,4 +1,4 @@
-# HIS 规则剥离引擎 - 基于 Spring Cloud Alibaba + Nacos
+# HIS 动态规则中台 - 基于 Spring Cloud Alibaba + Nacos
 
 ## 📖 项目简介
 
@@ -6,32 +6,37 @@
 
 **核心价值**：  
 - 医院可自主维护业务规则，不再依赖 HIS 厂商的代码修改周期  
-- 规则变更从“2~4周”缩短至“分钟级”  
+- 规则变更从"2~4周"缩短至"分钟级"  
 - 底层 HIS 退化为稳定的事务底座，上层业务逻辑灵活可控  
 
 ---
 
 ## 🛠️ 技术栈
 
-| 组件 | 版本 | 用途 |
-|:---|:---|:---|
-| Spring Boot | 3.5.x | 基础框架 |
-| Spring Cloud Alibaba | 2025.1.0.0 | 微服务生态（Nacos 配置中心） |
-| Nacos Client (配置中心) | 2.5.0 | 配置管理（存储公式/规则参数），与服务器版本独立演进 |
-| Nacos | 3.2.0 | 配置中心（存储公式/规则参数） |
-| Drools | 8.44.0.Final | 规则引擎（规则流编排） |
-| Aviator | 5.2.6 | 高性能表达式求值（负责公式计算） |
-| Caffeine | 3.2.3 | 本地缓存（缓存编译后的表达式） |
-| MySQL | 8.0+ | 存储规则定义、事实数据（可选） |
-| Maven | 3.9+ | 构建工具 |
+| 组件 | 版本 | 状态 | 用途 |
+|:---|:---|:---:|:---|
+| Spring Boot | 3.2.5 | ✅ | 基础框架 |
+| Spring Cloud | 2023.0.1 | ✅ | 微服务生态 |
+| Spring Cloud Alibaba | 2023.0.1.0 | ✅ | Nacos 注册中心 + 配置中心 |
+| Drools | 8.44.0.Final | ✅ | 规则引擎（规则流编排） |
+| Aviator | 5.4.3 | ✅ | 高性能表达式求值 |
+| Caffeine | 3.1.8 | ✅ | 本地缓存（编译后表达式） |
+| MyBatis-Plus | 3.5.6 | ✅ | ORM 框架 |
+| MySQL | 8.0+ | 📋 | 存储规则定义、事实数据 |
+| Sentinel | - | 📋 | 流量控制、熔断降级 |
+| OpenFeign | - | ✅ | 声明式服务调用 |
+| Maven | 3.8+ | ✅ | 构建工具 |
+| JDK | 21 | ✅ | 运行环境 |
+
+> ✅ 已集成 &nbsp; 📋 待实现 &nbsp; ⏳ 规划中
 
 ---
 
 ## 📦 环境要求
 
-- JDK 11 或更高版本  
-- Maven 3.9+    
-- Nacos Server 2.2.0（[下载地址](https://github.com/alibaba/nacos/releases)）  
+- JDK 21 或更高版本  
+- Maven 3.8+    
+- Nacos Server 2.x（[下载地址](https://github.com/alibaba/nacos/releases)）  
 - MySQL 8.0（仅当需要持久化规则库时）  
 - Git  
 
@@ -46,11 +51,11 @@ git clone https://github.com/zzlzy1989/his_drools_aviator.git
 cd his_drools_aviator
 ```
 
-### 2. 启动 Nacos Server
+### 2. 启动 Nacos Server <span style="color:orange">📋 待实现</span>
 
 ```bash
 # 解压并启动
-unzip nacos-server-3.2.0.zip
+unzip nacos-server-2.x.x.zip
 cd nacos/bin
 # Linux/Mac
 sh startup.sh -m standalone
@@ -60,7 +65,7 @@ startup.cmd -m standalone
 
 访问 Nacos 控制台：http://localhost:8848/nacos （默认账号密码：nacos/nacos）
 
-### 3. 创建 Nacos 配置
+### 3. 创建 Nacos 配置 <span style="color:orange">📋 待实现</span>
 
 在 Nacos 中创建 Data ID 为 `his-rule-engine.yaml`，Group 为 `HIS_RULE_GROUP` 的配置，内容如下：
 
@@ -73,7 +78,7 @@ formulas:
     weight: "(baseWeight + extraPoints) * severityFactor"
 ```
 
-### 4. 配置数据库（可选）
+### 4. 配置数据库 <span style="color:orange">📋 待实现</span>
 
 如需要持久化规则操作日志或规则元数据，请创建 MySQL 数据库并执行以下脚本：
 
@@ -95,39 +100,38 @@ CREATE TABLE `rule_formula` (
 );
 ```
 
-修改 `application.yml` 中的数据库连接参数。
+修改各服务 `application.yml` 中的数据库连接参数。
 
-### 5. 修改应用配置
-
-编辑 `src/main/resources/bootstrap.yml`：
-
-```yaml
-spring:
-  application:
-    name: his-rule-engine
-  cloud:
-    nacos:
-      config:
-        server-addr: 127.0.0.1:8848
-        file-extension: yaml
-        group: HIS_RULE_GROUP
-        namespace: public   # 如使用命名空间则填写
-  profiles:
-    active: dev
-```
-
-### 6. 编译与运行
+### 5. 编译项目
 
 ```bash
-mvn clean package
-java -jar target/his-rule-engine-1.0.0.jar
+cd his-rule-engine
+mvn clean compile
 ```
 
-### 7. 测试规则调用
+### 6. 启动服务 <span style="color:orange">📋 待实现</span>
+
+```bash
+# 启动网关（端口 9000）
+cd his-gateway
+mvn spring-boot:run
+
+# 启动规则管理服务（端口 9001）
+cd his-rule-service
+mvn spring-boot:run
+
+# 启动医保结算服务（端口 9003）
+cd his-settlement-service
+mvn spring-boot:run
+
+# ... 其他服务按需启动
+```
+
+### 7. 测试规则调用 <span style="color:orange">📋 待实现</span>
 
 ```bash
 # 结算测试（示例）
-curl -X POST http://localhost:8080/api/settlement \
+curl -X POST http://localhost:9000/api/v1/settlements \
   -H "Content-Type: application/json" \
   -d '{"patientType":"resident","totalFee":2000}'
 ```
@@ -139,50 +143,84 @@ curl -X POST http://localhost:8080/api/settlement \
 ## 📁 项目模块结构
 
 ```
-his-rule-engine/
-├── src/main/java/com/his/rule
-│   ├── config/                 # Spring 配置（Drools、缓存、Aviator）
-│   ├── engine/                 # 规则引擎核心
-│   │   ├── drools/             # Drools 会话管理、规则加载
-│   │   ├── aviator/            # Aviator 表达式缓存与执行器
-│   │   └── formula/            # 公式管理器（Nacos + 本地缓存）
-│   ├── fact/                   # 事实对象定义（SettlementFact、OrderFact等）
-│   ├── listener/               # Nacos 配置变更监听器
-│   ├── service/                # 业务服务（结算、质控等）
-│   ├── controller/             # REST API
-│   └── validator/              # 公式校验工具
-├── src/main/resources/
-│   ├── rules/                  # Drools 规则文件（.drl）
-│   │   └── reimbursement.drl   # 医保报销规则流
-│   ├── bootstrap.yml           # Nacos 配置
-│   ├── application.yml         # 通用配置（端口、数据库等）
-│   └── logback-spring.xml      # 日志配置
-└── pom.xml
+his_drools_aviator/
+├── .trae/                          # Trae IDE 配置（规则、命令、钩子）
+├── .gitignore                      # Git 忽略规则
+├── README.md                       # 项目说明
+├── drools_aviator.md               # 架构设计文档
+├── test-his-ui-drug.md             # 测试用例文档
+│
+└── his-rule-engine/                # 后端代码
+    ├── pom.xml                     # 父 POM（版本管理、依赖统一）
+    │
+    ├── his-common/                 # 公共模块
+    │   ├── pom.xml
+    │   ├── his-common-core/        #   核心：枚举、异常、Fact 对象
+    │   ├── his-common-web/         #   Web：统一响应、异常处理、Swagger
+    │   ├── his-common-drools/      #   Drools 引擎封装
+    │   └── his-common-aviator/     #   Aviator 引擎封装
+    │
+    ├── his-gateway/                # API 网关 (9000)
+    │   └── Spring Cloud Gateway + Nacos + Sentinel
+    │
+    ├── his-rule-service/           # 规则管理服务 (9001)
+    │   └── 规则 CRUD、版本管理、DRL 发布
+    │
+    ├── his-formula-service/        # 公式管理服务 (9002)
+    │   └── 公式 CRUD、语法校验、Nacos 同步
+    │
+    ├── his-settlement-service/     # 医保结算服务 (9003)
+    │   └── 费用结算、报销计算、规则执行
+    │
+    ├── his-drug-service/           # 合理用药服务 (9004)
+    │   └── 处方审核、配伍禁忌、极量检查
+    │
+    ├── his-quality-service/        # 质控服务 (9005)
+    │   └── 院感防控、质控规则、拦截卡控
+    │
+    └── his-drg-service/            # DRG分组服务 (9006)
+        └── DRG/DIP 分组、权重计算、标准分值
 ```
+
+---
+
+## 📊 服务端口规划
+
+| 服务 | 端口 | 说明 | 状态 |
+|:---|:---:|:---|:---:|
+| API Gateway | 9000 | 统一入口，路由转发 | ✅ 骨架 |
+| Rule Service | 9001 | 规则管理 | ✅ 骨架 |
+| Formula Service | 9002 | 公式管理 | ✅ 骨架 |
+| Settlement Service | 9003 | 医保结算 | ✅ 骨架 |
+| Drug Service | 9004 | 合理用药 | ✅ 骨架 |
+| Quality Service | 9005 | 质控 | ✅ 骨架 |
+| DRG Service | 9006 | DRG/DIP 分组 | ✅ 骨架 |
+
+> ✅ 骨架 = 模块结构、启动类、配置文件已就绪，业务逻辑待开发
 
 ---
 
 ## ⚙️ 核心配置说明
 
-### Nacos 配置刷新
+### Nacos 配置刷新 <span style="color:orange">📋 待实现</span>
 
 - 所有公式均通过 `@RefreshScope` + `NacosConfigManager` 实现动态更新  
 - 修改 Nacos 中的 `formulas.*` 配置后，应用会自动重新加载公式并刷新 Aviator 缓存，**无需重启**
 
-### Drools 规则热加载
+### Drools 规则热加载 <span style="color:orange">📋 待实现</span>
 
 - 规则文件放在 `src/main/resources/rules/` 下  
-- 生产环境建议将 `.drl` 文件也存放在 Nacos 或数据库中，通过 `KieScanner` 实现热部署（本示例默认从 classpath 加载）
+- 生产环境建议将 `.drl` 文件也存放在 Nacos 或数据库中，通过 `KieScanner` 实现热部署
 
-### Aviator 表达式缓存
+### Aviator 表达式缓存 <span style="color:orange">📋 待实现</span>
 
 - 使用 Caffeine 缓存编译后的 `Expression` 对象  
-- 缓存大小：1000 条，过期时间：30 分钟  
+- 缓存大小：5000 条，过期时间：30 分钟  
 - 公式变更时自动失效对应的缓存条目
 
 ---
 
-## 🧪 示例：医保结算规则流
+## 🧪 示例：医保结算规则流 <span style="color:orange">📋 待实现</span>
 
 ### 事实对象（Fact）
 
@@ -227,9 +265,9 @@ end
 
 ---
 
-## 📊 性能指标（参考）
+## 📊 性能指标（目标） <span style="color:orange">📋 待实现</span>
 
-| 场景 | 耗时 |
+| 场景 | 目标耗时 |
 | :--- | :--- |
 | 单条规则匹配（Drools） | < 5ms |
 | Aviator 表达式执行（已缓存） | < 0.5ms |
@@ -241,7 +279,7 @@ end
 ## 🧰 常见问题
 
 **Q：Nacos 配置不生效？**  
-A：检查 `bootstrap.yml` 中的 `spring.cloud.nacos.config` 是否正确，并确保应用已添加 `@RefreshScope`。
+A：检查 `application.yml` 中的 `spring.cloud.nacos.config` 是否正确，并确保应用已添加 `@RefreshScope`。
 
 **Q：Aviator 表达式报错 `Unknown variable`？**  
 A：请在 `FormulaValidator` 中定义允许的变量白名单，或在执行前将所需变量全部放入 `env` 中。
@@ -264,7 +302,7 @@ A：可在 Nacos 中使用不同的 `namespace` 或 `group` 来隔离医院的�
 
 2. **接入自己的数据库作为规则源**  
    - 实现 `RuleProvider` 接口，从数据库读取规则内容  
-   - 移除 `bootstrap.yml` 中的 Nacos 依赖（可选）
+   - 移除 `application.yml` 中的 Nacos 依赖（可选）
 
 3. **集成监控**  
    - 暴露 `/actuator/health` 端点  
