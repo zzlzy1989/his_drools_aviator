@@ -47,7 +47,7 @@
 
         <!-- 数据库 -->
         <mybatis-plus.version>3.5.6</mybatis-plus.version>
-        <mysql.version>8.0.33</mysql.version>
+        <mysql.version>8.2.0</mysql.version>
 
         <!-- 工具类 -->
         <hutool.version>5.8.26</hutool.version>
