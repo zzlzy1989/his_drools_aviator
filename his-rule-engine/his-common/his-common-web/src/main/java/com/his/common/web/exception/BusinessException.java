@@ -18,4 +18,17 @@ public class BusinessException extends HisException {
     public BusinessException(ErrorCode errorCode, Throwable cause, Object... args) {
         super(errorCode, cause, args);
     }
+
+    public BusinessException(String message) {
+        super("BUSINESS", message);
+    }
+
+    public BusinessException(String code, String message) {
+        super(code, message);
+    }
+
+    public BusinessException(String code, String message, Throwable cause) {
+        super(code, message);
+        initCause(cause);
+    }
 }

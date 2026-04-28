@@ -2,7 +2,7 @@ package com.his.drug.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.his.common.SkillResult;
-import com.his.common.enums.ResultLevel;
+import com.his.common.ResultLevel;
 import com.his.common.web.context.TenantContext;
 import com.his.drug.dto.PrescriptionDTO;
 import com.his.drug.dto.PrescriptionReviewVO;

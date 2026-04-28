@@ -7,7 +7,7 @@ Rules 是模块化的规范文件集合，按主题组织，在特定开发任�
 ## 目录结构（v1.0）
 
 ```
-.claude/rules/
+.trae/rules/
 ├── README.md              # 本文档（索引）
 ├── workflow.md            # 7 步强制工作流程 + 3 阻塞节点
 ├── code-style.md          # Java/Spring/Drools 编码规范

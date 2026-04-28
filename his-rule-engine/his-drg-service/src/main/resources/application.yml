@@ -11,10 +11,12 @@ spring:
       config:
         server-addr: ${NACOS_ADDR:127.0.0.1:8848}
         file-extension: yml
+        import-check:
+          enabled: false
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/his_rule_engine?useUnicode=true&characterEncoding=utf8mb4&useSSL=false&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://${MYSQL_HOST:192.168.1.105}:${MYSQL_PORT:3306}/his_rule_engine?characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
     username: ${MYSQL_USER:root}
-    password: ${MYSQL_PASSWORD:root}
+    password: ${MYSQL_PASSWORD:testhub123}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 20

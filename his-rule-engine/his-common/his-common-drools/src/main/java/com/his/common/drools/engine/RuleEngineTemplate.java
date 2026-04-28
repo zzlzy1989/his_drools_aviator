@@ -3,7 +3,6 @@ package com.his.common.drools.engine;
 import com.his.common.SkillContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.kie.api.KieBase;
 import org.kie.api.runtime.KieSession;
 
 import java.util.concurrent.TimeUnit;
@@ -35,15 +34,13 @@ public class RuleEngineTemplate {
             int rulesFired = kieSession.fireAllRules();
             long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
 
-            log.info("规则执行完成: group={}, rulesFired={}, elapsedMs={}",
-                    getRuleGroupName(), rulesFired, elapsedMs);
+            log.info("规则执行完成: rulesFired={}, elapsedMs={}", rulesFired, elapsedMs);
 
             if (elapsedMs > timeoutMs) {
-                log.warn("规则执行超时: group={}, elapsedMs={}, timeoutMs={}",
-                        getRuleGroupName(), elapsedMs, timeoutMs);
+                log.warn("规则执行超时: elapsedMs={}, timeoutMs={}", elapsedMs, timeoutMs);
             }
         } finally {
-            kieSession.clear();
+            kieSession.dispose();
         }
     }
 
@@ -58,13 +55,5 @@ public class RuleEngineTemplate {
         RuleEngineTemplate template = new RuleEngineTemplate(kieSession, timeoutMs);
         SkillContext<?> context = new SkillContext<>();
         template.fireRules(context, fact);
-    }
-
-    /**
-     * 获取规则组名称
-     */
-    private String getRuleGroupName() {
-        KieBase kieBase = kieSession.getKieBase();
-        return kieBase != null ? kieBase.getName() : "unknown";
     }
 }

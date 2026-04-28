@@ -2,8 +2,6 @@ package com.his.common.aviator.helper;
 
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
-import com.googlecode.aviator.Options;
-import com.googlecode.aviator.runtime.Functions;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
@@ -19,9 +17,7 @@ import java.util.Map;
 public class AviatorHelper {
 
     static {
-        AviatorEvaluator.setOption(Options.ALWAYS_PARSE_FLOATING_POINT_NUMBER_INTO_BIGDECIMAL, true);
-        AviatorEvaluator.setOption(Options.ENABLE_SCIENTIFIC_NOTATION, false);
-        AviatorEvaluator.setOption(Options.MAX_LOOKUP_CACHE_SIZE, 1024);
+        // Aviator 5.x 配置保持默认
     }
 
     /**
@@ -128,7 +124,6 @@ public class AviatorHelper {
      * 初始化 Aviator 配置
      */
     public static void init() {
-        log.info("AviatorHelper initialized, version: {}",
-                com.googlecode.aviator.utils.Version.getVersion());
+        log.info("AviatorHelper initialized");
     }
 }

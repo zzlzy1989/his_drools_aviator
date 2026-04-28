@@ -2,8 +2,8 @@
 
 ## 执行步骤
 
-1. 读取 .claude/agent.md 中的项目概述
-2. 读取 .claude/MEMORY.md 中的最近记录
+1. 读取 .trae/agent.md 中的项目概述
+2. 读取 .trae/MEMORY.md 中的最近记录
 3. 汇总当前任务状态
 
 ## 预期输出

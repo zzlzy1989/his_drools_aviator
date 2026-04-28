@@ -141,11 +141,14 @@ Agent 的项目说明书，定义:
 
 | 命令 | 说明 |
 |------|------|
-| `((command:health))` | 健康检查（环境/依赖/配置） |
-| `((command:context))` | 显示当前任务上下文 |
-| `((command:status))` | 项目状态总览 |
-| `((command:analyze-task))` | 分析任务复杂度 |
-| `((command:check-memory))` | 检查记忆状态 |
+| `((command:health))` | 环境健康检查 | 开发环境异常排查 |
+| `((command:context))` | 显示任务上下文 | 开始新任务前 |
+| `((command:status))` | 项目状态总览 | 了解项目进度 |
+| `((command:analyze-task))` | 分析任务复杂度 | 评估工作量 |
+| `((command:check-memory))` | 检查记忆状态 | 确认 AI 知识完整性 |
+| `((command:summarize))` | 会话总结 | 任务完成时 |
+| `((command:review))` | 代码审查 | 代码提交前 |
+| `((command:knowledge-writeback))` | 知识回写 | 积累业务知识 |
 
 ---
 

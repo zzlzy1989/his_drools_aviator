@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.his.common.SkillContext;
 import com.his.common.SkillResult;
-import com.his.common.enums.ResultLevel;
+import com.his.common.ResultLevel;
 import com.his.common.web.context.TenantContext;
 import com.his.common.web.exception.BusinessException;
 import com.his.common.web.service.AuditLogService;
@@ -153,7 +153,7 @@ public class SettlementService {
     /**
      * 更新结算结果
      */
-    private void updateSettlementResult(SettlementResult result, SkillContext context) {
+    private void updateSettlementResult(SettlementResult result, SkillContext<?> context) {
         boolean hasBlock = context.hasBlock();
         boolean hasWarn = context.getResults().stream()
                 .anyMatch(r -> r.getLevel() == ResultLevel.WARN);

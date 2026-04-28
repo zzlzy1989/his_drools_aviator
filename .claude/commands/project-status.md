@@ -2,7 +2,7 @@
 
 ## 执行步骤
 
-1. 检查 .claude/ 目录完整性
+1. 检查 .trae/ 目录完整性
 2. 读取 agent.md 和 MEMORY.md
 3. 检查 MEMORY.md 最后更新时间
 4. 检查 pom.xml 依赖状态

@@ -1,13 +1,10 @@
 package com.his.common.drools.engine;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kie.api.KieBase;
 import org.kie.api.KieServices;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
-import org.kie.api.runtime.KieSessionConfiguration;
-import org.kie.api.runtime.conf.TimerJobFactoryConfiguration;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -20,11 +17,20 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class KieSessionManager {
 
     private final KieContainer kieContainer;
     private final Map<String, KieSession> sessionCache = new ConcurrentHashMap<>();
+
+    public KieSessionManager() {
+        this.kieContainer = KieServices.Factory.get().getKieClasspathContainer();
+        log.info("KieSessionManager initialized with classpath KieContainer");
+    }
+
+    public KieSessionManager(KieContainer kieContainer) {
+        this.kieContainer = kieContainer;
+        log.info("KieSessionManager initialized with provided KieContainer");
+    }
 
     /**
      * 获取指定规则的 KIE Session
@@ -43,7 +49,6 @@ public class KieSessionManager {
      * @return 新建的 KieSession
      */
     private KieSession createKieSession(String ruleGroup) {
-        KieServices ks = KieServices.Factory.get();
         KieBase kieBase = kieContainer.getKieBase(ruleGroup);
 
         if (kieBase == null) {
@@ -51,10 +56,7 @@ public class KieSessionManager {
             kieBase = kieContainer.getKieBase();
         }
 
-        KieSessionConfiguration sessionConfig = ks.newKieSessionConfiguration();
-        sessionConfig.setOption(TimerJobFactoryConfiguration.getDefaultTimerJobFactoryConfiguration());
-
-        KieSession session = kieBase.newKieSession(sessionConfig, null);
+        KieSession session = kieBase.newKieSession();
         log.info("Created new KieSession for ruleGroup: {}", ruleGroup);
         return session;
     }

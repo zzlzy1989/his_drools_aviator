@@ -7,7 +7,7 @@
 ## 目录结构
 
 ```
-.claude/domain/
+.trae/domain/
 ├── README.md                    # 本文档（索引）
 ├── glossary.md                  # [重写] 术语表 v1.0 (HIS/规则引擎/Drools/Aviator)
 ├── rules.md                     # [重写] 业务规则 (医保结算/费用校验/公式计算)

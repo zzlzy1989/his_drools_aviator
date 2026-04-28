@@ -1,7 +1,6 @@
 package com.his.common.drools.helper;
 
 import lombok.extern.slf4j.Slf4j;
-import org.drools.core.util.Drools;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
@@ -11,6 +10,7 @@ import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 
 import java.io.InputStream;
+import java.util.jar.Manifest;
 
 /**
  * Drools 辅助工具类
@@ -81,7 +81,7 @@ public class DroolsHelper {
      * @return 版本字符串
      */
     public static String getVersion() {
-        return Drools.DROOLS_VERSION;
+        return "8.44.0.Final";
     }
 
     /**

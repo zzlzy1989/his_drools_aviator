@@ -71,7 +71,7 @@
 
 ```
 his_drools_aviator/
-├── .claude/                    # Harness 工程配置（AI 辅助开发）
+├── .trae/                    # Harness 工程配置（AI 辅助开发）
 ├── drools_aviator.md           # Drools+Aviator 混合架构技术文档
 ├── test-his-ui-drug.md       # 全院级 Skill/Agent 架构设计文档
 ├── README.md                   # 项目说明

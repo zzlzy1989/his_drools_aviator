@@ -255,6 +255,188 @@ his_drools_aviator/
 
 ---
 
+## 📖 使用说明
+
+### 一、Harness 工程体系概览
+
+本项目采用 **Harness 工程体系**，通过 `.trae/` 和 `.claude/` 目录下的配置，实现 AI 辅助开发的标准化、自动化。
+
+**核心价值**：
+- ✅ **规范约束**：11 个编码规范文件，覆盖 Java/Spring/Drools/Aviator 全技术栈
+- ✅ **流程管控**：7 步强制工作流程 + 3 阻塞节点，确保开发质量
+- ✅ **知识积累**：领域知识库 + 项目记忆，AI 不会遗忘业务上下文
+- ✅ **计划跟踪**：自动生成任务计划，跟踪进度，自动归档
+- ✅ **安全防护**：10 个钩子脚本，拦截危险操作，保护关键文件
+
+### 二、日常开发流程
+
+#### 1. 开始新任务
+
+```
+# 查看当前任务上下文
+((command:context))
+
+# 分析任务复杂度
+((command:analyze-task))
+```
+
+AI 会自动：
+- 检查是否有活跃计划（`.trae/workflow-plans/active/`）
+- 如无计划，提示创建新计划
+- 加载相关规范文件（根据任务类型自动匹配）
+
+#### 2. 遵循 7 步工作流程
+
+| 步骤 | 名称 | 说明 | 阻塞节点 |
+|------|------|------|:---:|
+| Step 1 | 梳理业务 | 理解需求，查阅 domain/ 知识库 | - |
+| Step 2 | 规划改动 | 输出改动清单，确认方案 | ★ 必须确认 |
+| Step 3 | 实现代码 | 按规范编写代码 | - |
+| Step 4 | 实现审查 | 检查 BigDecimal、异常处理、安全 | ★ 必须检查 |
+| Step 5 | 质量验证 | 验证公式语法、金额精度、规则触发 | ★ 必须验证 |
+| Step 6 | 测试验证 | 运行单元测试、集成测试 | - |
+| Step 7 | 知识回写 | 更新 domain/ 文件，积累知识 | - |
+
+#### 3. 任务完成
+
+```
+# 总结会话并回写知识
+((command:summarize))
+
+# 更新项目状态
+((command:status))
+```
+
+AI 会自动：
+- 更新计划状态（pending → in_progress → completed）
+- 将新知识写入 `domain/` 目录
+- 更新 `CHANGELOG.md` 记录变更
+
+### 三、命令系统
+
+#### 开发辅助命令
+
+| 命令 | 说明 | 使用场景 |
+|------|------|----------|
+| `((command:health))` | 环境健康检查 | 开发环境异常排查 |
+| `((command:context))` | 显示任务上下文 | 开始新任务前 |
+| `((command:status))` | 项目状态总览 | 了解项目进度 |
+| `((command:analyze-task))` | 分析任务复杂度 | 评估工作量 |
+| `((command:check-memory))` | 检查记忆状态 | 确认 AI 知识完整性 |
+| `((command:summarize))` | 会话总结 | 任务完成时 |
+| `((command:review))` | 代码审查 | 代码提交前 |
+| `((command:knowledge-writeback))` | 知识回写 | 积累业务知识 |
+
+#### 计划管理命令
+
+| 命令 | 说明 | 示例 |
+|------|------|------|
+| `((command:plan list))` | 查看活跃计划 | 了解当前任务进度 |
+| `((command:plan create <标题> <类型> <阶段> <负责人> <优先级>))` | 创建新计划 | `((command:plan create 实现医保报销规则 feature Phase 2 张三 P0))` |
+| `((command:plan update <文件名> <状态> <备注>))` | 更新计划状态 | `((command:plan update 2026-04-26-feature-reimburse.md in_progress 开始开发))` |
+| `((command:plan show <文件名>))` | 查看计划详情 | `((command:plan show 2026-04-26-feature-reimburse.md))` |
+| `((command:plan reindex))` | 重建索引 | 索引异常时手动修复 |
+
+**计划类型**：`feature` | `bugfix` | `refactor` | `config` | `docs` | `test` | `deploy` | `research`
+
+**优先级**：`P0`（紧急） | `P1`（高） | `P2`（中） | `P3`（低）
+
+### 四、钩子机制（Hooks）
+
+钩子脚本在特定事件触发时自动执行，无需手动调用：
+
+| 钩子 | 触发时机 | 功能 |
+|------|----------|------|
+| `pre-task-start.sh` | 任务开始前 | 检查活跃计划，提示创建/关联 |
+| `post-task-complete.sh` | 任务完成后 | 知识回写 + 计划状态检查 |
+| `post-plan-update.sh` | 计划变更后 | 更新索引 + 变更日志 |
+| `pre-write-file.sh` | 文件写入前 | 保护关键文件（如 agent.md） |
+| `post-read-file.sh` | 文件读取后 | 提醒敏感信息（如密码） |
+| `pre-execute-shell.sh` | Shell 执行前 | 拦截危险命令（如 rm -rf） |
+| `post-execute-shell.sh` | Shell 执行后 | 记录命令执行日志 |
+
+### 五、规范文件速查
+
+根据任务类型，AI 会自动加载对应规范：
+
+| 任务类型 | 关联规范 | 说明 |
+|----------|----------|------|
+| 新建规则 | `workflow.md` → `code-style.md` → `database.md` → `api-design.md` → `testing.md` | 完整开发流程 |
+| 编写 DRL | `workflow.md` → `code-style.md(Drools)` → `documentation.md` → `testing.md(DRL测试)` | 规则开发专用 |
+| 编写 Aviator 公式 | `workflow.md` → `code-style.md(Aviator)` → `security.md` → `performance.md` → `testing.md` | 公式开发专用 |
+| 开发 API | `workflow.md` → `api-design.md` → `error-handling.md` → `security.md` → `testing.md` | 接口开发专用 |
+| Docker 部署 | `docker-deploy.md` → `performance.md` → `security.md(Docker加固)` | 部署专用 |
+| 性能优化 | `performance.md` → `database.md(查询优化)` → `code-style.md(BigDecimal)` | 调优专用 |
+
+### 六、知识库维护
+
+#### domain/ 目录结构
+
+```
+domain/
+├── glossary.md          # 术语表（HIS/Drools/Aviator 专业术语）
+├── rules.md             # 业务规则（医保结算/费用校验）
+├── state-machines.md    # 状态机（规则生命周期/结算流程）
+├── edge-cases.md        # 边界案例（BigDecimal 精度/规则冲突）
+├── decisions.md         # 架构决策记录（为什么这样设计）
+└── modules/             # 模块知识（6 个微服务）
+    ├── config/overview.md
+    ├── formulas/overview.md
+    ├── rules/overview.md
+    ├── settlements/overview.md
+    ├── skills/overview.md
+    └── tenants/overview.md
+```
+
+#### 何时更新知识库
+
+| 场景 | 更新文件 | 内容 |
+|------|----------|------|
+| 发现新业务术语 | `glossary.md` | 术语定义、使用场景 |
+| 实现新业务规则 | `rules.md` | 规则逻辑、触发条件 |
+| 遇到边界问题 | `edge-cases.md` | 问题描述、解决方案 |
+| 做出架构决策 | `decisions.md` | 决策背景、方案对比、最终选择 |
+| 新增微服务模块 | `modules/<name>/overview.md` | 模块职责、接口、依赖 |
+
+### 七、常见问题
+
+#### Q1：AI 不遵循规范怎么办？
+
+**A**：检查以下文件是否存在且内容正确：
+- `.trae/agent.md` - AI 行为规范
+- `.trae/rules/workflow.md` - 工作流程
+- `.trae/rules/code-style.md` - 编码规范
+
+如被修改，检查 `CHANGELOG.md` 查看变更历史。
+
+#### Q2：如何查看当前计划状态？
+
+```
+((command:plan list))
+```
+
+或查看文件：`.trae/workflow-plans/INDEX.md`
+
+#### Q3：计划文件太多怎么办？
+
+已完成 7 天以上的计划会自动归档到 `archived/` 目录。也可手动归档：
+
+```bash
+mv .trae/workflow-plans/active/xxx.md .trae/workflow-plans/archived/
+```
+
+#### Q4：如何跨项目复用 Harness 配置？
+
+查看 `.trae/MIGRATION_GUIDE.md`，包含完整的迁移步骤和注意事项。
+
+#### Q5：.trae 和 .claude 目录有什么区别？
+
+- `.trae/` - Trae IDE 使用
+- `.claude/` - Claude Code 使用
+- 内容完全同步，保持功能一致
+
+---
+
 ## 📊 服务端口规划
 
 | 服务 | 端口 | 说明 | 状态 |

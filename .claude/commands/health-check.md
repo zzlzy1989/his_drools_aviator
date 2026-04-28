@@ -3,7 +3,7 @@
 ## 执行步骤
 
 1. 检查 MEMORY.md 是否存在
-2. 检查 .claude/ 目录结构
+2. 检查 .trae/ 目录结构
 3. 检查 pom.xml 和依赖
 4. 检查 JDK 版本
 5. 验证必要文件完整性
@@ -12,8 +12,8 @@
 
 ```
 ✅ MEMORY.md: 存在，最后更新 2026-04-26
-✅ .claude/rules/: 10 个规则文件
-✅ .claude/domain/: 6 个知识文件
+✅ .trae/rules/: 10 个规则文件
+✅ .trae/domain/: 6 个知识文件
 ✅ pom.xml: 存在
 ⚠️  JDK 版本: 需确认 ≥17
 ⚠️  Maven: 需确认 ≥3.9

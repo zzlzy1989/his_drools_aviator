@@ -1,6 +1,6 @@
 # HIS Drools+Aviator 规则引擎 - Harness 工程实施总结
 
-> 基于"从 Vibe Coding 到 Harness 工程"理念，对 `.claude/` 目录进行的系统性工程化改造完整记录
+> 基于"从 Vibe Coding 到 Harness 工程"理念，对 `.trae/` 目录进行的系统性工程化改造完整记录
 
 **项目**: HIS Drools+Aviator 规则引擎（医疗业务规则剥离引擎）
 **实施日期**: 2026-04-26
@@ -15,14 +15,14 @@
 
 | 问题 | 表现 | 影响 |
 |------|------|------|
-| **内容不匹配** | 原始 Harness 配置为 TestHub（测试管理平台）内容 | AI 输出与 HIS 规则引擎项目不符 |
+| **内容不匹配** | 原始 Harness 配置为 TestHub（测试管理平台）内容 | AI 输出与 HIS Drools+Aviator 规则引擎 项目不符 |
 | **技术栈错误** | 包含 Django/Vue/Python 等无关技术栈 | 代码生成方向错误 |
 | **业务领域偏差** | 测试用例/执行计划等测试领域知识 | 缺乏医保结算/Drools/Aviator 领域知识 |
 | **流程不适用** | 前端组件审查/CI 流水线等流程 | 缺乏规则验证/公式校验等关键流程 |
 
 ### 1.2 改造目标
 
-将 TestHub 的 Harness 工程体系**完整迁移**到 HIS Drools+Aviator 规则引擎项目，实现：
+将 TestHub 的 Harness 工程体系**完整迁移**到 HIS Drools+Aviator 规则引擎 项目，实现：
 
 1. **技术栈对齐**: Java 17+ / Spring Boot 3.x / Drools 8.x / Aviator 5.x
 2. **业务领域适配**: 医保结算 / 费用计算 / 规则匹配 / 表达式求值
@@ -64,11 +64,11 @@
 
 | 文件 | 迁移前 | 迁移后 |
 |------|--------|--------|
-| agent.md | TestHub 行为规范 | HIS 规则引擎行为规范 |
+| agent.md | TestHub 行为规范 | HIS Drools+Aviator 规则引擎 行为规范 |
 | MEMORY.md | TestHub 项目事实 | HIS 技术栈/API/数据库 |
 
 **关键更新**:
-- 身份定位：从"TestHub 开发助手"→"HIS 规则引擎专家"
+- 身份定位：从"TestHub 开发助手"→"HIS Drools+Aviator 规则引擎 专家"
 - 技术栈：Java/Spring/Drools/Aviator 替代 Python/Django/Vue
 - 组件使用规则：BigDecimal 强制使用、Aviator 公式规范
 - API 端点：`/api/v1/rules/*`, `/api/v1/settlement/*`
@@ -77,7 +77,7 @@
 
 ### Phase 2: 规范层适配（已完成 ✅）
 
-**目标**: 将 rules/ 下所有文件从 TestHub 改为 HIS 规则引擎
+**目标**: 将 rules/ 下所有文件从 TestHub 改为 HIS Drools+Aviator 规则引擎
 
 | 文件 | 主要变更 |
 |------|---------|
@@ -115,7 +115,7 @@
 **检查项**:
 - [x] rules/ 下 10 个文件已全部更新
 - [x] domain/ 下 5 个文件已全部更新
-- [ ] .claude/ 根目录文件待更新（SUMMARY/README/CHANGELOG）
+- [ ] .trae/ 根目录文件待更新（SUMMARY/README/CHANGELOG）
 - [ ] commands/ 下命令文件待更新
 - [ ] hooks/ 下钩子脚本待更新
 - [ ] settings.schema.json 待更新

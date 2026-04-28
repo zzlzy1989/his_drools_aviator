@@ -1,6 +1,6 @@
 # CHANGELOG - HIS Drools+Aviator 规则引擎 Harness 配置变更日志
 
-> 记录 `.claude/` 目录所有配置和内容的变更历史
+> 记录 `.trae/` 目录所有配置和内容的变更历史
 
 ---
 
@@ -9,7 +9,7 @@
 ### Phase 1: 核心配置迁移
 
 #### 重构文件
-- **重构** `agent.md` — 从 TestHub 行为规范 → HIS 规则引擎行为规范 (v2.0)
+- **重构** `agent.md` — 从 TestHub 行为规范 → HIS Drools+Aviator 规则引擎 行为规范 (v2.0)
   - 身份定位：TestHub 开发助手 → HIS 规则引擎专家
   - 技术栈：Python/Django/Vue → Java/Spring/Drools/Aviator
   - 新增：BigDecimal 强制使用规则、Aviator 公式安全约束
@@ -46,17 +46,17 @@
 - **重写** `domain/rules.md` — 测试业务规则 → 医保结算/费用校验规则
 - **重写** `domain/state-machines.md` — 测试状态机 → 规则生命周期/结算流程
 - **重写** `domain/edge-cases.md` — 测试边界 → BigDecimal精度/规则冲突边界
-- **重写** `domain/decisions.md` — TestHub决策(22条) → HIS决策(20条)
-- **重写** `domain/README.md` — TestHub知识索引 → HIS规则引擎知识索引
+- **重写** `domain/decisions.md` — TestHub决策(22条) → HIS Drools+Aviator 规则引擎决策(20条)
+- **重写** `domain/README.md` — TestHub知识索引 → HIS Drools+Aviator 规则引擎知识索引
 
 ---
 
 ### Phase 4: 根目录文件更新
 
 #### 更新文件
-- **更新** `.claude/SUMMARY.md` — TestHub实施总结 → HIS迁移实施总结
-- **更新** `.claude/README.md` — TestHub Harness说明 → HIS规则引擎Harness说明
-- **更新** `.claude/CHANGELOG.md` — TestHub变更日志 → HIS迁移变更日志
+- **更新** `.trae/SUMMARY.md` — TestHub实施总结 → HIS Drools+Aviator 规则引擎迁移实施总结
+- **更新** `.trae/README.md` — TestHub Harness说明 → HIS Drools+Aviator 规则引擎Harness说明
+- **更新** `.trae/CHANGELOG.md` — TestHub变更日志 → HIS Drools+Aviator 规则引擎迁移变更日志
 
 ---
 
@@ -65,7 +65,7 @@
 > ⚠️ 此版本为原始 TestHub 项目配置，已完全替换为 HIS 规则引擎版本
 
 ### 新建内容
-- 创建 `.claude/` 完整目录结构
+- 创建 `.trae/` 完整目录结构
 - 创建 `agent.md` (TestHub版)
 - 创建 `MEMORY.md` (TestHub版)
 - 创建 `rules/` (6 个规则文件 + README)

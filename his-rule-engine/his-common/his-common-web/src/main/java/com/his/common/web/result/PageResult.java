@@ -1,9 +1,12 @@
 package com.his.common.web.result;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.Data;
 import lombok.Builder;
 
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 分页响应封装
@@ -78,5 +81,30 @@ public class PageResult<T> {
      */
     public static <T> PageResult<T> empty(Integer page, Integer pageSize) {
         return of(List.of(), 0L, page, pageSize);
+    }
+
+    /**
+     * 从MyBatis-Plus IPage创建分页响应
+     *
+     * @param page MyBatis-Plus分页对象
+     * @param <T>  数据类型
+     * @return 分页响应
+     */
+    public static <T> PageResult<T> of(IPage<T> page) {
+        return of(page.getRecords(), page.getTotal(), (int) page.getCurrent(), (int) page.getSize());
+    }
+
+    /**
+     * 从MyBatis-Plus IPage创建分页响应（带转换）
+     *
+     * @param page MyBatis-Plus分页对象
+     * @param converter 类型转换器
+     * @param <T>  原始数据类型
+     * @param <R>  目标数据类型
+     * @return 分页响应
+     */
+    public static <T, R> PageResult<R> of(IPage<T> page, Function<T, R> converter) {
+        List<R> records = page.getRecords().stream().map(converter).collect(Collectors.toList());
+        return of(records, page.getTotal(), (int) page.getCurrent(), (int) page.getSize());
     }
 }

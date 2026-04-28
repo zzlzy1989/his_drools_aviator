@@ -17,6 +17,11 @@ public class HisException extends RuntimeException {
     private final ErrorCode errorCode;
 
     /**
+     * 错误码字符串（当直接使用字符串构造时使用）
+     */
+    private final String codeString;
+
+    /**
      * 格式化参数
      */
     private final Object[] args;
@@ -30,6 +35,7 @@ public class HisException extends RuntimeException {
     public HisException(ErrorCode errorCode, Object... args) {
         super(String.format(errorCode.getMessage(), args));
         this.errorCode = errorCode;
+        this.codeString = errorCode.getCode();
         this.args = args;
     }
 
@@ -43,7 +49,21 @@ public class HisException extends RuntimeException {
     public HisException(ErrorCode errorCode, Throwable cause, Object... args) {
         super(String.format(errorCode.getMessage(), args), cause);
         this.errorCode = errorCode;
+        this.codeString = errorCode.getCode();
         this.args = args;
+    }
+
+    /**
+     * 构造器（直接使用字符串错误码）
+     *
+     * @param code    错误码字符串
+     * @param message 错误信息
+     */
+    public HisException(String code, String message) {
+        super(message);
+        this.errorCode = null;
+        this.codeString = code;
+        this.args = new Object[0];
     }
 
     /**
@@ -52,6 +72,6 @@ public class HisException extends RuntimeException {
      * @return 错误码
      */
     public String getCode() {
-        return errorCode.getCode();
+        return codeString;
     }
 }

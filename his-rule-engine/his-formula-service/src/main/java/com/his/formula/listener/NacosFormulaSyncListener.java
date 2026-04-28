@@ -89,7 +89,7 @@ public class NacosFormulaSyncListener {
             String dataId = buildDataId(formula.getFormulaKey(), formula.getTenantId());
 
             nacosConfigManager.getConfigService()
-                    .deleteConfig(dataId, FORMULA_GROUP);
+                    .removeConfig(dataId, FORMULA_GROUP);
 
             log.info("公式已从Nacos删除: dataId={}", dataId);
 

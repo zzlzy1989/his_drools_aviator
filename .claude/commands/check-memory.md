@@ -2,8 +2,8 @@
 
 ## 执行步骤
 
-1. 读取 .claude/MEMORY.md
-2. 列出 .claude/memory/ 目录下的所有日记
+1. 读取 .trae/MEMORY.md
+2. 列出 .trae/memory/ 目录下的所有日记
 3. 检查最后更新时间
 
 ## 预期输出

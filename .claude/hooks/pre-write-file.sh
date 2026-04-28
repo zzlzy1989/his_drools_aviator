@@ -11,11 +11,11 @@ FILE_CONTENT="${2:-}"
 # 受保护的文件列表（写入前必须获得用户显式确认）
 PROTECTED_FILES=(
     # Harness 核心文件
-    ".claude/agent.md"
-    ".claude/MEMORY.md"
-    ".claude/settings.local.json"
-    ".claude/settings.schema.json"
-    ".claude/rules/workflow.md"
+    ".trae/agent.md"
+    ".trae/MEMORY.md"
+    ".trae/settings.local.json"
+    ".trae/settings.schema.json"
+    ".trae/rules/workflow.md"
     
     # 环境与密钥
     ".env"
