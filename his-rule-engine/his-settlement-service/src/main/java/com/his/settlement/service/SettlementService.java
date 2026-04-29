@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.his.common.SkillContext;
 import com.his.common.SkillResult;
 import com.his.common.ResultLevel;
+import com.his.common.aviator.helper.AviatorHelper;
 import com.his.common.web.context.TenantContext;
 import com.his.common.web.exception.BusinessException;
 import com.his.common.web.service.AuditLogService;
@@ -34,6 +35,7 @@ public class SettlementService {
 
     private final SettlementResultMapper settlementMapper;
     private final AuditLogService auditLogService;
+    private final FormulaLoaderService formulaLoaderService;
 
     private static final DateTimeFormatter SNO_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
@@ -112,8 +114,14 @@ public class SettlementService {
             return;
         }
 
-        BigDecimal baseAmount = result.getTotalFee().subtract(deductible);
-        BigDecimal reimburseAmount = baseAmount.multiply(ratio).setScale(2, java.math.RoundingMode.HALF_UP);
+        // 使用动态公式引擎计算报销金额
+        BigDecimal reimburseAmount = formulaLoaderService.executeReimburseFormula(
+                result.getTenantId(),
+                result.getPatientType(),
+                result.getTotalFee(),
+                deductible,
+                ratio
+        );
         result.setReimburseAmount(reimburseAmount);
         result.setSelfPayAmount(result.getTotalFee().subtract(reimburseAmount));
 
