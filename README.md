@@ -573,7 +573,7 @@ Apache License 2.0
 
 欢迎提交 Issue 或 Pull Request。
 
-**项目维护者**：HIS 创新实验室
+**项目维护者**：蓝天
 
 ---
 
