@@ -5,8 +5,10 @@ import com.his.common.web.result.PageResult;
 import com.his.common.web.result.Result;
 import com.his.settlement.dto.SettlementDTO;
 import com.his.settlement.dto.SettlementVO;
+import com.his.settlement.service.FormulaLoaderService;
 import com.his.settlement.service.SettlementService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,11 +26,28 @@ import org.springframework.web.bind.annotation.*;
 public class SettlementController {
 
     private final SettlementService settlementService;
+    private final FormulaLoaderService formulaLoaderService;
 
     @PostMapping
     @Operation(summary = "发起结算")
     public Result<SettlementVO> settle(@RequestBody @Valid SettlementDTO dto) {
         return Result.success(settlementService.settle(dto));
+    }
+
+    @PostMapping("/cache/refresh")
+    @Operation(summary = "刷新公式缓存")
+    public Result<Void> refreshCache(
+            @RequestParam String tenantId,
+            @RequestParam String formulaKey) {
+        formulaLoaderService.refreshCache(tenantId, formulaKey);
+        return Result.success();
+    }
+
+    @PostMapping("/cache/clear")
+    @Operation(summary = "清空公式缓存")
+    public Result<Void> clearCache() {
+        formulaLoaderService.clearCache();
+        return Result.success();
     }
 
     @GetMapping("/page")
