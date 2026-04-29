@@ -1,0 +1,67 @@
+{
+    "plansDirectory": ".trae/workflow-plans",
+    "permissions": {
+        "allow": [
+            "Bash(git init *)",
+            "Bash(git add *)",
+            "Bash(git commit *)",
+            "Bash(git branch *)",
+            "Bash(git remote *)",
+            "Bash(ssh-keyscan github.com)",
+            "Bash(ssh -T git@github.com)",
+            "Bash(git push *)",
+            "Bash(mvn *)",
+            "Bash(mvnw *)",
+            "Bash(./mvnw *)",
+            "Bash(java -version)",
+            "Bash(java *)",
+            "Bash(javac *)",
+            "Bash(npm *)",
+            "Bash(npx *)",
+            "Bash(docker *)",
+            "Bash(docker-compose *)",
+            "Bash(mysql *)",
+            "Bash(curl *)",
+            "Bash(wget *)"
+        ]
+    },
+    "workflow": {
+        "allow": [
+            "Bash(git pull *)",
+            "Bash(git merge *)",
+            "Bash(git push *)",
+            "Bash(git push --rebase *)",
+            "Bash(git push --rebase --tags *)",
+            "Bash(git push --rebase --tags --follow-tags *)"
+        ],
+        "plansDirectory": ".trae/workflow-plans",
+        "planSettings": {
+            "autoGenerate": true,
+            "namingPattern": "{date}-{task-type}-{slug}.md",
+            "requiredMetadata": [
+                "title",
+                "type",
+                "status",
+                "created_at",
+                "updated_at",
+                "phase",
+                "owner"
+            ],
+            "statusValues": ["pending", "in_progress", "completed", "cancelled"],
+            "taskTypes": [
+                "feature",
+                "bugfix",
+                "refactor",
+                "config",
+                "docs",
+                "test",
+                "deploy",
+                "research"
+            ],
+            "autoArchive": {
+                "enabled": true,
+                "daysAfterCompletion": 7
+            }
+        }
+    }
+}

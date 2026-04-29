@@ -1,0 +1,64 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: his-gateway
+  config:
+    import: optional:nacos
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:192.168.1.105:8848}
+      config:
+        server-addr: ${NACOS_ADDR:192.168.1.105:8848}
+        file-extension: yml
+        import-check:
+          enabled: false
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: his-rule-service
+          uri: lb://his-rule-service
+          predicates:
+            - Path=/api/v1/rules/**
+          filters:
+            - StripPrefix=0
+        - id: his-formula-service
+          uri: lb://his-formula-service
+          predicates:
+            - Path=/api/v1/formulas/**
+          filters:
+            - StripPrefix=0
+        - id: his-settlement-service
+          uri: lb://his-settlement-service
+          predicates:
+            - Path=/api/v1/settlements/**
+          filters:
+            - StripPrefix=0
+        - id: his-drug-service
+          uri: lb://his-drug-service
+          predicates:
+            - Path=/api/v1/drugs/**
+          filters:
+            - StripPrefix=0
+        - id: his-quality-service
+          uri: lb://his-quality-service
+          predicates:
+            - Path=/api/v1/quality/**
+          filters:
+            - StripPrefix=0
+        - id: his-drg-service
+          uri: lb://his-drg-service
+          predicates:
+            - Path=/api/v1/drg/**
+          filters:
+            - StripPrefix=0
+
+logging:
+  level:
+    com.his.gateway: debug
+    org.springframework.cloud.gateway: debug
