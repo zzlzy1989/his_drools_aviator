@@ -1,7 +1,7 @@
 ---
 title: "架构升级：Spring Cloud Alibaba 2025.0.1.0 + Nacos 3.2.0"
 type: "feature"
-status: "pending"
+status: "in_progress"
 created_at: "2026-04-30"
 updated_at: "2026-04-30"
 phase: "Phase 1"
@@ -45,8 +45,8 @@ dependencies: []
 |------|---------|---------|---------|------|
 | Spring Boot | 3.2.5 | 3.5.0 | ⚠️ 中 | 版本链要求，必调 |
 | Spring Cloud | 2023.0.1 | 2025.0.1 | ⚠️ 中 | 版本链要求，必调 |
-| Spring Cloud Alibaba | 2023.0.1.0 | 2025.0.1.0 | 🔴 高 | 核心适配点 |
-| Nacos 客户端 | 2.3.2 | 3.0.3 | 🔴 高 | SCA 管理，必调 |
+| Spring Cloud Alibaba | 2023.0.1.0 | **2025.1.0.0** | ✅ 已升级 | 官方最新稳定版 |
+| Nacos 客户端 | 2.3.2 | 3.1.1 | ✅ 已升级 | SCA 2025.1.0.0 内置 |
 | Drools | 8.44.0.Final | 待定 | 🔴 高 | 与 Spring 6 API 不兼容 |
 | Aviator | 5.4.3 | 5.4.3 | ✅ 低 | 已知兼容 |
 | MyBatis-Plus | 3.5.6 | 3.5.6 | ✅ 低 | 已知兼容 |
@@ -97,9 +97,9 @@ dependencies: []
 
 | 任务 | 状态 | 说明 |
 |------|:----:|------|
-| 2.1 更新 pom.xml 版本 | ⬜ | Spring Boot / Cloud / SCA |
-| 2.2 验证 Maven 依赖解析 | ⬜ | `mvn dependency:tree` |
-| 2.3 配置 JDK 17 运行环境 | ⬜ | 微服务 JVM 参数 |
+| 2.1 更新 pom.xml 版本 | ✅ | Spring Boot 3.5.0 / Cloud 2025.0.1 / SCA 2025.1.0.0 |
+| 2.2 验证 Maven 依赖解析 | ✅ | 依赖树正常，nacos-client 3.1.1 |
+| 2.3 编译通过 | ✅ | `mvn compile -DskipTests` 成功 |
 
 ### Phase 3: Nacos 3.2.0 配置
 

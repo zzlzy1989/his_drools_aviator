@@ -15,6 +15,9 @@ spring:
         file-extension: yml
         import-check:
           enabled: false
+    service-registry:
+      auto-registration:
+        enabled: false
     gateway:
       discovery:
         locator:
