@@ -1,0 +1,1142 @@
+{
+  "info": {
+    "name": "HIS Rule Engine API Collection",
+    "description": "HIS动态规则中台接口测试集 - 包含规则管理、公式管理、医保结算、合理用药、质控、DRG分组",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0",
+    "created": "2026-05-01",
+    "updated": "2026-05-01"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:9001",
+      "type": "string"
+    },
+    {
+      "key": "tenantId",
+      "value": "tenant_001",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. 规则管理 API (his-rule-service:9001)",
+      "item": [
+        {
+          "name": "R01 - 分页查询规则",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('状态码为200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('返回成功标识', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.code).to.eql('0');",
+                  "});",
+                  "pm.test('返回分页数据', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('list');",
+                  "    pm.expect(jsonData.data).to.have.property('total');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules?page=1&pageSize=20&category=reimbursement",
+              "host": ["{{baseUrl}}", ":9001"],
+              "path": ["api", "v1", "rules"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "pageSize", "value": "20"},
+                {"key": "category", "value": "reimbursement"}
+              ]
+            },
+            "description": "分页查询规则列表，支持按分类筛选"
+          },
+          "response": [
+            {
+              "name": "成功响应",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {"key": "Content-Type", "value": "application/json"}
+              ],
+              "body": "{\n    \"code\": \"0\",\n    \"data\": {\n        \"list\": [],\n        \"total\": 0,\n        \"page\": 1,\n        \"pageSize\": 20\n    },\n    \"message\": \"操作成功\",\n    \"timestamp\": 1746057600000\n}"
+            }
+          ]
+        },
+        {
+          "name": "R02 - 规则详情",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('状态码为200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules/1",
+              "host": ["{{baseUrl}}", ":9001"],
+              "path": ["api", "v1", "rules", "1"]
+            },
+            "description": "根据ID查询规则详情"
+          },
+          "response": [
+            {
+              "name": "成功响应",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n    \"code\": \"0\",\n    \"data\": {\n        \"id\": 1,\n        \"ruleKey\": \"rule.test.demo\",\n        \"ruleText\": \"...\",\n        \"category\": \"REIMBURSEMENT\",\n        \"status\": \"DRAFT\",\n        \"version\": 1\n    },\n    \"message\": \"操作成功\",\n    \"timestamp\": 1746057600000\n}"
+            }
+          ]
+        },
+        {
+          "name": "R03 - 创建规则",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('状态码为200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('返回成功标识', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.code).to.eql('0');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules",
+              "host": ["{{baseUrl}}", ":9001"],
+              "path": ["api", "v1", "rules"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"ruleKey\": \"rule.test.demo\",\n    \"ruleText\": \"rule \\\"测试规则\\\" when then end\",\n    \"category\": \"REIMBURSEMENT\",\n    \"description\": \"测试规则\"\n}"
+            },
+            "description": "创建新规则"
+          },
+          "response": [
+            {
+              "name": "成功响应",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n    \"code\": \"0\",\n    \"data\": null,\n    \"message\": \"操作成功\",\n    \"timestamp\": 1746057600000\n}"
+            }
+          ]
+        },
+        {
+          "name": "R04 - 更新规则",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules/1",
+              "host": ["{{baseUrl}}", ":9001"],
+              "path": ["api", "v1", "rules", "1"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"ruleText\": \"rule \\\"更新测试\\\" when then end\",\n    \"description\": \"更新描述\"\n}"
+            },
+            "description": "更新规则内容"
+          },
+          "response": []
+        },
+        {
+          "name": "R05 - 删除规则",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules/1",
+              "host": ["{{baseUrl}}", ":9001"],
+              "path": ["api", "v1", "rules", "1"]
+            },
+            "description": "删除规则"
+          },
+          "response": []
+        },
+        {
+          "name": "R06 - 校验规则",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules/1/validate",
+              "host": ["{{baseUrl}}", ":9001"],
+              "path": ["api", "v1", "rules", "1", "validate"]
+            },
+            "description": "校验规则语法"
+          },
+          "response": []
+        },
+        {
+          "name": "R07 - 发布规则",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules/1/publish",
+              "host": ["{{baseUrl}}", ":9001"],
+              "path": ["api", "v1", "rules", "1", "publish"]
+            },
+            "description": "发布规则使其生效"
+          },
+          "response": []
+        },
+        {
+          "name": "R08 - 停用规则",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules/1/deactivate",
+              "host": ["{{baseUrl}}", ":9001"],
+              "path": ["api", "v1", "rules", "1", "deactivate"]
+            },
+            "description": "停用规则"
+          },
+          "response": []
+        },
+        {
+          "name": "R09 - 版本历史",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules/1/versions?page=1&pageSize=10",
+              "host": ["{{baseUrl}}", ":9001"],
+              "path": ["api", "v1", "rules", "1", "versions"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "pageSize", "value": "10"}
+              ]
+            },
+            "description": "查看规则版本历史"
+          },
+          "response": []
+        },
+        {
+          "name": "R10 - 版本回滚",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules/1/rollback/1",
+              "host": ["{{baseUrl}}", ":9001"],
+              "path": ["api", "v1", "rules", "1", "rollback", "1"]
+            },
+            "description": "回滚到指定版本"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. 公式管理 API (his-formula-service:9002)",
+      "item": [
+        {
+          "name": "F01 - 分页查询公式",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('状态码为200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas?page=1&pageSize=20&category=GENERAL",
+              "host": ["{{baseUrl}}", ":9002"],
+              "path": ["api", "v1", "formulas"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "pageSize", "value": "20"},
+                {"key": "category", "value": "GENERAL"}
+              ]
+            },
+            "description": "分页查询公式列表"
+          },
+          "response": []
+        },
+        {
+          "name": "F02 - 公式详情",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas/1",
+              "host": ["{{baseUrl}}", ":9002"],
+              "path": ["api", "v1", "formulas", "1"]
+            },
+            "description": "根据ID查询公式详情"
+          },
+          "response": []
+        },
+        {
+          "name": "F03 - 创建公式",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('状态码为200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('返回成功标识', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.code).to.eql('0');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas",
+              "host": ["{{baseUrl}}", ":9002"],
+              "path": ["api", "v1", "formulas"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"formulaKey\": \"formula.test.demo\",\n    \"formulaText\": \"a + b\",\n    \"category\": \"GENERAL\",\n    \"description\": \"测试公式\"\n}"
+            },
+            "description": "创建新公式"
+          },
+          "response": [
+            {
+              "name": "成功响应",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n    \"code\": \"0\",\n    \"data\": null,\n    \"message\": \"操作成功\",\n    \"timestamp\": 1746057600000\n}"
+            }
+          ]
+        },
+        {
+          "name": "F04 - 更新公式",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas/1",
+              "host": ["{{baseUrl}}", ":9002"],
+              "path": ["api", "v1", "formulas", "1"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"formulaText\": \"a - b\",\n    \"description\": \"更新描述\"\n}"
+            },
+            "description": "更新公式内容"
+          },
+          "response": []
+        },
+        {
+          "name": "F05 - 删除公式",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas/1",
+              "host": ["{{baseUrl}}", ":9002"],
+              "path": ["api", "v1", "formulas", "1"]
+            },
+            "description": "删除公式"
+          },
+          "response": []
+        },
+        {
+          "name": "F06 - 语法校验",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas/1/validate",
+              "host": ["{{baseUrl}}", ":9002"],
+              "path": ["api", "v1", "formulas", "1", "validate"]
+            },
+            "description": "校验公式语法"
+          },
+          "response": []
+        },
+        {
+          "name": "F07 - 发布公式",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas/1/publish",
+              "host": ["{{baseUrl}}", ":9002"],
+              "path": ["api", "v1", "formulas", "1", "publish"]
+            },
+            "description": "发布公式使其生效"
+          },
+          "response": []
+        },
+        {
+          "name": "F08 - 公式测试",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('状态码为200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas/1/test",
+              "host": ["{{baseUrl}}", ":9002"],
+              "path": ["api", "v1", "formulas", "1", "test"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"params\": {\n        \"a\": 100,\n        \"b\": 50\n    }\n}"
+            },
+            "description": "测试公式计算"
+          },
+          "response": [
+            {
+              "name": "成功响应",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n    \"code\": \"0\",\n    \"data\": 150,\n    \"message\": \"操作成功\",\n    \"timestamp\": 1746057600000\n}"
+            }
+          ]
+        },
+        {
+          "name": "F09 - 参数列表",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas/1/params",
+              "host": ["{{baseUrl}}", ":9002"],
+              "path": ["api", "v1", "formulas", "1", "params"]
+            },
+            "description": "获取公式参数列表"
+          },
+          "response": []
+        },
+        {
+          "name": "F10 - 添加参数",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas/1/params",
+              "host": ["{{baseUrl}}", ":9002"],
+              "path": ["api", "v1", "formulas", "1", "params"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"paramName\": \"x\",\n    \"paramType\": \"BigDecimal\"\n}"
+            },
+            "description": "为公式添加参数"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. 医保结算 API (his-settlement-service:9003)",
+      "item": [
+        {
+          "name": "S01 - 执行结算",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('状态码为200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('返回成功标识', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.code).to.eql('0');",
+                  "});",
+                  "pm.test('包含结算结果', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('reimburseAmount');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9003/api/v1/settlements",
+              "host": ["{{baseUrl}}", ":9003"],
+              "path": ["api", "v1", "settlements"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"visitId\": \"V001\",\n    \"patientId\": \"P001\",\n    \"patientType\": \"employee\",\n    \"totalFee\": 15000\n}"
+            },
+            "description": "执行医保结算"
+          },
+          "response": [
+            {
+              "name": "成功响应",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n    \"code\": \"0\",\n    \"data\": {\n        \"settlementId\": \"ST202605010001\",\n        \"patientId\": \"P001\",\n        \"patientType\": \"employee\",\n        \"totalFee\": 15000,\n        \"reimburseAmount\": 3400.00,\n        \"selfPayAmount\": 11600.00,\n        \"resultLevel\": \"PASS\"\n    },\n    \"message\": \"操作成功\",\n    \"timestamp\": 1746057600000\n}"
+            }
+          ]
+        },
+        {
+          "name": "S02 - 医保报销",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('状态码为200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9003/api/v1/settlements/reimburse",
+              "host": ["{{baseUrl}}", ":9003"],
+              "path": ["api", "v1", "settlements", "reimburse"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"visitId\": \"V001\",\n    \"patientId\": \"P001\",\n    \"patientType\": \"employee\",\n    \"totalFee\": 15000\n}"
+            },
+            "description": "执行医保报销计算"
+          },
+          "response": [
+            {
+              "name": "成功响应",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n    \"code\": \"0\",\n    \"data\": {\n        \"reimburseAmount\": 3400.00\n    },\n    \"message\": \"操作成功\",\n    \"timestamp\": 1746057600000\n}"
+            }
+          ]
+        },
+        {
+          "name": "S03 - 结算详情",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9003/api/v1/settlements/ST202605010001",
+              "host": ["{{baseUrl}}", ":9003"],
+              "path": ["api", "v1", "settlements", "ST202605010001"]
+            },
+            "description": "查询结算详情"
+          },
+          "response": []
+        },
+        {
+          "name": "S04 - 结算历史",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9003/api/v1/settlements?patientId=P001&startDate=2026-05-01",
+              "host": ["{{baseUrl}}", ":9003"],
+              "path": ["api", "v1", "settlements"],
+              "query": [
+                {"key": "patientId", "value": "P001"},
+                {"key": "startDate", "value": "2026-05-01"}
+              ]
+            },
+            "description": "查询患者结算历史"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. 合理用药 API (his-drug-service:9004)",
+      "item": [
+        {
+          "name": "D01 - 处方审核",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('状态码为200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('返回成功标识', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.code).to.eql('0');",
+                  "});",
+                  "pm.test('审核结果为PASSED', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.resultLevel).to.eql('PASSED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9004/api/v1/drugs/check",
+              "host": ["{{baseUrl}}", ":9004"],
+              "path": ["api", "v1", "drugs", "check"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"visitId\": \"V001\",\n    \"patientId\": \"P001\",\n    \"drugs\": [\n        {\n            \"name\": \"阿莫西林\",\n            \"dosage\": 100,\n            \"unit\": \"mg\"\n        }\n    ]\n}"
+            },
+            "description": "处方审核接口"
+          },
+          "response": [
+            {
+              "name": "成功响应",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n    \"code\": \"0\",\n    \"data\": {\n        \"resultLevel\": \"PASSED\",\n        \"messages\": [],\n        \"details\": []\n    },\n    \"message\": \"操作成功\",\n    \"timestamp\": 1746057600000\n}"
+            }
+          ]
+        },
+        {
+          "name": "D02 - 处方审核(别名)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9004/api/v1/drugs/review",
+              "host": ["{{baseUrl}}", ":9004"],
+              "path": ["api", "v1", "drugs", "review"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"visitId\": \"V001\",\n    \"patientId\": \"P001\",\n    \"drugs\": [\n        {\n            \"name\": \"阿莫西林\",\n            \"dosage\": 100,\n            \"unit\": \"mg\"\n        }\n    ]\n}"
+            },
+            "description": "处方审核接口(别名)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. 质控 API (his-quality-service:9005)",
+      "item": [
+        {
+          "name": "Q01 - 质控检查",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('状态码为200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('返回成功标识', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.code).to.eql('0');",
+                  "});",
+                  "pm.test('检查结果为PASSED', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.resultLevel).to.eql('PASSED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9005/api/v1/quality/check",
+              "host": ["{{baseUrl}}", ":9005"],
+              "path": ["api", "v1", "quality", "check"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"visitId\": \"V001\",\n    \"checkType\": \"infection_control\"\n}"
+            },
+            "description": "执行质控检查"
+          },
+          "response": [
+            {
+              "name": "成功响应",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n    \"code\": \"0\",\n    \"data\": {\n        \"resultLevel\": \"PASSED\",\n        \"messages\": [],\n        \"checkType\": \"infection_control\"\n    },\n    \"message\": \"操作成功\",\n    \"timestamp\": 1746057600000\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. DRG分组 API (his-drg-service:9006)",
+      "item": [
+        {
+          "name": "G01 - DRG分组",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('状态码为200', function() {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('返回成功标识', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.code).to.eql('0');",
+                  "});",
+                  "pm.test('包含分组结果', function() {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.have.property('drgCode');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9006/api/v1/drg/group",
+              "host": ["{{baseUrl}}", ":9006"],
+              "path": ["api", "v1", "drg", "group"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"primaryDiagnosis\": \"J18.9\",\n    \"secondaryDiagnoses\": [],\n    \"surgeryCode\": \"\"\n}"
+            },
+            "description": "执行DRG分组"
+          },
+          "response": [
+            {
+              "name": "成功响应",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n    \"code\": \"0\",\n    \"data\": {\n        \"drgCode\": \"EX00\",\n        \"drgName\": \"未分组\",\n        \"weight\": 0.00,\n        \"remark\": \"未找到匹配的DRG分组规则\"\n    },\n    \"message\": \"操作成功\",\n    \"timestamp\": 1746057600000\n}"
+            }
+          ]
+        },
+        {
+          "name": "G02 - DRG分组(别名)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9006/api/v1/drg/grouping",
+              "host": ["{{baseUrl}}", ":9006"],
+              "path": ["api", "v1", "drg", "grouping"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"primaryDiagnosis\": \"J18.9\",\n    \"secondaryDiagnoses\": [],\n    \"surgeryCode\": \"\"\n}"
+            },
+            "description": "执行DRG分组(别名)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. 安全测试",
+      "item": [
+        {
+          "name": "SEC01 - SQL注入防护(规则查询)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "' OR '1'='1"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules?page=1&pageSize=20&category=' OR '1'='1",
+              "host": ["{{baseUrl}}", ":9001"],
+              "path": ["api", "v1", "rules"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "pageSize", "value": "20"},
+                {"key": "category", "value": "' OR '1'='1"}
+              ]
+            },
+            "description": "测试SQL注入防护 - 应返回空列表或正常结果"
+          },
+          "response": []
+        },
+        {
+          "name": "SEC02 - Aviator表达式注入防护",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas",
+              "host": ["{{baseUrl}}", ":9002"],
+              "path": ["api", "v1", "formulas"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"formulaKey\": \"formula.test.injection\",\n    \"formulaText\": \"system.exit(1)\",\n    \"category\": \"GENERAL\",\n    \"description\": \"危险表达式测试\"\n}"
+            },
+            "description": "测试Aviator表达式注入防护 - 危险函数应被拦截"
+          },
+          "response": []
+        },
+        {
+          "name": "SEC03 - 无效Tenant-Id访问",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "invalid-tenant"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules?page=1&pageSize=20",
+              "host": ["{{baseUrl}}", ":9001"],
+              "path": ["api", "v1", "rules"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "pageSize", "value": "20"}
+              ]
+            },
+            "description": "测试无效租户ID - 应返回空列表或错误码"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

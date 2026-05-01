@@ -7,7 +7,7 @@
 **/release.properties
 **/dependency-reduced-pom.xml
 **/release-pom.xml
-
+docs/
 # IDE
 .idea/
 *.iml
