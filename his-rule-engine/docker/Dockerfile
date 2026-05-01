@@ -6,18 +6,11 @@ ENV SERVICE_NAME=${SERVICE_NAME}
 
 WORKDIR /app
 
-# 预下载依赖（利用 Docker 缓存层）
-COPY pom.xml .
-RUN mvn dependency:go-offline -B -DskipTests
+# 复制整个项目到 /app
+COPY . .
 
-# 复制公共模块
-COPY his-common ./his-common
-
-# 复制目标服务源码
-COPY ${SERVICE_NAME} ./service-src
-
-# 构建目标服务
-RUN mvn package -DskipTests -B -pl :${SERVICE_NAME} -am
+# 构建目标服务（包含依赖）
+RUN mvn package -DskipTests -B -pl ${SERVICE_NAME} -am
 
 # ===== Stage 2: JRE Runtime =====
 FROM eclipse-temurin:21-jre-alpine
@@ -33,12 +26,11 @@ WORKDIR /app
 # 创建日志和数据目录
 RUN mkdir -p /app/logs /app/data/rules && chown -R appuser:appgroup /app
 
-# 复制构建产物
-COPY --from=builder --chown=appuser:appgroup /app/service-src/target/*.jar app.jar
+# 安装 curl 用于健康检查
+RUN apk add --no-cache curl
 
-# 复制健康检查脚本
-COPY docker/scripts/healthcheck.sh /app/scripts/healthcheck.sh
-RUN chmod +x /app/scripts/healthcheck.sh
+# 复制构建产物
+COPY --from=builder --chown=appuser:appgroup /app/${SERVICE_NAME}/target/*.jar app.jar
 
 USER appuser
 
@@ -54,9 +46,5 @@ ENV JAVA_OPTS="-Xms256m -Xmx512m \
   -XX:TieredStopAtLevel=1 \
   -XX:+HeapDumpOnOutOfMemoryError \
   -XX:HeapDumpPath=/app/logs/heapdump.hprof"
-
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD ["/app/scripts/healthcheck.sh", "${SERVER_PORT:-9000}"]
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

@@ -7,14 +7,14 @@
 
 ## 活跃计划 (active/)
 
-| 计划 ID | 标题 | 类型 | 状态 | 阶段 | 负责人 | 创建时间 | 文件 |
-|---------|------|------|------|------|--------|---------|------|
-| PLAN-20260501-001 | V1.0 功能测试：单元测试+接口测试+安全测试+数据准备 | test | ✅ Phase 1-4 完成 | Phase 4 | developer | 2026-05-01 | [链接](active/2026-05-01-test-v1-full-coverage.md) |
+*暂无活跃计划*
 
 ## 已完成计划 (completed/)
 
 | 计划 ID | 标题 | 类型 | 完成时间 | 文件 |
 |---------|------|------|---------|------|
+| PLAN-20260501-002 | V1.0 部署配置：Nacos配置+Docker Compose部署 | deploy | 2026-05-01 | [链接](completed/2026-05-01-deploy-docker-nacos.md) |
+| PLAN-20260501-001 | V1.0 功能测试：单元测试+接口测试+安全测试+数据准备 | test | 2026-05-01 | [链接](archived/2026-05-01-test-v1-full-coverage.md) |
 | PLAN-20260530-001 | 架构升级：SCA 2025.1.0.0 + Nacos 3.2.0 | feature | 2026-05-01 | [链接](completed/2026-05-01-sca-upgrade.md) |
 | PLAN-20260428-001 | 公式动态引擎集成与文档 | feature | 2026-04-28 | [链接](completed/2026-04-28-formula-dynamic-engine.md) |
 | PLAN-20260427-001 | P1 测试验证与联调 | feature | 2026-04-28 | [链接](completed/2026-04-27-p1-test-verification.md) |
@@ -25,6 +25,7 @@
 | 计划 ID | 标题 | 类型 | 归档时间 | 文件 |
 |---------|------|------|---------|------|
 | PLAN-20260426-000 | V1.0 全功能开发 | feature | 2026-04-26 | [链接](archived/2026-04-26-feature-v1-full-development.md) |
+| PLAN-20260501-001 | V1.0 功能测试：单元测试+接口测试+安全测试+数据准备 | test | 2026-05-01 | [链接](archived/2026-05-01-test-v1-full-coverage.md) |
 
 ---
 
@@ -32,10 +33,10 @@
 
 | 状态 | 数量 |
 |------|------|
-| 活跃 (in_progress) | 0 |
-| 已完成 (completed) | 4 |
-| 已归档 (archived) | 1 |
-| **总计** | **4** |
+| 活跃 (pending) | 0 |
+| 已完成 (completed) | 6 |
+| 已归档 (archived) | 2 |
+| **总计** | **8** |
 
 ---
 
