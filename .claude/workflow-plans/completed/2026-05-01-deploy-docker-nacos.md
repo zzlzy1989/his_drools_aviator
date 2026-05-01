@@ -20,7 +20,7 @@ dependencies: []
 
 > 计划 ID: PLAN-20260501-002
 > 创建时间: 2026-05-01
-> 状态: ✅ Phase 1-3 完成
+> 状态: ✅ 全部完成（Nacos配置已写入）
 
 ---
 
@@ -57,13 +57,13 @@ dependencies: []
 
 | 任务 | 配置内容 | 状态 |
 |------|---------|------|
-| 2.1 | his-gateway 配置 | ✅ 使用本地配置 |
-| 2.2 | his-rule-service 配置 | ✅ 使用本地配置 |
-| 2.3 | his-formula-service 配置 | ✅ 使用本地配置 |
-| 2.4 | his-settlement-service 配置 | ✅ 使用本地配置 |
-| 2.5 | his-drug-service 配置 | ✅ 使用本地配置 |
-| 2.6 | his-quality-service 配置 | ✅ 使用本地配置 |
-| 2.7 | his-drg-service 配置 | ✅ 使用本地配置 |
+| 2.1 | his-gateway 配置 | ✅ 已写入Nacos (gateway.yaml) |
+| 2.2 | his-rule-service 配置 | ✅ 已写入Nacos (rule-service.yaml) |
+| 2.3 | his-formula-service 配置 | ✅ 已写入Nacos (formula-service.yaml) |
+| 2.4 | his-settlement-service 配置 | ✅ 已写入Nacos (settlement-service.yaml) |
+| 2.5 | his-drug-service 配置 | ✅ 已写入Nacos (drug-service.yaml) |
+| 2.6 | his-quality-service 配置 | ✅ 已写入Nacos (quality-service.yaml) |
+| 2.7 | his-drg-service 配置 | ✅ 已写入Nacos (drg-service.yaml) |
 
 ### Phase 3: Docker Compose部署 ✅ 已完成
 
