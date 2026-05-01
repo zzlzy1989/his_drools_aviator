@@ -2,22 +2,61 @@
 
 ---
 
-## 一、整体架构图（文字版）
+## 一、整体架构图（微服务版）
 
 ```text
-[ HIS 结算请求 ] 
+[ HIS 结算请求 ]
        ↓
-[ Drools 规则引擎 ]   ← 加载规则文件 (DRL)
-       │
-       ├─ 规则1: 身份校验 → 通过/拒绝
-       ├─ 规则2: 限制用药校验 → 通过/拒绝
-       ├─ 规则3: 起付线判断 → 计算基数
-       └─ 规则4: 报销金额计算 → 触发 Aviator 表达式
-              ↓
-       [ Aviator 表达式引擎 ]  ← 动态执行公式字符串
-              ↓
-       返回计算结果 → 继续后续规则或结束
+[ API Gateway (his-gateway) ]  ← Spring Cloud Gateway + Sentinel 限流 + JWT 鉴权
+       ↓ 路由分发
+┌──────────────────────────────────────────────────────────────┐
+│  微服务集群 (Spring Cloud 2025.0.1 + Nacos 注册/配置中心)      │
+│                                                              │
+│  ┌──────────────────┐  ┌──────────────────┐                  │
+│  │ his-rule-service │  │his-formula-service│                  │
+│  │ 规则 CRUD/DRL发布 │  │ 公式 CRUD/语法校验 │                  │
+│  │ + Drools 8.44    │  │ + Nacos 同步      │                  │
+│  └──────────────────┘  └──────────────────┘                  │
+│                                                              │
+│  ┌──────────────────┐  ┌──────────────────┐                  │
+│  │his-settlement-svc│  │ his-drug-service │                  │
+│  │ 医保结算/报销计算  │  │ 合理用药/处方审核  │                  │
+│  │ + Drools+Aviator │  │ + Drools 规则     │                  │
+│  └──────────────────┘  └──────────────────┘                  │
+│                                                              │
+│  ┌──────────────────┐  ┌──────────────────┐                  │
+│  │his-quality-service│ │  his-drg-service │                  │
+│  │ 质控/院感/拦截    │  │ DRG/DIP 分组/权重 │                  │
+│  │ + Drools+Aviator │  │ + Aviator 计算    │                  │
+│  └──────────────────┘  └──────────────────┘                  │
+└──────────────────────────────────────────────────────────────┘
+       ↓
+[ Nacos Config ] ← 公式/规则配置热更新
+[ Redis ]        ← 二级缓存（公式缓存）
+[ MySQL ]        ← 规则/公式/结算数据持久化
 ```
+
+### 技术栈版本
+
+| 组件 | 版本 | 说明 |
+| :--- | :--- | :--- |
+| **Java** | 21 | LTS 版本 |
+| **Spring Boot** | 3.5.0 | 基于 Jakarta EE |
+| **Spring Cloud** | 2025.0.1 | 微服务框架 |
+| **Spring Cloud Alibaba** | 2025.1.0.0 | Nacos + Sentinel |
+| **Drools** | 8.44.0.Final | 规则引擎 |
+| **Aviator** | 5.4.3 | 表达式引擎 |
+| **Caffeine** | 3.1.8 | 本地缓存 |
+| **MyBatis-Plus** | 3.5.6 | ORM 框架 |
+| **MySQL Connector** | 8.2.0 | 数据库驱动 |
+| **Hutool** | 5.8.26 | 工具类库 |
+| **MapStruct** | 1.5.5.Final | 对象映射 |
+| **SpringDoc** | 2.7.0 | OpenAPI/Swagger |
+| **Nacos** | 内置于 SCA 2025.1.0.0 | 注册中心 + 配置中心 |
+| **Sentinel** | 1.8.8 | 流量控制 |
+| **Redis** | spring-boot-starter-data-redis | 二级缓存 |
+| **OpenFeign** | Spring Cloud 内置 | 服务间调用 |
+| **JWT (jjwt)** | 0.12.5 | 认证令牌 |
 
 ---
 
@@ -37,13 +76,33 @@
 ### 1. Fact 对象（传递给 Drools 和 Aviator）
 
 ```java
+package com.his.common;
+
+import lombok.Data;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Data
 public class SettlementFact {
+    private String patientId;
+    private String patientName;
     private String patientType;     // 职工/居民
+    private String tenantId;        // 租户ID
+    private String settlementId;
+
     private BigDecimal totalFee;    // 总费用
     private BigDecimal deductible;  // 起付线
     private BigDecimal ratio;       // 报销比例
     private BigDecimal finalAmount; // 最终报销金额（待计算）
-    // getters/setters
+
+    private String insuranceType;
+    private String hospitalLevel;
+    private LocalDateTime admissionDate;
+    private LocalDateTime dischargeDate;
+
+    private String diagnosisCode;
+    private String drugCode;
+    private Integer drugQuantity;
 }
 ```
 
@@ -144,27 +203,31 @@ public class SettlementService {
 
 ---
 
-## 四、动态公式的来源（生产环境最佳实践）
+## 四、动态公式的来源（项目实际方案）
 
-公式不会硬编码在 DRL 文件中，而是存储在**数据库或配置中心**，便于业务人员实时调整。
+公式存储在 **MySQL 数据库**中，通过 `his-formula-service` 管理，发布后自动同步到 **Nacos 配置中心**和 **Redis 二级缓存**，各微服务实时感知。
 
-| 存储方式 | 示例表结构 | 更新机制 |
+| 存储方式 | 说明 | 更新机制 |
 | :--- | :--- | :--- |
-| 数据库 | `reimbursement_formula` (rule_id, formula_text, version) | 修改后通过 Drools 的动态规则加载 + Aviator 表达式缓存刷新 |
-| Apollo/Nacos | 配置项 `formula.reimbursement.resident = "round((totalFee - deductible) * 0.65, 2)"` | 监听配置变更，更新 Aviator 编译后的表达式 |
+| MySQL（主存储） | `aviator_formula` 表（formula_key/formula_text/category/status/tenant_id 等） | 公式 CRUD + 语法校验（FormulaValidator） |
+| Nacos（配置中心） | Data ID: `his-formula-{tenantId}-{formulaKey}`，JSON 格式 | `NacosFormulaSyncListener` 监听 FormulaPublishEvent 自动同步 |
+| Redis（二级缓存） | Key: `formula:{tenantId}:{formulaKey}`，Hash 结构 | 与 Nacos 同步时一并写入，TTL 24 小时 |
 
 **关键接口**：  
-Drools 规则只需引用一个抽象的公式ID，值注入由 Aviator 动态解析。
+Drools 规则只需引用一个抽象的公式Key，值注入由 Aviator 动态解析。项目通过 `FormulaService` 提供公式查询，各微服务通过 OpenFeign 调用获取公式。
 
-```drools
-rule "4. 动态公式计算"
-    when
-        $f: SettlementFact()
-        $formula: FormulaEntity(ruleId == "reimburse_resident")
-    then
-        BigDecimal amount = AviatorHelper.executeFormula($formula.getText(), $f);
-        $f.setFinalAmount(amount);
-end
+```java
+// FormulaService 提供的方法（his-formula-service）
+public FormulaVO getByKey(String formulaKey) {
+    // 从 MySQL 查询公式，返回 formulaText
+}
+
+// 消费方通过 OpenFeign 调用
+@FeignClient(name = "his-formula-service")
+public interface FormulaClient {
+    @GetMapping("/api/v1/formulas/byKey")
+    Result<FormulaVO> getByKey(@RequestParam String formulaKey);
+}
 ```
 
 ---
@@ -190,9 +253,9 @@ end
 
 ---
 
-如果需要，我可以进一步给出 **Drools + Aviator 的表达式缓存实现** 或 **基于 Apollo 的动态公式刷新示例**。
+如果需要，我可以进一步给出 **Drools + Aviator 的表达式缓存实现** 或 **基于 Nacos 的动态公式刷新示例**。
 
-下面分别给出 **Aviator 表达式缓存** 和 **基于 Apollo 的动态公式刷新** 的完整实现示例，两者可以组合使用，以实现高性能且支持热更新的公式管理。
+下面分别给出 **Aviator 表达式缓存** 和 **基于 Nacos 的动态公式刷新** 的完整实现示例，两者可以组合使用，以实现高性能且支持热更新的公式管理。
 
 ---
 
@@ -226,7 +289,7 @@ import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -303,187 +366,22 @@ public class AviatorHelper {
 
 ---
 
-## 二、基于 Apollo 的动态公式刷新示例
+## 二、基于 Nacos 的动态公式刷新实现（项目实际方案）
 
-Apollo（携程开源的配置中心）可以动态修改配置，应用实时感知。我们让公式文本存储在 Apollo 的一个命名空间中，当配置变化时，自动刷新缓存并通知 Drools（如果需要）。
+Nacos 是阿里巴巴开源的配置中心和服务发现平台，本项目使用 Spring Cloud Alibaba 2025.1.0.0 集成 Nacos 作为唯一的配置中心，支持配置的动态监听和热更新。
 
-### 1. 依赖（Apollo 客户端）
-
-```xml
-<dependency>
-    <groupId>com.ctrip.framework.apollo</groupId>
-    <artifactId>apollo-client</artifactId>
-    <version>2.2.0</version>
-</dependency>
-```
-
-### 2. Apollo 配置示例
-
-在 Apollo 中创建一个 Application 命名空间，添加配置项：
-
-| Key | Value |
-| --- | --- |
-| `formula.reimburse.resident` | `round((totalFee - 500) * 0.65, 2)` |
-| `formula.reimburse.employee` | `round((totalFee - 1000) * 0.85, 2)` |
-| `formula.drg.adjWeight` | `(baseWeight + extraPoints) * severityFactor` |
-
-### 3. 动态公式管理器（监听 Apollo 变更）
-
-```java
-import com.ctrip.framework.apollo.Config;
-import com.ctrip.framework.apollo.ConfigChangeListener;
-import com.ctrip.framework.apollo.ConfigService;
-import com.ctrip.framework.apollo.model.ConfigChangeEvent;
-import com.googlecode.aviator.Expression;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
-import java.util.concurrent.ConcurrentHashMap;
-
-@Component
-public class DynamicFormulaManager {
-
-    private static final Logger log = LoggerFactory.getLogger(DynamicFormulaManager.class);
-    
-    // 本地缓存：formulaKey -> 表达式文本
-    private final ConcurrentHashMap<String, String> formulaTextCache = new ConcurrentHashMap<>();
-    
-    @Autowired
-    private AviatorExpressionCache aviatorCache;
-
-    @PostConstruct
-    public void init() {
-        Config config = ConfigService.getAppConfig(); // 获取 Apollo 配置
-        // 1. 初始加载所有公式配置
-        refreshAllFormulas(config);
-        
-        // 2. 添加变更监听器
-        config.addChangeListener(new ConfigChangeListener() {
-            @Override
-            public void onChange(ConfigChangeEvent changeEvent) {
-                for (String key : changeEvent.changedKeys()) {
-                    if (key.startsWith("formula.")) {
-                        String newValue = changeEvent.getChange(key).getNewValue();
-                        log.info("Formula changed: {} = {}", key, newValue);
-                        // 更新本地文本
-                        formulaTextCache.put(key, newValue);
-                        // 关键：让 Aviator 缓存中的表达式失效
-                        aviatorCache.refreshFormula(newValue);
-                        // 可选：如果 Drools 规则中引用了公式Key，也可以通知 Drools 重新加载某条规则
-                    }
-                }
-            }
-        });
-    }
-
-    private void refreshAllFormulas(Config config) {
-        // 获取所有以 "formula." 开头的配置项（Apollo 没有直接获取全部，这里演示具体写法）
-        // 实际项目中可预先定义需要监听的公式Key列表
-        List<String> formulaKeys = Arrays.asList(
-            "formula.reimburse.resident",
-            "formula.reimburse.employee",
-            "formula.drg.adjWeight"
-        );
-        for (String key : formulaKeys) {
-            String value = config.getProperty(key, null);
-            if (value != null) {
-                formulaTextCache.put(key, value);
-                // 预热缓存（可选）
-                aviatorCache.getCompiledExpression(value);
-            }
-        }
-    }
-
-    /**
-     * 根据公式Key获取当前表达式文本
-     */
-    public String getFormulaByKey(String key) {
-        return formulaTextCache.get(key);
-    }
-}
-```
-
-### 4. 在 Drools 规则中结合 Apollo
-
-修改之前的 DRL 规则，不再硬编码公式，而是通过 Key 动态获取：
-
-```drools
-import com.example.SettlementFact
-import com.example.DynamicFormulaManager
-import com.example.AviatorHelper
-
-global DynamicFormulaManager formulaManager;
-global AviatorHelper aviatorHelper;
-
-rule "动态报销金额计算 (Apollo)"
-    when
-        $f: SettlementFact(patientType == "resident")
-    then
-        // 根据患者类型获取公式Key
-        String formulaKey = "formula.reimburse.resident";
-        String formulaText = formulaManager.getFormulaByKey(formulaKey);
-        
-        if (formulaText != null) {
-            BigDecimal amount = aviatorHelper.executeFormula(formulaText, $f);
-            $f.setFinalAmount(amount);
-        } else {
-            // 降级逻辑
-            $f.setFinalAmount(BigDecimal.ZERO);
-        }
-        update($f);
-end
-```
-
-### 5. 调用方需设置全局变量
-
-```java
-KieSession kieSession = ...;
-kieSession.setGlobal("formulaManager", dynamicFormulaManager);
-kieSession.setGlobal("aviatorHelper", aviatorHelper);
-kieSession.insert(fact);
-kieSession.fireAllRules();
-```
-
----
-
-## 三、组合效果总结
-
-| 能力 | 实现方式 |
-| :--- | :--- |
-| **表达式编译性能** | Caffeine 缓存 Expression 对象，避免重复编译 |
-| **公式热更新** | Apollo 监听配置变更 → 刷新本地文本缓存 → 使 Aviator 缓存失效 → 下次调用重新编译 |
-| **规则与公式隔离** | Drools 只负责条件判断和流向，具体数值计算委托给 Aviator + 动态公式 |
-| **业务友好** | 公式字符串可放在 Apollo 配置中心，运维或医保专员可直接在 Web 界面修改，无需重启应用 |
-
----
-
-## 四、生产环境注意事项
-
-1. **表达式缓存大小**：HIS 系统中公式数量通常不超过几百个，设置 `maximumSize(2000)` 足够。
-2. **Apollo 推送延迟**：配置变更后，客户端最长 1 分钟（默认）会拉取新值。如需秒级生效，可增加 `apollo.refreshInterval` 或主动调用 `Config.refresh()`。
-3. **降级策略**：当 Apollo 不可用或公式语法错误时，应记录日志并返回默认值（如 0），避免结算中断。
-4. **灰度发布**：可为不同医院或不同环境配置不同的 Apollo 集群，实现公式按院区隔离。
-
-如果需要，我可以继续给出 **基于 Nacos 的实现** 或 **公式语法校验工具类**。
-
-下面分别给出 **基于 Nacos 的动态公式刷新实现** 和 **Aviator 公式语法校验工具类**，两者均可与之前的 Drools + Aviator 架构无缝集成。
-
----
-
-## 一、基于 Nacos 的动态公式刷新实现
-
-Nacos 是阿里巴巴开源的配置中心和服务发现平台，与 Apollo 类似，也支持配置的动态监听和热更新。
-
-### 1. 依赖（Spring Boot + Nacos）
+### 1. 依赖（Spring Cloud Alibaba 已管理版本）
 
 ```xml
+<!-- Nacos 配置中心（版本由 spring-cloud-alibaba-dependencies BOM 管理） -->
 <dependency>
     <groupId>com.alibaba.cloud</groupId>
     <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
-    <version>2021.0.5.0</version>
+</dependency>
+<!-- Nacos 服务发现 -->
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
 </dependency>
 ```
 
@@ -499,246 +397,301 @@ spring:
         server-addr: 127.0.0.1:8848
         file-extension: yaml
         namespace: his_prod
-        group: HIS_RULE_GROUP
+        group: HIS_RULE_ENGINE
+      discovery:
+        server-addr: 127.0.0.1:8848
+        namespace: his_prod
 ```
 
 ### 3. 在 Nacos 配置中心添加公式配置
 
-- **Data ID**: `his-rule-engine.yaml`
-- **Group**: `HIS_RULE_GROUP`
+- **Data ID**: `his-formula-{tenantId}-{formulaKey}`（如 `his-formula-tenant001-reimburse_resident`）
+- **Group**: `HIS_RULE_ENGINE`
+- **配置格式**: JSON
 - **配置内容**:
 
-```yaml
-formulas:
-  reimburse:
-    resident: "round((totalFee - 500) * 0.65, 2)"
-    employee: "round((totalFee - 1000) * 0.85, 2)"
-    medical_aid: "round((totalFee - 200) * 0.95, 2)"
-  drg:
-    weight_adjust: "(baseWeight + extraPoints) * severityFactor"
-  critical_value: "totalFee > 20000 ? totalFee * 0.5 : totalFee * 0.3"
+```json
+{
+  "formulaKey": "reimburse.resident",
+  "formulaText": "round((totalFee - 500) * 0.65, 2)",
+  "category": "reimburse",
+  "version": 1,
+  "status": "active"
+}
 ```
 
-### 4. 动态公式管理器（使用 `@RefreshScope` + 监听）
+### 4. 动态公式管理器（基于 Nacos + Redis 二级缓存）
+
+项目实际实现使用 `NacosFormulaSyncListener` 监听公式发布事件，将公式同步到 Nacos 和 Redis：
 
 ```java
+package com.his.formula.listener;
+
 import com.alibaba.cloud.nacos.NacosConfigManager;
 import com.alibaba.nacos.api.config.listener.Listener;
-import com.alibaba.nacos.api.exception.NacosException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.context.config.annotation.RefreshScope;
+import com.his.formula.entity.AviatorFormula;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 
+/**
+ * Nacos 公式同步监听器
+ * 监听公式发布事件，将公式同步到 Nacos 配置中心 + Redis 二级缓存
+ */
+@Slf4j
 @Component
-@RefreshScope  // 支持配置自动刷新
-public class NacosFormulaManager implements InitializingBean {
+@RequiredArgsConstructor
+public class NacosFormulaSyncListener {
 
-    @Value("${formulas:}")
-    private Map<String, Map<String, String>> formulasConfig; // 自动注入
+    private final NacosConfigManager nacosConfigManager;
+    private final StringRedisTemplate redisTemplate;
+    private final ObjectMapper objectMapper;
 
-    private final Map<String, String> formulaCache = new ConcurrentHashMap<>();
+    private static final String FORMULA_DATA_ID_PREFIX = "his-formula-";
+    private static final String FORMULA_GROUP = "HIS_RULE_ENGINE";
 
-    @Autowired
-    private NacosConfigManager nacosConfigManager;
+    /**
+     * 处理公式发布事件
+     */
+    @EventListener
+    public void onFormulaPublish(FormulaPublishEvent event) {
+        AviatorFormula formula = event.getFormula();
+        String action = event.getAction();
 
-    @Autowired
-    private AviatorExpressionCache aviatorCache;
+        log.info("收到公式发布事件: action={}, formulaKey={}, tenantId={}",
+                action, formula.getFormulaKey(), formula.getTenantId());
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        // 初始加载
-        refreshFormulas();
-        // 注册 Nacos 监听器（可选，用于更精细的控制）
-        registerNacosListener();
-    }
-
-    private void refreshFormulas() {
-        if (formulasConfig == null) return;
-        formulaCache.clear();
-        for (Map.Entry<String, Map<String, String>> category : formulasConfig.entrySet()) {
-            for (Map.Entry<String, String> entry : category.getValue().entrySet()) {
-                String key = category.getKey() + "." + entry.getKey(); // 如 "reimburse.resident"
-                String formula = entry.getValue();
-                formulaCache.put(key, formula);
-                // 预热 Aviator 缓存（可选）
-                aviatorCache.getCompiledExpression(formula);
+        try {
+            switch (action) {
+                case "PUBLISH", "ACTIVATE" -> publishToNacos(formula);
+                case "DEACTIVATE" -> removeFromNacos(formula);
             }
+        } catch (Exception e) {
+            log.error("公式同步Nacos失败: formulaKey={}", formula.getFormulaKey(), e);
         }
-        System.out.println("Formulas refreshed: " + formulaCache.size());
     }
 
     /**
-     * 获取公式文本
+     * 发布公式到 Nacos
      */
-    public String getFormula(String key) {
-        return formulaCache.get(key);
+    private void publishToNacos(AviatorFormula formula) {
+        try {
+            String dataId = buildDataId(formula.getFormulaKey(), formula.getTenantId());
+
+            Map<String, Object> formulaConfig = new HashMap<>();
+            formulaConfig.put("formulaKey", formula.getFormulaKey());
+            formulaConfig.put("formulaText", formula.getFormulaText());
+            formulaConfig.put("category", formula.getCategory());
+            formulaConfig.put("version", formula.getVersion());
+            formulaConfig.put("status", formula.getStatus());
+
+            String content = objectMapper.writeValueAsString(formulaConfig);
+
+            nacosConfigManager.getConfigService()
+                    .publishConfig(dataId, FORMULA_GROUP, content, "JSON");
+
+            log.info("公式已同步到Nacos: dataId={}, group={}", dataId, FORMULA_GROUP);
+
+            publishToRedis(formula);
+
+        } catch (Exception e) {
+            log.error("发布公式到Nacos失败: formulaKey={}", formula.getFormulaKey(), e);
+            throw new RuntimeException("Nacos同步失败", e);
+        }
     }
 
     /**
-     * 手动刷新（通常由 @RefreshScope 机制自动触发，此处作为备份）
+     * 从 Nacos 移除公式
      */
-    public void manualRefresh() {
-        refreshFormulas();
+    private void removeFromNacos(AviatorFormula formula) {
+        try {
+            String dataId = buildDataId(formula.getFormulaKey(), formula.getTenantId());
+            nacosConfigManager.getConfigService()
+                    .removeConfig(dataId, FORMULA_GROUP);
+            log.info("公式已从Nacos删除: dataId={}", dataId);
+            removeFromRedis(formula);
+        } catch (Exception e) {
+            log.error("从Nacos删除公式失败: formulaKey={}", formula.getFormulaKey(), e);
+        }
     }
 
     /**
-     * 注册 Nacos 监听器，在配置变更时主动清除缓存并重新编译（与 @RefreshScope 互补）
+     * 发布到 Redis（作为二级缓存）
      */
-    private void registerNacosListener() throws NacosException {
-        String dataId = "his-rule-engine.yaml";
-        String group = "HIS_RULE_GROUP";
-        nacosConfigManager.getConfigService().addListener(dataId, group, new Listener() {
-            @Override
-            public Executor getExecutor() {
-                return null;
-            }
+    private void publishToRedis(AviatorFormula formula) {
+        try {
+            String key = buildRedisKey(formula.getFormulaKey(), formula.getTenantId());
+            Map<String, Object> formulaConfig = new HashMap<>();
+            formulaConfig.put("formulaKey", formula.getFormulaKey());
+            formulaConfig.put("formulaText", formula.getFormulaText());
+            formulaConfig.put("category", formula.getCategory());
+            formulaConfig.put("version", formula.getVersion());
 
-            @Override
-            public void receiveConfigInfo(String configInfo) {
-                // 当 Nacos 配置被修改时，该回调会执行
-                System.out.println("Nacos config changed, refreshing formulas...");
-                // 重新解析配置并更新缓存
-                // 这里因为使用了 @RefreshScope，实际上配置会自动注入到 formulasConfig
-                // 但为了立即刷新内部缓存，可以调用 manualRefresh
-                manualRefresh();
-            }
-        });
+            redisTemplate.opsForHash().putAll(key, formulaConfig);
+            redisTemplate.expire(key, java.time.Duration.ofHours(24));
+
+            log.debug("公式已同步到Redis: key={}", key);
+        } catch (Exception e) {
+            log.warn("Redis同步失败（不影响主流程）: formulaKey={}", formula.getFormulaKey(), e);
+        }
+    }
+
+    /**
+     * 从 Redis 移除
+     */
+    private void removeFromRedis(AviatorFormula formula) {
+        try {
+            String key = buildRedisKey(formula.getFormulaKey(), formula.getTenantId());
+            redisTemplate.delete(key);
+            log.debug("公式已从Redis删除: key={}", key);
+        } catch (Exception e) {
+            log.warn("Redis删除失败: formulaKey={}", formula.getFormulaKey(), e);
+        }
+    }
+
+    private String buildDataId(String formulaKey, String tenantId) {
+        return FORMULA_DATA_ID_PREFIX + tenantId + "-" + formulaKey.replace(".", "_");
+    }
+
+    private String buildRedisKey(String formulaKey, String tenantId) {
+        return "formula:" + tenantId + ":" + formulaKey;
     }
 }
 ```
 
-### 5. 在 Drools 规则中使用
-
-```drools
-global NacosFormulaManager formulaManager;
-global AviatorHelper aviatorHelper;
-
-rule "按居民医保公式计算"
-    when
-        $f: SettlementFact(patientType == "resident")
-    then
-        String formula = formulaManager.getFormula("reimburse.resident");
-        if (formula != null) {
-            BigDecimal amount = aviatorHelper.executeFormula(formula, $f);
-            $f.setFinalAmount(amount);
-        }
-end
-```
-
----
-
-## 二、Aviator 公式语法校验工具类
-
-在动态公式场景中，业务人员可能在配置中心输入错误的公式（如括号不匹配、变量名拼错、函数不存在等）。我们需要一个**校验工具**，在保存配置时或系统启动时提前验证，避免运行时崩溃。
-
-### 1. 校验核心类
+### 5. 公式发布事件
 
 ```java
-import com.googlecode.aviator.AviatorEvaluator;
-import com.googlecode.aviator.Expression;
-import com.googlecode.aviator.exception.ExpressionSyntaxErrorException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package com.his.formula.listener;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import com.his.formula.entity.AviatorFormula;
+import lombok.Getter;
+import org.springframework.context.ApplicationEvent;
 
+/**
+ * 公式发布事件
+ */
+@Getter
+public class FormulaPublishEvent extends ApplicationEvent {
+
+    private final AviatorFormula formula;
+    private final String action; // PUBLISH / ACTIVATE / DEACTIVATE
+
+    private FormulaPublishEvent(Object source, AviatorFormula formula, String action) {
+        super(source);
+        this.formula = formula;
+        this.action = action;
+    }
+
+    public static FormulaPublishEvent published(Object source, AviatorFormula formula) {
+        return new FormulaPublishEvent(source, formula, "PUBLISH");
+    }
+
+    public static FormulaPublishEvent activated(Object source, AviatorFormula formula) {
+        return new FormulaPublishEvent(source, formula, "ACTIVATE");
+    }
+
+    public static FormulaPublishEvent deactivated(Object source, AviatorFormula formula) {
+        return new FormulaPublishEvent(source, formula, "DEACTIVATE");
+    }
+}
+```
+
+### 6. 公式实体（实际实现）
+
+```java
+package com.his.formula.entity;
+
+import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
+import java.time.LocalDateTime;
+
+/**
+ * 公式定义实体
+ */
+@Data
+@TableName("aviator_formula")
+public class AviatorFormula {
+
+    @TableId(type = IdType.AUTO)
+    private Long id;
+
+    private String formulaKey;
+    private String formulaName;
+    private String formulaText;
+    private String category;
+    private Integer version;
+    private String status;
+    private String description;
+    private Integer isValidated;
+    private String validatedMsg;
+    private String tenantId;
+    private String createBy;
+
+    @TableField(fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+
+    private String updateBy;
+
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
+
+    @TableLogic
+    private Integer deleted;
+}
+```
+
+### 7. 公式语法校验器
+
+```java
+package com.his.formula.validator;
+
+import com.his.common.aviator.helper.AviatorHelper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+/**
+ * 公式语法校验器
+ */
+@Slf4j
+@Component
 public class FormulaValidator {
 
-    private static final Logger logger = LoggerFactory.getLogger(FormulaValidator.class);
-
-    /**
-     * 校验公式语法是否正确
-     * @param formula 公式字符串，如 "round((totalFee - 500) * 0.65, 2)"
-     * @return true 表示语法合法
-     */
-    public static boolean validateSyntax(String formula) {
-        if (formula == null || formula.trim().isEmpty()) {
-            return false;
+    public ValidationResult validate(String formulaText) {
+        if (formulaText == null || formulaText.isBlank()) {
+            return ValidationResult.fail("公式内容不能为空");
         }
-        try {
-            // 仅编译，不执行
-            Expression expr = AviatorEvaluator.compile(formula, true);
-            return true;
-        } catch (ExpressionSyntaxErrorException e) {
-            logger.error("Formula syntax error: {}", e.getMessage());
-            return false;
-        } catch (Exception e) {
-            logger.error("Unexpected error during formula compilation: {}", e.getMessage());
-            return false;
+        if (formulaText.length() > 1000) {
+            return ValidationResult.fail("公式内容不超过1000字符");
         }
-    }
-
-    /**
-     * 校验公式中使用的变量是否都在提供的变量集合中（可选）
-     * @param formula 公式字符串
-     * @param allowedVariables 允许的变量名集合（如 ["totalFee", "deductible", "ratio"]）
-     * @return 是否所有变量都被声明
-     */
-    public static boolean validateVariables(String formula, Set<String> allowedVariables) {
-        try {
-            Expression expr = AviatorEvaluator.compile(formula, true);
-            // 获取表达式中使用的变量名（Aviator 5.x 提供 getVariableNames 方法）
-            Set<String> usedVars = expr.getVariableNames();
-            for (String var : usedVars) {
-                if (!allowedVariables.contains(var)) {
-                    logger.warn("Unknown variable '{}' in formula: {}", var, formula);
-                    return false;
-                }
-            }
-            return true;
-        } catch (Exception e) {
-            return false;
+        if (AviatorHelper.containsDangerousFunctions(formulaText)) {
+            return ValidationResult.fail("公式包含不允许的函数");
         }
-    }
-
-    /**
-     * 综合校验 + 返回详细的错误信息
-     * @param formula 公式
-     * @param allowedVariables 允许的变量集合（可为null）
-     * @return 校验结果对象
-     */
-    public static ValidationResult validate(String formula, Set<String> allowedVariables) {
-        if (formula == null || formula.trim().isEmpty()) {
-            return ValidationResult.fail("公式不能为空");
+        String error = AviatorHelper.getValidationError(formulaText);
+        if (error != null) {
+            log.warn("公式语法校验失败: {}", error);
+            return ValidationResult.fail(error);
         }
-        try {
-            Expression expr = AviatorEvaluator.compile(formula, true);
-            if (allowedVariables != null && !allowedVariables.isEmpty()) {
-                Set<String> usedVars = expr.getVariableNames();
-                for (String var : usedVars) {
-                    if (!allowedVariables.contains(var)) {
-                        return ValidationResult.fail("使用了未定义的变量: " + var);
-                    }
-                }
-            }
-            return ValidationResult.success();
-        } catch (ExpressionSyntaxErrorException e) {
-            return ValidationResult.fail("语法错误: " + e.getMessage());
-        } catch (Exception e) {
-            return ValidationResult.fail("未知错误: " + e.getMessage());
-        }
+        return ValidationResult.ok();
     }
 
     public static class ValidationResult {
-        private boolean valid;
-        private String errorMessage;
+        private final boolean valid;
+        private final String message;
 
-        private ValidationResult(boolean valid, String errorMessage) {
+        private ValidationResult(boolean valid, String message) {
             this.valid = valid;
-            this.errorMessage = errorMessage;
+            this.message = message;
         }
 
-        public static ValidationResult success() {
+        public static ValidationResult ok() {
             return new ValidationResult(true, null);
         }
 
@@ -747,68 +700,105 @@ public class FormulaValidator {
         }
 
         public boolean isValid() { return valid; }
-        public String getErrorMessage() { return errorMessage; }
-    }
-}
-```
-
-### 2. 在配置中心保存前调用校验（以 Nacos 为例，可扩展为 Apollo 同理）
-
-```java
-@RestController
-public class FormulaController {
-
-    @Autowired
-    private NacosConfigManager nacosConfigManager;
-
-    @PostMapping("/formula/update")
-    public String updateFormula(@RequestParam String key, @RequestParam String formula) {
-        // 校验公式
-        Set<String> allowedVars = Set.of("totalFee", "deductible", "ratio", "baseWeight", "extraPoints", "severityFactor");
-        ValidationResult result = FormulaValidator.validate(formula, allowedVars);
-        if (!result.isValid()) {
-            return "校验失败: " + result.getErrorMessage();
-        }
-        // 通过校验，更新 Nacos 配置（实际需通过 Nacos OpenAPI 或 SDK）
-        // ...
-        return "success";
-    }
-}
-```
-
-### 3. 在系统启动时批量校验所有公式（结合 NacosFormulaManager）
-
-```java
-@Component
-public class FormulaStartupValidator implements ApplicationRunner {
-
-    @Autowired
-    private NacosFormulaManager formulaManager;
-
-    @Override
-    public void run(ApplicationArguments args) {
-        // 假设所有公式Key已知，遍历校验
-        List<String> allKeys = Arrays.asList("reimburse.resident", "reimburse.employee", "drg.weight_adjust");
-        for (String key : allKeys) {
-            String formula = formulaManager.getFormula(key);
-            if (!FormulaValidator.validateSyntax(formula)) {
-                throw new IllegalStateException("Formula invalid at startup: " + key + " -> " + formula);
-            }
-        }
-        System.out.println("All formulas validated.");
+        public String getMessage() { return message; }
     }
 }
 ```
 
 ---
 
-## 三、结合使用建议
+## 三、组合效果总结
 
-| 场景 | 推荐方案 |
+| 能力 | 实现方式 |
 | :--- | :--- |
-| **配置中心选型** | 如果已使用 Spring Cloud Alibaba，选 Nacos；如果已有 Apollo，用之前提供的 Apollo 实现。两者效果等价。 |
-| **公式校验** | 在配置保存接口、系统启动、配置变更监听中均调用校验工具，确保恶意或错误公式不会进入生产环境。 |
-| **性能** | 校验时只需要编译一次，不执行，开销很小。可放心在每次配置更新时调用。 |
-| **变量白名单** | 在 HIS 系统中，应明确定义每个公式可用的变量集合（基于 Fact 对象的字段），避免注入攻击或意外变量。 |
+| **表达式编译性能** | Caffeine 缓存 Expression 对象，避免重复编译 |
+| **公式热更新** | Spring Event 发布公式事件 → NacosFormulaSyncListener 监听 → 同步到 Nacos + Redis 二级缓存 → 消费方拉取新公式重新编译 |
+| **规则与公式隔离** | Drools 只负责条件判断和流向，具体数值计算委托给 Aviator + 动态公式 |
+| **业务友好** | 公式存储在 MySQL，通过 his-formula-service 管理，发布后自动同步到 Nacos，各微服务实时感知 |
+| **多租户隔离** | 公式按 tenantId 隔离，Nacos Data ID 和 Redis Key 均包含租户标识 |
 
-如果需要，我可以继续给出 **基于 Nacos 的配置加解密** 或 **公式性能压测对比** 的示例。
+---
+
+## 四、生产环境注意事项
+
+1. **表达式缓存大小**：HIS 系统中公式数量通常不超过几百个，设置 `maximumSize(5000)` 足够（见 `.trae/rules/performance.md`）。
+2. **Nacos 推送延迟**：配置变更后，客户端默认 10 秒轮询拉取。如需秒级生效，可调整 `spring.cloud.nacos.config.refreshInterval`。
+3. **降级策略**：当 Nacos 不可用或公式语法错误时，应记录日志并返回默认值（如 0），避免结算中断。
+4. **灰度发布**：通过 Nacos namespace 实现不同环境（dev/test/prod）或不同院区的公式隔离。
+5. **Redis 二级缓存**：Redis 作为 Nacos 的补充缓存，TTL 设为 24 小时，Redis 不可用时不影响主流程（仅 warn 日志）。
+6. **微服务间调用**：his-settlement-service 等通过 OpenFeign 调用 his-formula-service 获取公式，需配置超时和重试策略。
+7. **Sentinel 限流**：his-gateway 集成 Sentinel 对规则发布、结算执行等敏感接口进行流量控制。
+
+如果需要，我可以继续给出 **Drools KieBase 分组策略** 或 **微服务间 OpenFeign 调用示例**。
+
+---
+
+## 七、微服务模块说明
+
+项目采用微服务架构，各模块职责如下：
+
+| 模块 | 职责 | 依赖引擎 |
+| :--- | :--- | :--- |
+| **his-gateway** | API 网关：路由、限流（Sentinel）、JWT 鉴权 | Spring Cloud Gateway |
+| **his-rule-service** | 规则管理：规则 CRUD、版本管理、DRL 发布 | Drools 8.44 |
+| **his-formula-service** | 公式管理：公式 CRUD、语法校验、Nacos 同步 | Aviator 5.4.3 + Nacos + Redis |
+| **his-settlement-service** | 医保结算：报销计算、规则执行 | Drools + Aviator |
+| **his-drug-service** | 合理用药：处方审核、药物相互作用、极量检查 | Drools |
+| **his-quality-service** | 质控管理：院感预防、质控规则、拦截控制 | Drools + Aviator |
+| **his-drg-service** | DRG/DIP：分组、权重计算、标准分 | Aviator |
+
+### 公共模块（his-common）
+
+| 模块 | 职责 |
+| :--- | :--- |
+| **his-common-core** | 核心实体：SettlementFact、ErrorCode、ISkill、SkillResult 等 |
+| **his-common-web** | Web 公共组件：统一响应、全局异常、租户上下文 |
+| **his-common-drools** | Drools 引擎封装：KieSession 管理、规则加载 |
+| **his-common-aviator** | Aviator 引擎封装：表达式缓存（Caffeine）、AviatorHelper |
+
+---
+
+## 八、核心 Fact 对象（实际实现）
+
+```java
+package com.his.common;
+
+import lombok.Data;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Data
+public class SettlementFact {
+
+    private String patientId;
+    private String patientName;
+    private String patientType;
+    private String tenantId;
+    private String settlementId;
+
+    private BigDecimal totalFee;
+    private BigDecimal deductible;
+    private BigDecimal ratio;
+    private BigDecimal finalAmount;
+
+    private String insuranceType;
+    private String hospitalLevel;
+    private LocalDateTime admissionDate;
+    private LocalDateTime dischargeDate;
+
+    private String diagnosisCode;
+    private String drugCode;
+    private Integer drugQuantity;
+}
+```
+
+---
+
+## 九、注意事项
+
+1. **Aviator 不是完整规则引擎**：它只负责计算，不做条件分支（分支条件仍在 Drools 中）。
+2. **表达式缓存**：生产中应对 `AviatorEvaluator.compile(formula, true)` 的结果进行缓存（以 formula 为 key），避免重复编译。项目使用 Caffeine 缓存，最大 5000 条，30 分钟过期。
+3. **类型一致性**：Drools 和 Aviator 之间传递的数值统一使用 `BigDecimal`，避免浮点精度问题。
+4. **异常处理**：公式语法错误时，Aviator 会抛出异常，需要捕获并回退到默认逻辑。
+5. **Jakarta EE 迁移**：Spring Boot 3.5.0 使用 Jakarta EE（`jakarta.*` 包），不再使用 `javax.*`。
+6. **租户隔离**：所有公式和规则查询强制过滤 `tenant_id`，通过 `TenantContext` 传递。

@@ -1,9 +1,10 @@
 # HIS 动态规则中台 — V1.0 开发指导文档
 
-> 文档版本: v1.0  
-> 创建日期: 2026-04-26  
-> 文档状态: 可执行  
-> 依据文档: [PRD.md](PRD.md) v1.0  
+> 文档版本: v1.1
+> 创建日期: 2026-04-26
+> 最后更新: 2026-05-01
+> 文档状态: 已完成
+> 依据文档: [PRD.md](PRD.md) v1.0
 > 适用项目: his_drools_aviator
 
 ---
@@ -16,11 +17,12 @@
 ### 0.2 项目背景
 传统 HIS 系统业务规则硬编码导致规则变更周期长达 2~4 周，本项目旨在通过 Drools + Aviator 混合架构实现规则的灵活编排和热更新，将变更周期缩短至分钟级。
 
-### 0.3 当前状态
-- 项目处于**早期开发阶段**，仅完成基础骨架
-- `his-common-core` 已实现 7 个核心类（ISkill, SkillContext, SkillResult, SettlementFact, ResultLevel, ErrorCode, HisEventType）
-- 所有 7 个微服务仅有 Application 启动类
-- `his-common-drools` 和 `his-common-aviator` 为空骨架
+### 0.3 当前状态 (2026-05-01 已更新)
+- **项目阶段**: 功能开发完成，联调通过
+- **SCA 升级完成**: Spring Cloud Alibaba 2025.1.0.0 + Nacos 3.2.0 适配完成
+- 所有 7 个微服务正常运行 (9000-9006)
+- his-common-core 包含 7 个核心类（ISkill, SkillContext, SkillResult, SettlementFact, ResultLevel, ErrorCode, HisEventType）
+- his-common-drools 和 his-common-aviator 已实现基础封装
 
 ---
 
@@ -66,25 +68,26 @@
     ├── /api/v1/quality/*  ──→ [Quality Service :9005]   ──→ Drools 规则引擎
     └── /api/v1/drg/*     ──→ [DRG Service :9006]       ──→ Drools 分组 + Aviator 权重
 
-[Nacos :8848] ─ 配置中心 + 服务注册
+[Nacos :8848] ─ 配置中心 + 服务注册 (版本 3.2.0)
 [MySQL :3306]  ─ 规则/公式/结算数据持久化
 ```
 
-### 2.2 技术选型（已确定）
+### 2.2 技术选型（已确定，2026-05-01 已更新）
 
 | 层级 | 技术 | 版本 | 用途 |
 |------|------|------|------|
-| 基础框架 | Spring Boot | 3.2.5 | 微服务基础 |
-| 微服务生态 | Spring Cloud | 2023.0.1 | 服务治理 |
-| 服务注册/配置 | Spring Cloud Alibaba | 2023.0.1.0 | Nacos 集成 |
+| 基础框架 | Spring Boot | 3.5.0 | 微服务基础 |
+| 微服务生态 | Spring Cloud | 2025.0.1 | 服务治理 |
+| 服务注册/配置 | Spring Cloud Alibaba | 2025.1.0.0 | Nacos 3.x 集成 |
+| Nacos 客户端 | Nacos Client | 3.1.1 | SCA 内置，与 Nacos 3.2.0 兼容 |
 | 规则引擎 | Drools | 8.44.0.Final | 规则编排 |
 | 表达式引擎 | Aviator | 5.4.3 | 公式计算 |
 | 本地缓存 | Caffeine | 3.1.8 | 表达式编译缓存 |
 | ORM | MyBatis-Plus | 3.5.6 | 数据库操作 |
 | 数据库 | MySQL | 8.0+ | 数据持久化 |
-| API 文档 | SpringDoc | 2.5.0 | OpenAPI 3.0 |
+| API 文档 | SpringDoc | 2.7.0 | OpenAPI 3.0 |
 | 工具类 | Hutool | 5.8.26 | 通用工具 |
-| 对象映射 | MapStruct | 1.5.5 | DTO/Entity 转换 |
+| 对象映射 | MapStruct | 1.5.5.Final | DTO/Entity 转换 |
 | 构建工具 | Maven | 3.8+ | 项目构建 |
 | 运行环境 | JDK | 21 | Java 运行 |
 
@@ -324,12 +327,14 @@ public class PageResult<T> {
 | POST | `/api/v1/settlements` | 执行结算 | `SettlementRequestDTO` | `Result<SettlementResultVO>` |
 | GET | `/api/v1/settlements/{settlementId}` | 结算详情 | — | `Result<SettlementResultVO>` |
 | GET | `/api/v1/settlements` | 结算历史 | Query: page, pageSize, patientId, startDate, endDate | `Result<PageResult<SettlementResultVO>>` |
+| POST | `/api/v1/settlements/reimburse` | 医保报销计算 | `SettlementRequestDTO` | `Result<SettlementResultVO>` |
 
 ### 4.5 合理用药接口（his-drug-service）
 
 | 方法 | 路径 | 说明 | 请求体 | 响应体 |
 |------|------|------|--------|--------|
 | POST | `/api/v1/drugs/check` | 处方审核 | `PrescriptionCheckDTO` | `Result<DrugCheckResultVO>` |
+| POST | `/api/v1/drugs/review` | 处方审核（别名） | `PrescriptionCheckDTO` | `Result<DrugCheckResultVO>` |
 
 ### 4.6 质控接口（his-quality-service）
 
@@ -342,6 +347,7 @@ public class PageResult<T> {
 | 方法 | 路径 | 说明 | 请求体 | 响应体 |
 |------|------|------|--------|--------|
 | POST | `/api/v1/drg/group` | DRG 分组 | `DrgGroupDTO` | `Result<DrgGroupResultVO>` |
+| POST | `/api/v1/drg/grouping` | DRG 分组（别名） | `DrgGroupDTO` | `Result<DrgGroupResultVO>` |
 | GET | `/api/v1/drg/{groupCode}` | 分组详情 | — | `Result<DrgGroupResultVO>` |
 
 ### 4.8 DTO 定义
@@ -496,7 +502,7 @@ com.his.{module}
 | style | 代码格式 | `style: 格式化 RuleService 代码` |
 | refactor | 重构 | `refactor(formula): 重构公式校验逻辑` |
 | test | 测试 | `test(settlement): 添加结算单元测试` |
-| chore | 构建/工具 | `chore: 升级 Drools 到 8.44.0` |
+| chore | 构建/工具 | `chore: 升级 Spring Cloud Alibaba 到 2025.1.0.0` |
 
 ---
 
@@ -522,7 +528,7 @@ com.his.{module}
 | 项目 | 内容 |
 |------|------|
 | 负责人 | 运维/架构师 |
-| 交付物 | Nacos 2.x 运行中、MySQL 8.0 运行中 |
+| 交付物 | Nacos 3.x 运行中、MySQL 8.0 运行中 |
 | 验收标准 | Nacos 控制台可访问 (http://localhost:8848)、MySQL 连接成功 |
 
 #### Step 0.2: 数据库初始化
@@ -1071,22 +1077,24 @@ class ReimbursementRuleTest {
 ### 8.1 开发环境
 
 ```bash
-# 1. 启动 Nacos
-cd nacos/bin && sh startup.sh -m standalone
+# 1. 启动 Nacos (Docker)
+docker run -d --name his-nacos -p 8848:8848 -p 9848:9848 \
+  -e MODE=standalone \
+  -e SPRING_DATASOURCE_PLATFORM=mysql \
+  -e MYSQL_SERVICE_HOST=192.168.1.105 \
+  -e MYSQL_SERVICE_PORT=3306 \
+  -e MYSQL_SERVICE_DB_NAME=his_nacos \
+  -e MYSQL_SERVICE_USER=root \
+  -e MYSQL_SERVICE_PASSWORD=testhub123 \
+  nacos/nacos-server:v3.2.0
 
-# 2. 启动 MySQL
-docker run -d --name mysql8 -p 3306:3306 \
-  -e MYSQL_ROOT_PASSWORD=root123 \
-  -e MYSQL_DATABASE=his_rule_engine \
-  mysql:8.0
+# 2. 启动 MySQL（如未运行）
+# 确保数据库 his_rule_engine 和 his_nacos 已创建
 
-# 3. 执行建表脚本
-mysql -h 127.0.0.1 -u root -proot123 his_rule_engine < sql/schema.sql
-
-# 4. 编译项目
+# 3. 编译项目
 cd his-rule-engine && mvn clean compile
 
-# 5. 启动服务（按依赖顺序）
+# 4. 启动服务（按依赖顺序）
 mvn spring-boot:run -pl his-gateway
 mvn spring-boot:run -pl his-rule-service
 mvn spring-boot:run -pl his-formula-service
@@ -1100,6 +1108,7 @@ mvn spring-boot:run -pl his-drg-service
 
 ```yaml
 version: '3.8'
+
 services:
   mysql:
     image: mysql:8.0
@@ -1113,9 +1122,15 @@ services:
       - "3306:3306"
 
   nacos:
-    image: nacos/nacos-server:v2.2.3
+    image: nacos/nacos-server:v3.2.0
     environment:
       MODE: standalone
+      SPRING_DATASOURCE_PLATFORM: mysql
+      MYSQL_SERVICE_HOST: mysql
+      MYSQL_SERVICE_PORT: 3306
+      MYSQL_SERVICE_DB_NAME: his_nacos
+      MYSQL_SERVICE_USER: root
+      MYSQL_SERVICE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
       - "8848:8848"
       - "9848:9848"
@@ -1150,19 +1165,20 @@ volumes:
 | R05 | 金额计算精度丢失 | 高 | 低 | 强制 BigDecimal，Code Review 检查 | 后端开发 |
 | R06 | 微服务调用超时 | 中 | 中 | 设置合理超时，同机房部署 | 运维 |
 | R07 | 缓存内存溢出 | 中 | 低 | 设置 maximumSize，监控内存 | 后端开发 |
+| R08 | Drools 8.44 与 Spring 6 不兼容 | 中 | 中 | 建议后续评估 Aviator 替代方案或升级到 Drools 10.x | 后端开发 |
 
 ---
 
-## 10. 里程碑
+## 10. 里程碑 (已更新至 2026-05-01)
 
-| 里程碑 | 日期 | 交付物 | 验收人 |
-|--------|------|--------|--------|
-| M0: 基础设施就绪 | W1 结束 | 公共模块编译通过，数据库初始化完成 | 架构师 |
-| M1: 规则公式就绪 | W3 结束 | 规则/公式 CRUD + 发布流程可执行 | 产品经理 |
-| M2: 结算用药就绪 | W5 结束 | 结算流程可执行，用药审核可拦截 | 产品经理 |
-| M3: 全功能就绪 | W6 结束 | 所有模块功能开发完成 | 产品经理 |
-| M4: 集成测试通过 | W7 结束 | 全链路联调通过，网关路由正常 | QA |
-| M5: 发布就绪 | W8 结束 | 测试报告、性能报告、部署文档 | 项目经理 |
+| 里程碑 | 日期 | 交付物 | 验收人 | 状态 |
+|--------|------|--------|--------|------|
+| M0: 基础设施就绪 | W1 结束 | 公共模块编译通过，数据库初始化完成 | 架构师 | ✅ 已完成 |
+| M1: 规则公式就绪 | W3 结束 | 规则/公式 CRUD + 发布流程可执行 | 产品经理 | ✅ 已完成 |
+| M2: 结算用药就绪 | W5 结束 | 结算流程可执行，用药审核可拦截 | 产品经理 | ✅ 已完成 |
+| M3: 全功能就绪 | W6 结束 | 所有模块功能开发完成 | 产品经理 | ✅ 已完成 |
+| M4: 集成测试通过 | W7 结束 | 全链路联调通过，网关路由正常 | QA | ✅ 已完成 |
+| M5: 发布就绪 | W8 结束 | 测试报告、性能报告、部署文档 | 项目经理 | ⚠️ 待进行 |
 
 ---
 
@@ -1172,6 +1188,7 @@ volumes:
 
 | 错误码 | 说明 | 模块 |
 |--------|------|------|
+| HIS-0 | 操作成功 | 通用 |
 | HIS-001 | 患者身份信息缺失 | 结算 |
 | HIS-002 | 规则不存在 | 规则管理 |
 | HIS-003 | 结算正在进行中 | 结算 |
@@ -1184,7 +1201,7 @@ volumes:
 | HIS-401 | Aviator 注入检测 | 安全 |
 | HIS-901 | 配置中心不可用 | 系统 |
 | HIS-902 | KIE 编译失败 | 系统 |
-| HIS-999 | 系统内部异常 | 系统 |
+| HIS-099 | 系统内部错误 | 系统 |
 
 ### 11.2 事件类型清单
 
@@ -1203,6 +1220,15 @@ volumes:
 - [.trae/rules/](.trae/rules/) — 编码规范
 - [CLAUDE.md](CLAUDE.md) — 项目规则
 
+### 11.4 升级记录
+
+| 日期 | 升级内容 | 说明 |
+|------|---------|------|
+| 2026-05-01 | Spring Cloud Alibaba 2023.0.1.0 → 2025.1.0.0 | 适配 Nacos 3.2.0 |
+| 2026-05-01 | Spring Boot 3.2.5 → 3.5.0 | 版本链要求 |
+| 2026-05-01 | Spring Cloud 2023.0.1 → 2025.0.1 | 版本链要求 |
+| 2026-05-01 | SpringDoc 2.5.0 → 2.7.0 | 修复兼容性问题 |
+
 ---
 
-*文档结束*
+*文档结束 - 最后更新: 2026-05-01*

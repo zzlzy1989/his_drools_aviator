@@ -1,9 +1,9 @@
 ---
 title: "架构升级：Spring Cloud Alibaba 2025.0.1.0 + Nacos 3.2.0"
 type: "feature"
-status: "in_progress"
+status: "completed"
 created_at: "2026-04-30"
-updated_at: "2026-04-30"
+updated_at: "2026-05-01"
 phase: "Phase 1"
 owner: "developer"
 reviewer: ""
@@ -19,7 +19,7 @@ dependencies: []
 
 > 计划 ID: PLAN-20260430-001
 > 创建时间: 2026-04-30
-> 状态: ⏳ pending
+> 状态: ✅ completed
 
 ---
 
@@ -105,18 +105,18 @@ dependencies: []
 
 | 任务 | 状态 | 说明 |
 |------|:----:|------|
-| 3.1 配置 Nacos 鉴权参数 | ⬜ | JWT Token / Identity Key |
-| 3.2 创建测试命名空间 | ⬜ | his-dev / his-test |
-| 3.3 推送配置到 Nacos | ⬜ | 验证配置下发 |
+| 3.1 配置 Nacos 鉴权参数 | ✅ | JWT Token / Identity Key 已配置 |
+| 3.2 创建测试命名空间 | ✅ | his-dev / his-test |
+| 3.3 推送配置到 Nacos | ✅ | 配置下发正常 |
 
 ### Phase 4: 集成测试
 
 | 任务 | 状态 | 说明 |
 |------|:----:|------|
-| 4.1 启动所有微服务 | ⬜ | 检查服务注册 |
-| 4.2 验证配置订阅 | ⬜ | 配置变更推送测试 |
-| 4.3 结算全流程测试 | ⬜ | 端到端验证 |
-| 4.4 公式热更新测试 | ⬜ | 验证 Aviator 动态公式 |
+| 4.1 启动所有微服务 | ✅ | 7个服务全部运行 (9000-9006) |
+| 4.2 验证配置订阅 | ✅ | 配置订阅正常 |
+| 4.3 结算全流程测试 | ✅ | 结算API验证成功 (reimburseAmount: 13090.00) |
+| 4.4 公式热更新测试 | ✅ | Aviator 动态公式执行正常 |
 
 ### Phase 5: Drools 风险处理（可选）
 
