@@ -60,6 +60,12 @@ spring:
             - Path=/api/v1/drg/**
           filters:
             - StripPrefix=0
+        - id: his-rule-service-v2
+          uri: lb://his-rule-service
+          predicates:
+            - Path=/api/v2/flows/**
+          filters:
+            - StripPrefix=0
 
 logging:
   level:

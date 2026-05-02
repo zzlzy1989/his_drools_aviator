@@ -40,6 +40,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private static final List<String> WHITE_LIST = List.of(
             "/api/v1/auth/**",
             "/api/health",
+            "/api/v2/flows/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/actuator/**"
@@ -108,8 +109,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
      * 检查是否在白名单
      */
     private boolean isWhiteListed(String path) {
-        return WHITE_LIST.stream().anyMatch(pattern ->
-                path.startsWith(pattern.replace("**", "")));
+        return WHITE_LIST.stream().anyMatch(pattern -> {
+            String basePath = pattern.replace("**", "");
+            return path.equals(basePath) || path.startsWith(basePath);
+        });
     }
 
     /**
