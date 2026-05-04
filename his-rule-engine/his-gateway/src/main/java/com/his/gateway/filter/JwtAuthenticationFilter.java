@@ -110,8 +110,11 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
      */
     private boolean isWhiteListed(String path) {
         return WHITE_LIST.stream().anyMatch(pattern -> {
-            String basePath = pattern.replace("**", "");
-            return path.equals(basePath) || path.startsWith(basePath);
+            if (pattern.contains("**")) {
+                String basePath = pattern.replace("**", "").replaceAll("/+$", "");
+                return path.equals(basePath) || path.startsWith(basePath + "/");
+            }
+            return path.equals(pattern) || path.startsWith(pattern + "/");
         });
     }
 

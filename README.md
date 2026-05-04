@@ -446,6 +446,233 @@ domain/
 | 实现新业务规则 | `rules.md`                   | 规则逻辑、触发条件      |
 | 遇到边界问题  | `edge-cases.md`              | 问题描述、解决方案      |
 | 做出架构决策  | `decisions.md`               | 决策背景、方案对比、最终选择 |
+
+***
+
+## 🔧 故障排查记录
+
+> 记录部署和开发过程中遇到的问题及解决方案，避免重复踩坑。
+
+### 1. Docker 容器间网络不通导致服务反复重启
+
+**现象**：Gateway 服务启动后反复重启，日志报 `NacosException: Client not connected, current status:STARTING`
+
+**根因**：Nacos 容器在 `bridge` 默认网络，而其他微服务容器在 `docker_his-net` 自定义网络。Gateway 容器内无法通过 `nacos` 主机名解析到 Nacos 服务，导致 Nacos 注册失败，服务启动后立即崩溃重启。
+
+**排查步骤**：
+```bash
+# 1. 检查容器所在网络
+docker inspect his-nacos --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}}: {{$v.IPAddress}}{{"\n"}}{{end}}'
+docker inspect his-gateway --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}}: {{$v.IPAddress}}{{"\n"}}{{end}}'
+
+# 2. 在容器内测试 DNS 解析
+docker exec his-gateway wget -qO- "http://nacos:8848/nacos/v1/ns/instance/list?serviceName=his-rule-service"
+
+# 3. 查看错误日志
+docker logs his-gateway 2>&1 | grep -A 3 "Caused by"
+```
+
+**解决方案**：将 Nacos 容器连接到 `docker_his-net` 网络并添加别名
+```bash
+docker network connect --alias nacos docker_his-net his-nacos
+docker restart his-gateway
+```
+
+**预防措施**：在 `docker-compose.yml` 中确保所有服务使用同一个 `networks` 配置，Nacos 服务必须加入 `his-net` 网络：
+```yaml
+services:
+  nacos:
+    networks:
+      - his-net    # 确保与其他服务在同一网络
+```
+
+---
+
+### 2. JWT 白名单路径匹配失败
+
+**现象**：前端调用 `/api/v2/flows` 接口返回 `HIS-401 JWT Token缺失`，即使该路径已在白名单中
+
+**根因**：`JwtAuthenticationFilter.isWhiteListed()` 方法中，`/api/v2/flows/**` 替换 `**` 后变成 `/api/v2/flows/`（带尾部斜杠），而实际请求路径是 `/api/v2/flows`（无尾部斜杠），导致 `path.startsWith(basePath)` 匹配失败。
+
+**错误代码**：
+```java
+private boolean isWhiteListed(String path) {
+    return WHITE_LIST.stream().anyMatch(pattern -> {
+        String basePath = pattern.replace("**", "");
+        return path.equals(basePath) || path.startsWith(basePath);
+        // "/api/v2/flows".startsWith("/api/v2/flows/") → false
+    });
+}
+```
+
+**修复代码**：
+```java
+private boolean isWhiteListed(String path) {
+    return WHITE_LIST.stream().anyMatch(pattern -> {
+        if (pattern.contains("**")) {
+            String basePath = pattern.replace("**", "").replaceAll("/+$", "");
+            return path.equals(basePath) || path.startsWith(basePath + "/");
+        }
+        return path.equals(pattern) || path.startsWith(pattern + "/");
+    });
+}
+```
+
+**关键点**：
+- 替换 `**` 后需去除尾部斜杠（`.replaceAll("/+$", "")`）
+- `startsWith` 判断时需补回斜杠（`basePath + "/"`），避免 `/api/v2/flowsxxx` 误匹配
+
+---
+
+### 3. Spring Cloud Alibaba 与 Nacos Server 版本不兼容
+
+**现象**：微服务启动报 `NacosException: Client not connected` 或 `requestToServer failed`
+
+**根因**：Spring Cloud Alibaba 2025.0.0.0 内置 Nacos Client 3.0.x，需要 Nacos Server 3.0+ 配合。使用 Nacos Server 2.3.x 会导致 gRPC 协议不兼容。
+
+**版本对应关系**：
+
+| Spring Cloud Alibaba | Nacos Client | Nacos Server（最低） |
+|:---|:---|:---|
+| 2025.0.0.0 | 3.0.x | 3.0.0+ |
+| 2023.0.x | 2.x | 2.2.0+ |
+| 2022.0.x | 2.x | 2.2.0+ |
+
+**解决方案**：升级 Nacos Server 到 3.0.3
+```bash
+docker pull nacos/nacos-server:v3.0.3
+```
+
+---
+
+### 4. Nacos 服务注册未启用
+
+**现象**：服务启动正常但 Nacos 控制台看不到服务注册信息
+
+**根因**：`application.yml` 中 `service-registry.auto-registration.enabled` 设为 `false`
+
+**解决方案**：修改各服务的 `application.yml`
+```yaml
+spring:
+  cloud:
+    service-registry:
+      auto-registration:
+        enabled: true   # 必须为 true
+```
+
+---
+
+### 5. 前端规则流设计器节点拖拽位置偏移
+
+**现象**：从节点面板拖拽节点到画布时，节点落在鼠标位置之外
+
+**根因**：`FlowEditor.vue` 的 `handleDrop` 函数中，坐标计算未考虑画布容器的偏移量，且未使用 `graph.clientToGraph()` 将客户端坐标转换为图坐标
+
+**修复代码**：
+```typescript
+function handleDrop(event: DragEvent) {
+  event.preventDefault()
+  const nodeType = event.dataTransfer?.getData('nodeType') as NodeType
+  if (!nodeType || !graph) return
+
+  const rect = graphRef.value!.getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const y = event.clientY - rect.top
+
+  const position = graph.clientToGraph({ x, y })  // 关键：客户端坐标 → 图坐标
+  const nodeId = `node_${Date.now()}`
+  const config = nodeTypes.find(nt => nt.type === nodeType)
+
+  const nodeData: NodeDTO = {
+    nodeId,
+    type: nodeType,
+    label: config?.label || '新节点',
+    x: position.x - 60,  // 居中偏移
+    y: position.y - 25,
+  }
+  // ...
+}
+```
+
+**关键点**：
+- 必须用 `getBoundingClientRect()` 获取画布偏移
+- 必须用 `graph.clientToGraph()` 转换坐标系
+- 减去节点宽高的一半实现居中放置
+
+---
+
+### 6. Gateway 路由缺少 API 路径
+
+**现象**：前端调用 `/api/v2/flows/**` 接口返回 404
+
+**根因**：`GatewayRoutesConfig.java` 和 `application.yml` 中未配置 `/api/v2/flows/**` 的路由规则
+
+**解决方案**：在路由配置中添加
+```java
+.route("rule-service", r -> r
+    .path("/api/v1/rules/**", "/api/v1/rule-groups/**", "/api/v2/flows/**")
+    .filters(f -> f.stripPrefix(0))
+    .uri("lb://his-rule-service"))
+```
+
+**预防措施**：新增 API 路径时，必须同步更新以下两处：
+1. `GatewayRoutesConfig.java`（Java 配置）
+2. `application.yml`（YAML 配置）
+3. `JwtAuthenticationFilter.java` 白名单（如需免认证）
+
+---
+
+### 7. Nginx 代理前端 API 请求 404
+
+**现象**：浏览器访问 `http://localhost:8999` 页面正常，但 API 调用 404
+
+**根因**：Nginx 配置未将 `/api` 请求代理到 Gateway 服务
+
+**解决方案**：Nginx 配置中添加 API 代理
+```nginx
+server {
+    listen 80;
+    location /api/ {
+        proxy_pass http://host.docker.internal:9000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+    location / {
+        root /usr/share/nginx/html;
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+**关键点**：
+- `/api/` 路径代理到 Gateway（端口 9000）
+- `/` 路径服务前端静态文件
+- `try_files` 确保 Vue Router history 模式正常工作
+
+---
+
+### 8. MySQL 授权问题导致 Nacos 初始化失败
+
+**现象**：Nacos 启动报数据库连接失败或表不存在
+
+**根因**：MySQL 8.0 默认不授权远程访问，且 Nacos 3.0 需要独立的数据库
+
+**解决方案**：
+```sql
+-- 创建 Nacos 数据库
+CREATE DATABASE `his_nacos_v3` CHARACTER SET utf8mb4;
+
+-- 授权远程访问
+GRANT ALL PRIVILEGES ON his_nacos_v3.* TO 'root'@'%';
+FLUSH PRIVILEGES;
+```
+
+**预防措施**：Docker 部署时，MySQL 容器需在初始化脚本中完成建库和授权操作
+
+***
+
+> 最后更新: 2026-05-04
 | 新增微服务模块 | `modules/<name>/overview.md` | 模块职责、接口、依赖     |
 
 ### 七、常见问题

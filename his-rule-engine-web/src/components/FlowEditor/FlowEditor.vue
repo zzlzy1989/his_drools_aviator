@@ -436,7 +436,11 @@ function handleDrop(event: DragEvent) {
   const nodeType = event.dataTransfer?.getData('nodeType') as NodeType
   if (!nodeType || !graph) return
 
-  const position = graph.clientToGraph({ x: event.offsetX, y: event.offsetY })
+  const rect = graphRef.value!.getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const y = event.clientY - rect.top
+
+  const position = graph.clientToGraph({ x, y })
   const nodeId = `node_${Date.now()}`
   const config = nodeTypes.find(nt => nt.type === nodeType)
 
@@ -444,8 +448,8 @@ function handleDrop(event: DragEvent) {
     nodeId,
     type: nodeType,
     label: config?.label || '新节点',
-    x: position.x,
-    y: position.y,
+    x: position.x - 60,
+    y: position.y - 25,
   }
 
   if (nodeType === 'condition') {
@@ -457,8 +461,8 @@ function handleDrop(event: DragEvent) {
   // Add to graph
   graph.addNode({
     id: nodeId,
-    x: position.x,
-    y: position.y,
+    x: position.x - 60,
+    y: position.y - 25,
     width: 120,
     height: 50,
     attrs: {
