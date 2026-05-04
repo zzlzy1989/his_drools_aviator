@@ -19,8 +19,9 @@
 
 ### 0.3 当前状态 (2026-05-01 已更新)
 - **项目阶段**: 功能开发完成，联调通过
-- **SCA 升级完成**: Spring Cloud Alibaba 2025.1.0.0 + Nacos 3.2.0 适配完成
-- 所有 7 个微服务正常运行 (9000-9006)
+- **SCA 升级完成**: Spring Cloud Alibaba 2025.0.0.0 + Nacos 3.0.3 适配完成
+- 所有 7 个微服务正常运行 (9000-9006)，已容器化部署
+- 前端 Vue 3 + Element Plus + AntV X6 已部署至 Nginx (8999端口)
 - his-common-core 包含 7 个核心类（ISkill, SkillContext, SkillResult, SettlementFact, ResultLevel, ErrorCode, HisEventType）
 - his-common-drools 和 his-common-aviator 已实现基础封装
 
@@ -68,18 +69,18 @@
     ├── /api/v1/quality/*  ──→ [Quality Service :9005]   ──→ Drools 规则引擎
     └── /api/v1/drg/*     ──→ [DRG Service :9006]       ──→ Drools 分组 + Aviator 权重
 
-[Nacos :8848] ─ 配置中心 + 服务注册 (版本 3.2.0)
+[Nacos :8848] ─ 配置中心 + 服务注册 (版本 3.0.3)
 [MySQL :3306]  ─ 规则/公式/结算数据持久化
 ```
 
-### 2.2 技术选型（已确定，2026-05-01 已更新）
+### 2.2 技术选型（已确定，2026-05-03 已更新）
 
 | 层级 | 技术 | 版本 | 用途 |
 |------|------|------|------|
 | 基础框架 | Spring Boot | 3.5.0 | 微服务基础 |
-| 微服务生态 | Spring Cloud | 2025.0.1 | 服务治理 |
-| 服务注册/配置 | Spring Cloud Alibaba | 2025.1.0.0 | Nacos 3.x 集成 |
-| Nacos 客户端 | Nacos Client | 3.1.1 | SCA 内置，与 Nacos 3.2.0 兼容 |
+| 微服务生态 | Spring Cloud | 2025.0.0 | 服务治理 |
+| 服务注册/配置 | Spring Cloud Alibaba | 2025.0.0.0 | Nacos 3.x 集成 |
+| Nacos 客户端 | Nacos Client | 3.0.3 | SCA 内置，与 Nacos 3.0.3 兼容 |
 | 规则引擎 | Drools | 8.44.0.Final | 规则编排 |
 | 表达式引擎 | Aviator | 5.4.3 | 公式计算 |
 | 本地缓存 | Caffeine | 3.1.8 | 表达式编译缓存 |

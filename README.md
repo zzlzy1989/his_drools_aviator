@@ -4,42 +4,48 @@
 
 本项目是一个**医疗业务规则剥离引擎**，旨在将 HIS 系统中高频变化的业务规则（医保报销、质控、合理用药、DRG 分组等）从核心系统中抽离，封装为可独立热加载的规则单元。通过 **Drools + Aviator** 混合架构，实现规则的灵活编排和高性能计算，并通过 **Nacos** 配置中心实现公式的实时动态刷新。
 
-**核心价值**：  
-- 医院可自主维护业务规则，不再依赖 HIS 厂商的代码修改周期  
-- 规则变更从"2~4周"缩短至"分钟级"  
-- 底层 HIS 退化为稳定的事务底座，上层业务逻辑灵活可控  
+**核心价值**：
 
----
+- 医院可自主维护业务规则，不再依赖 HIS 厂商的代码修改周期
+- 规则变更从"2\~4周"缩短至"分钟级"
+- 底层 HIS 退化为稳定的事务底座，上层业务逻辑灵活可控
+
+***
 
 ## 🛠️ 技术栈
 
-| 组件 | 版本 | 状态 | 用途 |
-|:---|:---|:---:|:---|
-| Spring Boot | 3.2.5 | ✅ | 基础框架 |
-| Spring Cloud Alibaba | 2023.0.1.0 | ✅ | Nacos 注册中心 + 配置中心 |
-| Drools | 8.44.0.Final | ✅ | 规则引擎（规则流编排） |
-| Aviator | 5.4.3 | ✅ | 高性能表达式求值 |
-| Caffeine | 3.1.8 | ✅ | 本地缓存（编译后表达式） |
-| MyBatis-Plus | 3.5.6 | ✅ | ORM 框架 |
-| MySQL | 8.0+ | ✅ | 存储规则定义、事实数据 |
-| Sentinel | - | 📋 | 流量控制、熔断降级 |
-| OpenFeign | - | ✅ | 声明式服务调用 |
-| Maven | 3.8+ | ✅ | 构建工具 |
-| JDK | 21 | ✅ | 运行环境 |
+| 组件                   | 版本           |  状态 | 用途                |
+| :------------------- | :----------- | :-: | :---------------- |
+| Spring Boot          | 3.5.0        |  ✅  | 基础框架              |
+| Spring Cloud         | 2025.0.0     |  ✅  | 微服务框架            |
+| Spring Cloud Alibaba | 2025.0.0.0   |  ✅  | Nacos 注册中心 + 配置中心 |
+| Drools               | 8.44.0.Final |  ✅  | 规则引擎（规则流编排）       |
+| Aviator              | 5.4.3        |  ✅  | 高性能表达式求值          |
+| Caffeine             | 3.1.8        |  ✅  | 本地缓存（编译后表达式）      |
+| MyBatis-Plus         | 3.5.6        |  ✅  | ORM 框架            |
+| MySQL                | 8.0+         |  ✅  | 存储规则定义、事实数据       |
+| Nacos Server         | 3.0.3        |  ✅  | 服务注册 + 配置中心      |
+| OpenFeign            | -            |  ✅  | 声明式服务调用           |
+| Maven                | 3.8+         |  ✅  | 构建工具              |
+| JDK                  | 21           |  ✅  | 运行环境              |
+| Vue 3                | 3.4.x        |  ✅  | 前端框架              |
+| Element Plus         | 2.7+         |  ✅  | 前端 UI 组件库         |
+| AntV X6              | 2.x          |  ✅  | 规则流可视化编辑器         |
 
-> ✅ 已集成 &nbsp; 📋 待实现 &nbsp; ⏳ 规划中
+> ✅ 已集成   📋 待实现   ⏳ 规划中
 
----
+***
 
 ## 📦 环境要求
 
-- JDK 21 或更高版本  
-- Maven 3.8+    
-- Nacos Server 2.x（[下载地址](https://github.com/alibaba/nacos/releases)）  
-- MySQL 8.0（仅当需要持久化规则库时）  
-- Git  
+- JDK 21 或更高版本
+- Maven 3.8+
+- Nacos Server 3.0+（[下载地址](https://github.com/alibaba/nacos/releases)）
+- MySQL 8.0（仅当需要持久化规则库时）
+- Docker & Docker Compose（推荐容器化部署）
+- Git
 
----
+***
 
 ## 🚀 快速开始
 
@@ -50,11 +56,31 @@ git clone https://github.com/zzlzy1989/his_drools_aviator.git
 cd his_drools_aviator
 ```
 
-### 2. 启动 Nacos Server <span style="color:orange">📋 待实现</span>
+### 2. 启动 Nacos Server ✅
+
+**方式一：Docker 启动（推荐）**
+
+```bash
+# 启动 Nacos 3.0.3 单机模式
+docker run -d --name his-nacos \
+  --restart unless-stopped \
+  -p 8848:8848 -p 9848:9848 -p 9849:9849 \
+  -e MODE=standalone \
+  -e NACOS_AUTH_TOKEN=your-secret-token-here \
+  -e NACOS_AUTH_IDENTITY_KEY=nacos-auth \
+  -e NACOS_AUTH_IDENTITY_VALUE=my-identity-value \
+  -e JVM_XMS=256m -e JVM_XMX=512m \
+  nacos/nacos-server:v3.0.3
+
+# 验证启动
+curl http://localhost:8848/nacos/v1/console/server/state
+```
+
+**方式二：本地下载启动**
 
 ```bash
 # 解压并启动
-unzip nacos-server-2.x.x.zip
+unzip nacos-server-3.0.x.zip
 cd nacos/bin
 # Linux/Mac
 sh startup.sh -m standalone
@@ -62,7 +88,7 @@ sh startup.sh -m standalone
 startup.cmd -m standalone
 ```
 
-访问 Nacos 控制台：http://localhost:8848/nacos （默认账号密码：nacos/nacos）
+访问 Nacos 控制台：<http://localhost:8848/nacos> （默认账号密码：nacos/nacos）
 
 ### 3. 创建 Nacos 配置 <span style="color:orange">📋 待实现</span>
 
@@ -109,7 +135,25 @@ cd his-rule-engine
 mvn clean compile
 ```
 
-### 6. 启动服务 <span style="color:orange">📋 待实现</span>
+### 6. 启动服务（Docker 方式 - 推荐）
+
+```bash
+cd his-rule-engine/docker
+
+# 创建 .env 配置文件
+cp .env.example .env
+
+# 构建并启动所有服务
+docker compose up -d
+
+# 查看服务状态
+docker ps --filter name=his-
+
+# 查看服务日志
+docker compose logs -f his-gateway
+```
+
+### 7. 启动服务（本地开发方式）
 
 ```bash
 # 启动网关（端口 9000）
@@ -127,7 +171,7 @@ mvn spring-boot:run
 # ... 其他服务按需启动
 ```
 
-### 7. 测试规则调用 <span style="color:orange">📋 待实现</span>
+### 8. 测试规则调用 ✅
 
 ```bash
 # 结算测试（示例）
@@ -136,9 +180,13 @@ curl -X POST http://localhost:9000/api/v1/settlements \
   -d '{"patientType":"resident","totalFee":2000}'
 ```
 
-预期返回：`{"finalAmount":975.00}` （因公式 `round((2000-500)*0.65,2)` = 975）
+预期返回：`{"code":"0","data":{...}}`
 
----
+### 9. 前端访问 ✅
+
+前端服务已部署至 Nginx，访问地址：http://localhost:8999/
+
+***
 
 ## 📁 项目模块结构
 
@@ -252,7 +300,7 @@ his_drools_aviator/
         └── DRG/DIP 分组、权重计算、标准分值
 ```
 
----
+***
 
 ## 📖 使用说明
 
@@ -261,6 +309,7 @@ his_drools_aviator/
 本项目采用 **Harness 工程体系**，通过 `.trae/` 和 `.claude/` 目录下的配置，实现 AI 辅助开发的标准化、自动化。
 
 **核心价值**：
+
 - ✅ **规范约束**：11 个编码规范文件，覆盖 Java/Spring/Drools/Aviator 全技术栈
 - ✅ **流程管控**：7 步强制工作流程 + 3 阻塞节点，确保开发质量
 - ✅ **知识积累**：领域知识库 + 项目记忆，AI 不会遗忘业务上下文
@@ -280,21 +329,22 @@ his_drools_aviator/
 ```
 
 AI 会自动：
+
 - 检查是否有活跃计划（`.trae/workflow-plans/active/`）
 - 如无计划，提示创建新计划
 - 加载相关规范文件（根据任务类型自动匹配）
 
 #### 2. 遵循 7 步工作流程
 
-| 步骤 | 名称 | 说明 | 阻塞节点 |
-|------|------|------|:---:|
-| Step 1 | 梳理业务 | 理解需求，查阅 domain/ 知识库 | - |
-| Step 2 | 规划改动 | 输出改动清单，确认方案 | ★ 必须确认 |
-| Step 3 | 实现代码 | 按规范编写代码 | - |
+| 步骤     | 名称   | 说明                    |  阻塞节点  |
+| ------ | ---- | --------------------- | :----: |
+| Step 1 | 梳理业务 | 理解需求，查阅 domain/ 知识库   |    -   |
+| Step 2 | 规划改动 | 输出改动清单，确认方案           | ★ 必须确认 |
+| Step 3 | 实现代码 | 按规范编写代码               |    -   |
 | Step 4 | 实现审查 | 检查 BigDecimal、异常处理、安全 | ★ 必须检查 |
-| Step 5 | 质量验证 | 验证公式语法、金额精度、规则触发 | ★ 必须验证 |
-| Step 6 | 测试验证 | 运行单元测试、集成测试 | - |
-| Step 7 | 知识回写 | 更新 domain/ 文件，积累知识 | - |
+| Step 5 | 质量验证 | 验证公式语法、金额精度、规则触发      | ★ 必须验证 |
+| Step 6 | 测试验证 | 运行单元测试、集成测试           |    -   |
+| Step 7 | 知识回写 | 更新 domain/ 文件，积累知识    |    -   |
 
 #### 3. 任务完成
 
@@ -307,7 +357,8 @@ AI 会自动：
 ```
 
 AI 会自动：
-- 更新计划状态（pending → in_progress → completed）
+
+- 更新计划状态（pending → in\_progress → completed）
 - 将新知识写入 `domain/` 目录
 - 更新 `CHANGELOG.md` 记录变更
 
@@ -315,26 +366,26 @@ AI 会自动：
 
 #### 开发辅助命令
 
-| 命令 | 说明 | 使用场景 |
-|------|------|----------|
-| `((command:health))` | 环境健康检查 | 开发环境异常排查 |
-| `((command:context))` | 显示任务上下文 | 开始新任务前 |
-| `((command:status))` | 项目状态总览 | 了解项目进度 |
-| `((command:analyze-task))` | 分析任务复杂度 | 评估工作量 |
-| `((command:check-memory))` | 检查记忆状态 | 确认 AI 知识完整性 |
-| `((command:summarize))` | 会话总结 | 任务完成时 |
-| `((command:review))` | 代码审查 | 代码提交前 |
-| `((command:knowledge-writeback))` | 知识回写 | 积累业务知识 |
+| 命令                                | 说明      | 使用场景        |
+| --------------------------------- | ------- | ----------- |
+| `((command:health))`              | 环境健康检查  | 开发环境异常排查    |
+| `((command:context))`             | 显示任务上下文 | 开始新任务前      |
+| `((command:status))`              | 项目状态总览  | 了解项目进度      |
+| `((command:analyze-task))`        | 分析任务复杂度 | 评估工作量       |
+| `((command:check-memory))`        | 检查记忆状态  | 确认 AI 知识完整性 |
+| `((command:summarize))`           | 会话总结    | 任务完成时       |
+| `((command:review))`              | 代码审查    | 代码提交前       |
+| `((command:knowledge-writeback))` | 知识回写    | 积累业务知识      |
 
 #### 计划管理命令
 
-| 命令 | 说明 | 示例 |
-|------|------|------|
-| `((command:plan list))` | 查看活跃计划 | 了解当前任务进度 |
-| `((command:plan create <标题> <类型> <阶段> <负责人> <优先级>))` | 创建新计划 | `((command:plan create 实现医保报销规则 feature Phase 2 张三 P0))` |
-| `((command:plan update <文件名> <状态> <备注>))` | 更新计划状态 | `((command:plan update 2026-04-26-feature-reimburse.md in_progress 开始开发))` |
-| `((command:plan show <文件名>))` | 查看计划详情 | `((command:plan show 2026-04-26-feature-reimburse.md))` |
-| `((command:plan reindex))` | 重建索引 | 索引异常时手动修复 |
+| 命令                                                   | 说明     | 示例                                                                         |
+| ---------------------------------------------------- | ------ | -------------------------------------------------------------------------- |
+| `((command:plan list))`                              | 查看活跃计划 | 了解当前任务进度                                                                   |
+| `((command:plan create <标题> <类型> <阶段> <负责人> <优先级>))` | 创建新计划  | `((command:plan create 实现医保报销规则 feature Phase 2 张三 P0))`                   |
+| `((command:plan update <文件名> <状态> <备注>))`            | 更新计划状态 | `((command:plan update 2026-04-26-feature-reimburse.md in_progress 开始开发))` |
+| `((command:plan show <文件名>))`                        | 查看计划详情 | `((command:plan show 2026-04-26-feature-reimburse.md))`                    |
+| `((command:plan reindex))`                           | 重建索引   | 索引异常时手动修复                                                                  |
 
 **计划类型**：`feature` | `bugfix` | `refactor` | `config` | `docs` | `test` | `deploy` | `research`
 
@@ -344,28 +395,28 @@ AI 会自动：
 
 钩子脚本在特定事件触发时自动执行，无需手动调用：
 
-| 钩子 | 触发时机 | 功能 |
-|------|----------|------|
-| `pre-task-start.sh` | 任务开始前 | 检查活跃计划，提示创建/关联 |
-| `post-task-complete.sh` | 任务完成后 | 知识回写 + 计划状态检查 |
-| `post-plan-update.sh` | 计划变更后 | 更新索引 + 变更日志 |
-| `pre-write-file.sh` | 文件写入前 | 保护关键文件（如 agent.md） |
-| `post-read-file.sh` | 文件读取后 | 提醒敏感信息（如密码） |
-| `pre-execute-shell.sh` | Shell 执行前 | 拦截危险命令（如 rm -rf） |
-| `post-execute-shell.sh` | Shell 执行后 | 记录命令执行日志 |
+| 钩子                      | 触发时机      | 功能                 |
+| ----------------------- | --------- | ------------------ |
+| `pre-task-start.sh`     | 任务开始前     | 检查活跃计划，提示创建/关联     |
+| `post-task-complete.sh` | 任务完成后     | 知识回写 + 计划状态检查      |
+| `post-plan-update.sh`   | 计划变更后     | 更新索引 + 变更日志        |
+| `pre-write-file.sh`     | 文件写入前     | 保护关键文件（如 agent.md） |
+| `post-read-file.sh`     | 文件读取后     | 提醒敏感信息（如密码）        |
+| `pre-execute-shell.sh`  | Shell 执行前 | 拦截危险命令（如 rm -rf）   |
+| `post-execute-shell.sh` | Shell 执行后 | 记录命令执行日志           |
 
 ### 五、规范文件速查
 
 根据任务类型，AI 会自动加载对应规范：
 
-| 任务类型 | 关联规范 | 说明 |
-|----------|----------|------|
-| 新建规则 | `workflow.md` → `code-style.md` → `database.md` → `api-design.md` → `testing.md` | 完整开发流程 |
-| 编写 DRL | `workflow.md` → `code-style.md(Drools)` → `documentation.md` → `testing.md(DRL测试)` | 规则开发专用 |
+| 任务类型          | 关联规范                                                                                       | 说明     |
+| ------------- | ------------------------------------------------------------------------------------------ | ------ |
+| 新建规则          | `workflow.md` → `code-style.md` → `database.md` → `api-design.md` → `testing.md`           | 完整开发流程 |
+| 编写 DRL        | `workflow.md` → `code-style.md(Drools)` → `documentation.md` → `testing.md(DRL测试)`         | 规则开发专用 |
 | 编写 Aviator 公式 | `workflow.md` → `code-style.md(Aviator)` → `security.md` → `performance.md` → `testing.md` | 公式开发专用 |
-| 开发 API | `workflow.md` → `api-design.md` → `error-handling.md` → `security.md` → `testing.md` | 接口开发专用 |
-| Docker 部署 | `docker-deploy.md` → `performance.md` → `security.md(Docker加固)` | 部署专用 |
-| 性能优化 | `performance.md` → `database.md(查询优化)` → `code-style.md(BigDecimal)` | 调优专用 |
+| 开发 API        | `workflow.md` → `api-design.md` → `error-handling.md` → `security.md` → `testing.md`       | 接口开发专用 |
+| Docker 部署     | `docker-deploy.md` → `performance.md` → `security.md(Docker加固)`                            | 部署专用   |
+| 性能优化          | `performance.md` → `database.md(查询优化)` → `code-style.md(BigDecimal)`                       | 调优专用   |
 
 ### 六、知识库维护
 
@@ -389,19 +440,20 @@ domain/
 
 #### 何时更新知识库
 
-| 场景 | 更新文件 | 内容 |
-|------|----------|------|
-| 发现新业务术语 | `glossary.md` | 术语定义、使用场景 |
-| 实现新业务规则 | `rules.md` | 规则逻辑、触发条件 |
-| 遇到边界问题 | `edge-cases.md` | 问题描述、解决方案 |
-| 做出架构决策 | `decisions.md` | 决策背景、方案对比、最终选择 |
-| 新增微服务模块 | `modules/<name>/overview.md` | 模块职责、接口、依赖 |
+| 场景      | 更新文件                         | 内容             |
+| ------- | ---------------------------- | -------------- |
+| 发现新业务术语 | `glossary.md`                | 术语定义、使用场景      |
+| 实现新业务规则 | `rules.md`                   | 规则逻辑、触发条件      |
+| 遇到边界问题  | `edge-cases.md`              | 问题描述、解决方案      |
+| 做出架构决策  | `decisions.md`               | 决策背景、方案对比、最终选择 |
+| 新增微服务模块 | `modules/<name>/overview.md` | 模块职责、接口、依赖     |
 
 ### 七、常见问题
 
 #### Q1：AI 不遵循规范怎么办？
 
 **A**：检查以下文件是否存在且内容正确：
+
 - `.trae/agent.md` - AI 行为规范
 - `.trae/rules/workflow.md` - 工作流程
 - `.trae/rules/code-style.md` - 编码规范
@@ -434,43 +486,45 @@ mv .trae/workflow-plans/active/xxx.md .trae/workflow-plans/archived/
 - `.claude/` - Claude Code 使用
 - 内容完全同步，保持功能一致
 
----
+***
 
 ## 📊 服务端口规划
 
-| 服务 | 端口 | 说明 | 状态 |
-|:---|:---:|:---|:---:|
-| API Gateway | 9000 | 统一入口，路由转发 | ✅ 骨架 |
-| Rule Service | 9001 | 规则管理 | ✅ 骨架 |
-| Formula Service | 9002 | 公式管理 | ✅ 骨架 |
-| Settlement Service | 9003 | 医保结算 | ✅ 骨架 |
-| Drug Service | 9004 | 合理用药 | ✅ 骨架 |
-| Quality Service | 9005 | 质控 | ✅ 骨架 |
-| DRG Service | 9006 | DRG/DIP 分组 | ✅ 骨架 |
+| 服务                 |  端口  | 说明         |  状态  |
+| :----------------- | :--: | :--------- | :--: |
+| Nacos Server       | 8848 | 服务注册 + 配置中心 | ✅ 已部署 |
+| API Gateway        | 9000 | 统一入口，路由转发  | ✅ 已部署 |
+| Rule Service       | 9001 | 规则管理       | ✅ 已部署 |
+| Formula Service    | 9002 | 公式管理       | ✅ 已部署 |
+| Settlement Service | 9003 | 医保结算       | ✅ 已部署 |
+| Drug Service       | 9004 | 合理用药       | ✅ 已部署 |
+| Quality Service    | 9005 | 质控         | ✅ 已部署 |
+| DRG Service        | 9006 | DRG/DIP 分组 | ✅ 已部署 |
+| Frontend (Nginx)   | 8999 | Vue 3 前端   | ✅ 已部署 |
 
-> ✅ 骨架 = 模块结构、启动类、配置文件已就绪，业务逻辑待开发
+> ✅ 已部署 = 已容器化部署，服务正常运行
 
----
+***
 
 ## ⚙️ 核心配置说明
 
 ### Nacos 配置刷新 <span style="color:orange">📋 待实现</span>
 
-- 所有公式均通过 `@RefreshScope` + `NacosConfigManager` 实现动态更新  
+- 所有公式均通过 `@RefreshScope` + `NacosConfigManager` 实现动态更新
 - 修改 Nacos 中的 `formulas.*` 配置后，应用会自动重新加载公式并刷新 Aviator 缓存，**无需重启**
 
 ### Drools 规则热加载 <span style="color:orange">📋 待实现</span>
 
-- 规则文件放在 `src/main/resources/rules/` 下  
+- 规则文件放在 `src/main/resources/rules/` 下
 - 生产环境建议将 `.drl` 文件也存放在 Nacos 或数据库中，通过 `KieScanner` 实现热部署
 
 ### Aviator 表达式缓存 <span style="color:orange">📋 待实现</span>
 
-- 使用 Caffeine 缓存编译后的 `Expression` 对象  
-- 缓存大小：5000 条，过期时间：30 分钟  
+- 使用 Caffeine 缓存编译后的 `Expression` 对象
+- 缓存大小：5000 条，过期时间：30 分钟
 - 公式变更时自动失效对应的缓存条目
 
----
+***
 
 ## 🧪 示例：医保结算规则流 <span style="color:orange">📋 待实现</span>
 
@@ -515,58 +569,56 @@ rule "Calculate Reimbursement"
 end
 ```
 
----
+***
 
 ## 📊 性能指标（目标） <span style="color:orange">📋 待实现</span>
 
-| 场景 | 目标耗时 |
-| :--- | :--- |
-| 单条规则匹配（Drools） | < 5ms |
-| Aviator 表达式执行（已缓存） | < 0.5ms |
-| Nacos 配置变更到生效（含缓存刷新） | < 2s |
-| 规则引擎冷启动（加载 100 条规则） | ~800ms |
+| 场景                   | 目标耗时    |
+| :------------------- | :------ |
+| 单条规则匹配（Drools）       | < 5ms   |
+| Aviator 表达式执行（已缓存）   | < 0.5ms |
+| Nacos 配置变更到生效（含缓存刷新） | < 2s    |
+| 规则引擎冷启动（加载 100 条规则）  | \~800ms |
 
----
+***
 
 ## 🧰 常见问题
 
-**Q：Nacos 配置不生效？**  
+**Q：Nacos 配置不生效？**\
 A：检查 `application.yml` 中的 `spring.cloud.nacos.config` 是否正确，并确保应用已添加 `@RefreshScope`。
 
-**Q：Aviator 表达式报错 `Unknown variable`？**  
+**Q：Aviator 表达式报错** **`Unknown variable`？**\
 A：请在 `FormulaValidator` 中定义允许的变量白名单，或在执行前将所需变量全部放入 `env` 中。
 
-**Q：如何发布新的规则文件？**  
+**Q：如何发布新的规则文件？**\
 A：本示例从 classpath 加载 `.drl` 文件，重新打包即可。生产环境建议将规则文件放入 Nacos 或数据库，通过 `KieScanner` 动态加载。
 
-**Q：支持多租户（多个医院）吗？**  
+**Q：支持多租户（多个医院）吗？**\
 A：可在 Nacos 中使用不同的 `namespace` 或 `group` 来隔离医院的配置；Drools 会话也可按租户独立构建。
 
----
+***
 
 ## 🔧 扩展开发指南
 
-1. **新增一个业务规则集**  
-   - 定义新的事实对象（Fact）  
-   - 编写对应的 `.drl` 文件  
-   - 在 Nacos 中添加公式配置  
+1. **新增一个业务规则集**
+   - 定义新的事实对象（Fact）
+   - 编写对应的 `.drl` 文件
+   - 在 Nacos 中添加公式配置
    - 实现业务服务调用规则引擎
-
-2. **接入自己的数据库作为规则源**  
-   - 实现 `RuleProvider` 接口，从数据库读取规则内容  
+2. **接入自己的数据库作为规则源**
+   - 实现 `RuleProvider` 接口，从数据库读取规则内容
    - 移除 `application.yml` 中的 Nacos 依赖（可选）
-
-3. **集成监控**  
-   - 暴露 `/actuator/health` 端点  
+3. **集成监控**
+   - 暴露 `/actuator/health` 端点
    - 记录每次规则调用的耗时和命中率（Aviator 缓存统计）
 
----
+***
 
 ## 📄 许可证
 
 Apache License 2.0
 
----
+***
 
 ## 👥 贡献者
 
@@ -574,7 +626,7 @@ Apache License 2.0
 
 **项目维护者**：蓝天
 
----
+***
 
 ## 🔗 相关文档
 
@@ -582,3 +634,4 @@ Apache License 2.0
 - [Nacos 配置管理](https://nacos.io/zh-cn/docs/configuration-management.html)
 - [Drools 用户手册](https://docs.drools.org/)
 - [Aviator 表达式引擎指南](https://github.com/killme2008/aviator)
+

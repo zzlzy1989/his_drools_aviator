@@ -164,7 +164,7 @@ services:
 
   # === Nacos (配置中心) ===
   nacos:
-    image: nacos/nacos-server:v2.3.0
+    image: nacos/nacos-server:v3.0.3
     container_name: his-nacos
     ports:
       - "8848:8848"

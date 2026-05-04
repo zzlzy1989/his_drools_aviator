@@ -29,6 +29,30 @@ x-common-config: &common-config
         cpus: '1.0'
 
 services:
+  # ===== Nacos 3.0 注册中心 + 配置中心 =====
+  nacos:
+    image: nacos/nacos-server:v3.0.3
+    container_name: his-nacos
+    restart: unless-stopped
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+    environment:
+      MODE: standalone
+      NACOS_AUTH_TOKEN: SecretKey012345678901234567890123456789012345678901234567890123456789
+      NACOS_AUTH_IDENTITY_KEY: nacos-auth
+      NACOS_AUTH_IDENTITY_VALUE: my-identity-value
+      JVM_XMS: 256m
+      JVM_XMX: 512m
+    networks:
+      - his-net
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '2.0'
+
   # ===== HIS 网关 (9000) =====
   his-gateway:
     build:
@@ -41,10 +65,13 @@ services:
       - "9000:9000"
     environment:
       <<: *common-env
+      NACOS_ADDR: nacos:8848
       SERVER_PORT: 9000
     volumes:
       - ./logs/gateway:/app/logs
     <<: *common-config
+    depends_on:
+      - nacos
 
   # ===== HIS 规则服务 (9001) =====
   his-rule-service:

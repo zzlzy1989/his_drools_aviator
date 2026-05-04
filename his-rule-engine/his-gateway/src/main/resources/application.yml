@@ -17,7 +17,7 @@ spring:
           enabled: false
     service-registry:
       auto-registration:
-        enabled: false
+        enabled: true
     gateway:
       discovery:
         locator:

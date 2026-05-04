@@ -15,7 +15,7 @@ spring:
           enabled: false
     service-registry:
       auto-registration:
-        enabled: false
+        enabled: true
   datasource:
     url: jdbc:mysql://${MYSQL_HOST:192.168.1.105}:${MYSQL_PORT:3306}/his_rule_engine?characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
     username: ${MYSQL_USER:root}

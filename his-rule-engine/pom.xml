@@ -42,8 +42,8 @@
         <caffeine.version>3.1.8</caffeine.version>
 
         <!-- Spring Cloud & Alibaba -->
-        <spring-cloud.version>2025.0.1</spring-cloud.version>
-        <spring-cloud-alibaba.version>2025.1.0.0</spring-cloud-alibaba.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
+        <spring-cloud-alibaba.version>2025.0.0.0</spring-cloud-alibaba.version>
 
         <!-- 数据库 -->
         <mybatis-plus.version>3.5.6</mybatis-plus.version>
