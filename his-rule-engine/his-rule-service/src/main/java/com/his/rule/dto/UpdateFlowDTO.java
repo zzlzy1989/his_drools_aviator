@@ -1,5 +1,6 @@
 package com.his.rule.dto;
 
+import com.his.rule.dto.CreateFlowDTO.FlowDefinitionDTO;
 import lombok.Data;
 
 import jakarta.validation.constraints.NotBlank;
@@ -22,5 +23,5 @@ public class UpdateFlowDTO {
     private String description;
 
     /** 规则流定义 (节点和边) */
-    private FlowDefinitionDTO flowDefinition;
+    private CreateFlowDTO.FlowDefinitionDTO flowDefinition;
 }

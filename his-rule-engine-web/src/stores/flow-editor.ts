@@ -20,6 +20,7 @@ export const useFlowEditorStore = defineStore('flowEditor', () => {
   const flowDefinition = ref<FlowDefinitionDTO>({ nodes: [], edges: [] })
   const selectedNodeId = ref<string | null>(null)
   const selectedEdgeId = ref<string | null>(null)
+  const multiSelectedIds = ref<string[]>([])
   const isDirty = ref(false)
   const isPreviewMode = ref(false)
   const previewPath = ref<string[]>([])
@@ -132,6 +133,13 @@ export const useFlowEditorStore = defineStore('flowEditor', () => {
   function clearSelection() {
     selectedNodeId.value = null
     selectedEdgeId.value = null
+    multiSelectedIds.value = []
+  }
+
+  function setMultiSelection(ids: string[]) {
+    multiSelectedIds.value = ids
+    selectedNodeId.value = null
+    selectedEdgeId.value = null
   }
 
   function setPreviewMode(enabled: boolean) {
@@ -198,6 +206,7 @@ export const useFlowEditorStore = defineStore('flowEditor', () => {
     flowDefinition,
     selectedNodeId,
     selectedEdgeId,
+    multiSelectedIds,
     isDirty,
     isPreviewMode,
     previewPath,
@@ -218,6 +227,7 @@ export const useFlowEditorStore = defineStore('flowEditor', () => {
     selectNode,
     selectEdge,
     clearSelection,
+    setMultiSelection,
     setPreviewMode,
     setPreviewPath,
     undo,

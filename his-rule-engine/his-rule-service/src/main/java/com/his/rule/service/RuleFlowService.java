@@ -77,13 +77,13 @@ public class RuleFlowService {
      */
     @Transactional
     public RuleFlow createFlow(CreateFlowDTO dto) {
-        // 生成flowKey
-        String flowKey = "flow." + dto.getCategory().toLowerCase() + "." + UUID.randomUUID().toString().substring(0, 8);
+        String category = dto.getCategory() != null ? dto.getCategory().toLowerCase() : "default";
+        String flowKey = "flow." + category + "." + UUID.randomUUID().toString().substring(0, 8);
 
         RuleFlow flow = new RuleFlow();
         flow.setFlowKey(flowKey);
         flow.setFlowName(dto.getFlowName());
-        flow.setCategory(dto.getCategory());
+        flow.setCategory(category);
         flow.setDescription(dto.getDescription());
         flow.setStatus("draft");
         flow.setVersion(1);
@@ -338,44 +338,11 @@ public class RuleFlowService {
 
     private String toFlowDefinitionJson(Object dto) {
         try {
-            // Get flow definition from either CreateFlowDTO or UpdateFlowDTO
             Object flowDef = dto.getClass().getMethod("getFlowDefinition").invoke(dto);
-            Object nodes = flowDef.getClass().getMethod("getNodes").invoke(flowDef);
-            Object edges = flowDef.getClass().getMethod("getEdges").invoke(flowDef);
-
-            RuleFlowVO.FlowDefinitionDTO def = new RuleFlowVO.FlowDefinitionDTO();
-
-            // Convert nodes
-            java.util.List<RuleFlowVO.NodeDTO> nodeList = new java.util.ArrayList<>();
-            for (Object n : (java.util.List<?>) nodes) {
-                RuleFlowVO.NodeDTO node = new RuleFlowVO.NodeDTO();
-                node.setNodeId((String) n.getClass().getMethod("getNodeId").invoke(n));
-                node.setType((String) n.getClass().getMethod("getType").invoke(n));
-                node.setLabel((String) n.getClass().getMethod("getLabel").invoke(n));
-                node.setExpression((String) n.getClass().getMethod("getExpression").invoke(n));
-                node.setBranches((java.util.Map<String, String>) n.getClass().getMethod("getBranches").invoke(n));
-                node.setRuleKey((String) n.getClass().getMethod("getRuleKey").invoke(n));
-                node.setFormulaKey((String) n.getClass().getMethod("getFormulaKey").invoke(n));
-                node.setSubFlowId((String) n.getClass().getMethod("getSubFlowId").invoke(n));
-                node.setTimeout((Integer) n.getClass().getMethod("getTimeout").invoke(n));
-                node.setPosition((java.util.Map<String, Object>) n.getClass().getMethod("getPosition").invoke(n));
-                node.setParams((java.util.Map<String, Object>) n.getClass().getMethod("getParams").invoke(n));
-                nodeList.add(node);
+            if (flowDef == null) {
+                return "{\"nodes\":[],\"edges\":[]}";
             }
-            def.setNodes(nodeList);
-
-            // Convert edges
-            java.util.List<RuleFlowVO.EdgeDTO> edgeList = new java.util.ArrayList<>();
-            for (Object e : (java.util.List<?>) edges) {
-                RuleFlowVO.EdgeDTO edge = new RuleFlowVO.EdgeDTO();
-                edge.setSource((String) e.getClass().getMethod("getSource").invoke(e));
-                edge.setTarget((String) e.getClass().getMethod("getTarget").invoke(e));
-                edge.setLabel((String) e.getClass().getMethod("getLabel").invoke(e));
-                edgeList.add(edge);
-            }
-            def.setEdges(edgeList);
-
-            return objectMapper.writeValueAsString(def);
+            return objectMapper.writeValueAsString(flowDef);
         } catch (Exception e) {
             throw new RuntimeException("规则流定义序列化失败: " + e.getMessage());
         }

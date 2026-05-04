@@ -28,32 +28,33 @@ public class CreateFlowDTO {
 
     /** 租户ID */
     private String tenantId;
-}
 
-@Data
-class FlowDefinitionDTO {
-    private List<NodeDTO> nodes;
-    private List<EdgeDTO> edges;
-}
+    @Data
+    public static class FlowDefinitionDTO {
+        private List<NodeDTO> nodes;
+        private List<EdgeDTO> edges;
+    }
 
-@Data
-class NodeDTO {
-    private String nodeId;
-    private String type;        // start/end/condition/action/formula/subflow
-    private String label;
-    private String expression;  // 条件节点表达式
-    private Map<String, String> branches; // 条件节点分支
-    private String ruleKey;     // 动作节点引用的规则
-    private String formulaKey;  // 公式节点引用的公式
-    private String subFlowId;   // 子流程节点引用的子流程
-    private Integer timeout;   // 超时时间(ms)
-    private Map<String, Object> position; // 位置 {x, y}
-    private Map<String, Object> params;  // 其他参数
-}
+    @Data
+    public static class NodeDTO {
+        private String nodeId;
+        private String type;        // start/end/condition/action/formula/subflow
+        private String label;
+        private String expression;  // 条件节点表达式
+        private Map<String, String> branches; // 条件节点分支
+        private String ruleKey;     // 动作节点引用的规则
+        private String formulaKey;  // 公式节点引用的公式
+        private String subFlowId;   // 子流程节点引用的子流程
+        private Integer timeout;   // 超时时间(ms)
+        private Double x;          // x坐标
+        private Double y;          // y坐标
+        private Map<String, Object> params;  // 其他参数
+    }
 
-@Data
-class EdgeDTO {
-    private String source;
-    private String target;
-    private String label;
+    @Data
+    public static class EdgeDTO {
+        private String source;
+        private String target;
+        private String label;
+    }
 }
