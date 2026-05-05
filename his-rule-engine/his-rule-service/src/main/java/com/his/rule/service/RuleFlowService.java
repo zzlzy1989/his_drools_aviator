@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.his.common.web.context.TenantContext;
 import com.his.rule.dto.*;
 import com.his.rule.entity.RuleFlow;
 import com.his.rule.entity.RuleFlowHistory;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,21 +40,14 @@ public class RuleFlowService {
      * 分页查询规则流
      */
     public IPage<RuleFlowVO> pageList(Integer page, Integer pageSize, FlowQueryDTO queryDTO) {
+        String tenantId = TenantContext.getTenantId("T001");
         Page<RuleFlow> p = new Page<>(page, pageSize);
         LambdaQueryWrapper<RuleFlow> wrapper = new LambdaQueryWrapper<>();
 
-        if (queryDTO.getTenantId() != null) {
-            wrapper.eq(RuleFlow::getTenantId, queryDTO.getTenantId());
-        }
-        if (queryDTO.getFlowName() != null) {
-            wrapper.like(RuleFlow::getFlowName, queryDTO.getFlowName());
-        }
-        if (queryDTO.getCategory() != null) {
-            wrapper.eq(RuleFlow::getCategory, queryDTO.getCategory());
-        }
-        if (queryDTO.getStatus() != null) {
-            wrapper.eq(RuleFlow::getStatus, queryDTO.getStatus());
-        }
+        wrapper.eq(RuleFlow::getTenantId, tenantId);
+        wrapper.like(StringUtils.hasText(queryDTO.getFlowName()), RuleFlow::getFlowName, queryDTO.getFlowName());
+        wrapper.eq(StringUtils.hasText(queryDTO.getCategory()), RuleFlow::getCategory, queryDTO.getCategory());
+        wrapper.eq(StringUtils.hasText(queryDTO.getStatus()), RuleFlow::getStatus, queryDTO.getStatus());
         wrapper.eq(RuleFlow::getDeleted, 0);
         wrapper.orderByDesc(RuleFlow::getUpdateTime);
 

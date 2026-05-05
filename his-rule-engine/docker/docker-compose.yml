@@ -67,6 +67,7 @@ services:
       <<: *common-env
       NACOS_ADDR: nacos:8848
       SERVER_PORT: 9000
+      HIS_JWT_ENABLED: "false"  # 开发阶段关闭JWT认证
     volumes:
       - ./logs/gateway:/app/logs
     <<: *common-config

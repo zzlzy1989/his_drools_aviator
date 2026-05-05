@@ -13,7 +13,7 @@ const request: AxiosInstance = axios.create({
 request.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // Add tenant id from localStorage
-    const tenantId = localStorage.getItem('tenantId') || 'default'
+    const tenantId = localStorage.getItem('tenantId') || 'T001'
     if (config.headers) {
       config.headers['X-Tenant-Id'] = tenantId
     }

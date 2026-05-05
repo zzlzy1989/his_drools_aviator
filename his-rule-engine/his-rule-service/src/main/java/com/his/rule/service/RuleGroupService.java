@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class RuleGroupService {
      * 查询所有启用的规则分组
      */
     public List<RuleGroup> listEnabled() {
-        String tenantId = TenantContext.getTenantId();
+        String tenantId = TenantContext.getTenantId("T001");
         return ruleGroupMapper.selectList(
                 new LambdaQueryWrapper<RuleGroup>()
                         .eq(RuleGroup::getTenantId, tenantId)
@@ -42,7 +43,7 @@ public class RuleGroupService {
      * 分页查询规则分组
      */
     public IPage<RuleGroup> pageList(Integer page, Integer pageSize) {
-        String tenantId = TenantContext.getTenantId();
+        String tenantId = TenantContext.getTenantId("T001");
         Page<RuleGroup> pageParam = new Page<>(page, pageSize);
         return ruleGroupMapper.selectPage(pageParam,
                 new LambdaQueryWrapper<RuleGroup>()

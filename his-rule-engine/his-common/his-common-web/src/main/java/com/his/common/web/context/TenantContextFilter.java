@@ -33,10 +33,11 @@ public class TenantContextFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
             String tenantId = request.getHeader(TENANT_HEADER);
-            if (tenantId != null && !tenantId.isBlank()) {
-                TenantContext.setTenantId(tenantId);
-                log.debug("设置租户上下文: tenantId={}", tenantId);
+            if (tenantId == null || tenantId.isBlank() || "default".equals(tenantId)) {
+                tenantId = "T001";
             }
+            TenantContext.setTenantId(tenantId);
+            log.debug("设置租户上下文: tenantId={}", tenantId);
             filterChain.doFilter(request, response);
         } finally {
             TenantContext.clear();

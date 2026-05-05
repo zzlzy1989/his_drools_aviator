@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -36,23 +37,23 @@ public class RuleDefinitionService {
      * 分页查询规则
      */
     public IPage<RuleVO> pageList(Integer page, Integer pageSize, RuleQueryDTO queryDTO) {
-        String tenantId = TenantContext.getTenantId();
+        String tenantId = TenantContext.getTenantId("T001");
 
         Page<RuleDefinition> pageParam = new Page<>(page, pageSize);
         LambdaQueryWrapper<RuleDefinition> wrapper = new LambdaQueryWrapper<RuleDefinition>()
                 .eq(RuleDefinition::getTenantId, tenantId)
                 .eq(RuleDefinition::getDeleted, 0);
 
-        if (queryDTO.getCategory() != null) {
+        if (StringUtils.hasText(queryDTO.getCategory())) {
             wrapper.eq(RuleDefinition::getCategory, queryDTO.getCategory());
         }
-        if (queryDTO.getStatus() != null) {
+        if (StringUtils.hasText(queryDTO.getStatus())) {
             wrapper.eq(RuleDefinition::getStatus, queryDTO.getStatus());
         }
-        if (queryDTO.getRuleKey() != null) {
+        if (StringUtils.hasText(queryDTO.getRuleKey())) {
             wrapper.like(RuleDefinition::getRuleKey, queryDTO.getRuleKey());
         }
-        if (queryDTO.getRuleName() != null) {
+        if (StringUtils.hasText(queryDTO.getRuleName())) {
             wrapper.like(RuleDefinition::getRuleName, queryDTO.getRuleName());
         }
         if (queryDTO.getRuleGroupId() != null) {

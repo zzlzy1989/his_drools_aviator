@@ -19,7 +19,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/v2/flows")
+@RequestMapping("/api/v1/flows")
 @RequiredArgsConstructor
 @Tag(name = "规则流管理", description = "规则流定义 CRUD、发布、回滚")
 public class RuleFlowController {

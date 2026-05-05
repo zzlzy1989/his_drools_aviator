@@ -71,3 +71,7 @@ logging:
   level:
     com.his.gateway: debug
     org.springframework.cloud.gateway: debug
+
+his:
+  jwt:
+    enabled: false  # 开发阶段关闭JWT认证，前端无登录页面

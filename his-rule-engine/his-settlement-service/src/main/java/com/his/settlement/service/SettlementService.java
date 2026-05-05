@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -186,14 +187,15 @@ public class SettlementService {
     /**
      * 分页查询结算记录
      */
-    public IPage<SettlementVO> pageList(Integer page, Integer pageSize, String patientId, String status) {
+    public IPage<SettlementVO> pageList(Integer page, Integer pageSize, String settlementNo, String patientId, String status) {
         String tenantId = TenantContext.getTenantId();
 
         Page<SettlementResult> pageParam = new Page<>(page, pageSize);
         LambdaQueryWrapper<SettlementResult> wrapper = new LambdaQueryWrapper<SettlementResult>()
                 .eq(SettlementResult::getTenantId, tenantId)
-                .eq(patientId != null, SettlementResult::getPatientId, patientId)
-                .eq(status != null, SettlementResult::getStatus, status)
+                .like(StringUtils.hasText(settlementNo), SettlementResult::getSettlementNo, settlementNo)
+                .eq(StringUtils.hasText(patientId), SettlementResult::getPatientId, patientId)
+                .eq(StringUtils.hasText(status), SettlementResult::getStatus, status)
                 .orderByDesc(SettlementResult::getCreateTime);
 
         IPage<SettlementResult> pageResult = settlementMapper.selectPage(pageParam, wrapper);

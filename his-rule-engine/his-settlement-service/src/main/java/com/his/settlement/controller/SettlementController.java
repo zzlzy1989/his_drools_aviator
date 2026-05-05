@@ -49,14 +49,15 @@ public class SettlementController {
         return Result.success();
     }
 
-    @GetMapping("/page")
+    @GetMapping
     @Operation(summary = "分页查询结算记录")
     public Result<PageResult<SettlementVO>> pageList(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer pageSize,
+            @RequestParam(required = false) String settlementNo,
             @RequestParam(required = false) String patientId,
             @RequestParam(required = false) String status) {
-        IPage<SettlementVO> pageResult = settlementService.pageList(page, pageSize, patientId, status);
+        IPage<SettlementVO> pageResult = settlementService.pageList(page, pageSize, settlementNo, patientId, status);
         return Result.success(PageResult.of(pageResult));
     }
 
