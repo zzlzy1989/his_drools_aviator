@@ -97,7 +97,7 @@ export type FlowStatus = 'draft' | 'active' | 'inactive'
 // API functions
 export const getFlowPage = (page: number, pageSize: number, query?: FlowQueryDTO): AxiosPromise<PageResult<RuleFlowVO>> => {
   return request({
-    url: '/api/v2/flows',
+    url: '/api/v1/flows',
     method: 'GET',
     params: { page, pageSize, ...query },
   })
@@ -105,14 +105,14 @@ export const getFlowPage = (page: number, pageSize: number, query?: FlowQueryDTO
 
 export const getFlowById = (id: number): AxiosPromise<RuleFlowVO> => {
   return request({
-    url: `/api/v2/flows/${id}`,
+    url: `/api/v1/flows/${id}`,
     method: 'GET',
   })
 }
 
 export const createFlow = (data: CreateFlowDTO): AxiosPromise<number> => {
   return request({
-    url: '/api/v2/flows',
+    url: '/api/v1/flows',
     method: 'POST',
     data,
   })
@@ -120,7 +120,7 @@ export const createFlow = (data: CreateFlowDTO): AxiosPromise<number> => {
 
 export const updateFlow = (id: number, data: UpdateFlowDTO): AxiosPromise<void> => {
   return request({
-    url: `/api/v2/flows/${id}`,
+    url: `/api/v1/flows/${id}`,
     method: 'PUT',
     data,
   })
@@ -128,21 +128,21 @@ export const updateFlow = (id: number, data: UpdateFlowDTO): AxiosPromise<void> 
 
 export const deleteFlow = (id: number): AxiosPromise<void> => {
   return request({
-    url: `/api/v2/flows/${id}`,
+    url: `/api/v1/flows/${id}`,
     method: 'DELETE',
   })
 }
 
 export const publishFlow = (id: number): AxiosPromise<void> => {
   return request({
-    url: `/api/v2/flows/${id}/publish`,
+    url: `/api/v1/flows/${id}/publish`,
     method: 'POST',
   })
 }
 
 export const rollbackFlow = (id: number, targetVersion: number): AxiosPromise<void> => {
   return request({
-    url: `/api/v2/flows/${id}/rollback`,
+    url: `/api/v1/flows/${id}/rollback`,
     method: 'POST',
     params: { targetVersion },
   })
@@ -150,21 +150,21 @@ export const rollbackFlow = (id: number, targetVersion: number): AxiosPromise<vo
 
 export const getFlowVersions = (id: number): AxiosPromise<FlowVersionVO[]> => {
   return request({
-    url: `/api/v2/flows/${id}/versions`,
+    url: `/api/v1/flows/${id}/versions`,
     method: 'GET',
   })
 }
 
 export const exportFlow = (id: number): AxiosPromise<string> => {
   return request({
-    url: `/api/v2/flows/${id}/export`,
+    url: `/api/v1/flows/${id}/export`,
     method: 'GET',
   })
 }
 
 export const importFlow = (flowJson: string, tenantId?: string): AxiosPromise<number> => {
   return request({
-    url: '/api/v2/flows/import',
+    url: '/api/v1/flows/import',
     method: 'POST',
     data: flowJson,
     params: { tenantId },

@@ -1,6 +1,7 @@
 package com.his.rule.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.his.common.web.result.PageResult;
 import com.his.common.web.result.Result;
 import com.his.rule.dto.*;
 import com.his.rule.entity.RuleFlow;
@@ -31,7 +32,7 @@ public class RuleFlowController {
      */
     @GetMapping
     @Operation(summary = "分页查询规则流")
-    public Result<IPage<RuleFlowVO>> pageList(
+    public Result<PageResult<RuleFlowVO>> pageList(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer pageSize,
             @RequestParam(required = false) String flowName,
@@ -45,7 +46,8 @@ public class RuleFlowController {
         queryDTO.setStatus(status);
         queryDTO.setTenantId(tenantId);
 
-        return Result.success(ruleFlowService.pageList(page, pageSize, queryDTO));
+        IPage<RuleFlowVO> iPage = ruleFlowService.pageList(page, pageSize, queryDTO);
+        return Result.success(PageResult.of(iPage));
     }
 
     /**
