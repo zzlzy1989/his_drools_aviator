@@ -1,9 +1,9 @@
 ---
 title: "V2.0 规则可视化与监控平台"
 type: "feature"
-status: "pending"
+status: "in_progress"
 created_at: "2026-05-01"
-updated_at: "2026-05-01"
+updated_at: "2026-05-05"
 phase: "Phase 2"
 owner: "developer"
 reviewer: ""
@@ -56,13 +56,13 @@ V1.0 已完成核心功能开发，所有 7 个微服务已 Docker 部署并正�
 
 ### Phase 1: 规则可视化编排
 
-| 任务 | 说明 | 优先级 | 状态 |
-|------|------|--------|------|
-| 1.1 | 规则流设计器前端 - 拖拽式UI | P0 | ✅ 已完成 |
-| 1.2 | 规则节点类型定义（条件节点/动作节点/公式节点） | P0 | ✅ 已完成 |
-| 1.3 | 规则流后端API - CRUD + 校验 | P0 | ✅ 已完成 |
-| 1.4 | 规则流执行引擎 - 串联多个规则/公式 | P0 | ✅ 已完成 |
-| 1.5 | 规则流版本管理 | P1 | pending |
+| 任务 | 说明 | 优先级 | 状态 | 完成日期 |
+|------|------|--------|------|---------|
+| 1.1 | 规则流设计器前端 - 拖拽式UI (AntV X6) | P0 | ✅ 已完成 | 2026-05-05 |
+| 1.2 | 规则节点类型定义（条件节点/动作节点/公式节点/连线） | P0 | ✅ 已完成 | 2026-05-05 |
+| 1.3 | 规则流后端API - CRUD + 校验 + 发布 | P0 | ✅ 已完成 | 2026-05-05 |
+| 1.4 | 规则流执行引擎 - 串联多个规则/公式 | P0 | ✅ 已完成 | 2026-05-05 |
+| 1.5 | 规则流版本管理 | P1 | pending | - |
 
 ### Phase 2: 规则测试沙箱
 
@@ -181,13 +181,43 @@ V1.0 已完成核心功能开发，所有 7 个微服务已 Docker 部署并正�
 
 ## 6. 里程碑
 
-| 阶段 | 完成时间 | 主要交付 |
-|------|---------|---------|
-| Phase 1 | +3周 | 规则可视化编排器 |
-| Phase 2 | +5周 | 测试沙箱 |
-| Phase 3 | +6周 | 监控大屏 |
-| Phase 4 | +7周 | 规则市场 |
-| Phase 5 | +8周 | 增强功能 |
+| 阶段 | 完成时间 | 主要交付 | 状态 |
+|------|---------|---------|------|
+| Phase 1 | 2026-05-05 | 规则可视化编排器 | ✅ 已完成 |
+| Phase 2 | +5周 | 测试沙箱 | pending |
+| Phase 3 | +6周 | 监控大屏 | pending |
+| Phase 4 | +7周 | 规则市场 | pending |
+| Phase 5 | +8周 | 增强功能 | pending |
+
+---
+
+## 7. 2026-05-05 修复记录
+
+### 前端全量模块数据修复
+
+今天完成了所有 8 个前端页面的数据加载修复，解决以下问题：
+
+1. **所有页面加载失败** - 修复 TenantContextFilter 默认租户、Service 空字符串参数过滤、MyBatis-Plus 分页插件配置
+2. **所有页面字段为空** - 修复前端 API 响应解析（interceptor 已解包，前端不应再用 `res.data.list`）
+3. **规则流 404** - 修复前端 API 路径、Gateway 路由、Controller 返回格式
+4. **规则流无数据** - 初始化 10 条规则流数据
+5. **公式管理字段空** - 补充 formula_name 数据 + @JsonProperty 映射
+6. **结算管理患者姓名空** - 数据库添加 patient_name 列 + Entity/VO 字段
+7. **用药审核通用名/单价空** - DrugCatalog @JsonProperty 字段映射
+8. **DRG管理分类/权重空** - DrgDefinition @JsonProperty 字段映射
+
+### 修改文件汇总 (23 个文件)
+
+| 类型 | 文件数 | 说明 |
+|------|--------|------|
+| Java Entity/VO | 4 | FormulaVO、SettlementResult、SettlementVO、DrugCatalog、DrgDefinition |
+| Java Service/Controller | 10 | 所有分页查询改为 `StringUtils.hasText()` |
+| Java Config | 2 | TenantContextFilter、MybatisPlusConfig |
+| Frontend API | 3 | rule-flow.ts、rule-group.ts、request.ts |
+| Frontend Vue | 2 | DrugList.vue、DrgList.vue 字段映射 |
+| Java Gateway | 1 | application.yml 添加 flows 路由 |
+| SQL | 1 | V8__insert_rule_flows.sql |
+| 数据库变更 | 1 | settlement_result 添加 patient_name 列 |
 
 ---
 
