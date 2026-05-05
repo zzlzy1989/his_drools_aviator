@@ -32,14 +32,9 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="drgCode" label="DRG编码" width="180" />
         <el-table-column prop="drgName" label="DRG名称" />
-        <el-table-column prop="category" label="分类" width="120">
-          <template #default="{ row }">
-            <el-tag v-if="row.category === 'surgery'" type="primary" size="small">手术</el-tag>
-            <el-tag v-else-if="row.category === 'medical'" type="success" size="small">内科</el-tag>
-            <el-tag v-else type="info" size="small">{{ row.category }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="weight" label="权重" width="100" align="right" />
+        <el-table-column prop="mdcCode" label="分类" width="120" />
+        <el-table-column prop="mdcName" label="分类名称" width="150" />
+        <el-table-column prop="baseWeight" label="权重" width="100" align="right" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">

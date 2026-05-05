@@ -17,7 +17,15 @@ public class FormulaVO {
 
     private String formulaName;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("expression")
     private String formulaText;
+
+    private String returnType;
+
+    public String getReturnType() {
+        return returnType != null ? returnType : 
+            (formulaText != null && formulaText.contains("round") ? "BigDecimal" : "String");
+    }
 
     private String category;
 

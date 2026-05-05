@@ -20,11 +20,13 @@ public class DrgDefinition {
 
     private String drgName;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("category")
     private String mdcCode;
 
     private String mdcName;
 
-    private BigDecimal baseWeight;
+    @com.fasterxml.jackson.annotation.JsonProperty("weight")
+    private java.math.BigDecimal baseWeight;
 
     private BigDecimal baseFee;
 
