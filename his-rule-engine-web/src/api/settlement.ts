@@ -4,8 +4,12 @@ import type { AxiosPromise } from 'axios'
 export interface SettlementVO {
   id: number
   settlementNo: string
+  visitId?: string
   patientId: string
   patientName: string
+  patientType?: string
+  insuranceType?: string
+  hospitalLevel?: string
   totalFee: number
   reimburseAmount: number
   selfPayAmount: number
@@ -21,16 +25,21 @@ export interface SettlementVO {
 }
 
 export interface CreateSettlementDTO {
+  visitId: string
   patientId: string
-  patientName: string
+  patientType: string
+  insuranceType?: string
+  hospitalLevel?: string
   totalFee: number
-  flowId?: number
-  remarks?: string
-  items?: Array<{
-    itemName: string
-    quantity: number
-    unitPrice: number
-  }>
+}
+
+export interface UpdateSettlementDTO {
+  visitId?: string
+  patientId?: string
+  patientType?: string
+  insuranceType?: string
+  hospitalLevel?: string
+  totalFee?: number
 }
 
 export interface SettlementQueryDTO {
@@ -93,6 +102,21 @@ export const executeSettlement = (id: number): AxiosPromise<SettlementVO> => {
   return request({
     url: `/api/v1/settlements/${id}/execute`,
     method: 'POST',
+  })
+}
+
+export const updateSettlement = (id: number, data: UpdateSettlementDTO): AxiosPromise<void> => {
+  return request({
+    url: `/api/v1/settlements/${id}`,
+    method: 'PUT',
+    data,
+  })
+}
+
+export const deleteSettlement = (id: number): AxiosPromise<void> => {
+  return request({
+    url: `/api/v1/settlements/${id}`,
+    method: 'DELETE',
   })
 }
 

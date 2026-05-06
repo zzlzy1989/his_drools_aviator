@@ -59,6 +59,9 @@ public class DrugController {
     @PostMapping
     @Operation(summary = "新增药品")
     public Result<Void> create(@RequestBody DrugCatalog drug) {
+        if (drug.getDrugCode() == null || drug.getDrugCode().isEmpty()) {
+            drug.setDrugCode("DRG" + System.currentTimeMillis());
+        }
         drugCatalogMapper.insert(drug);
         return Result.success();
     }

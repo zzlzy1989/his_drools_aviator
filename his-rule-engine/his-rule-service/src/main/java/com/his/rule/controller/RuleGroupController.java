@@ -3,10 +3,13 @@ package com.his.rule.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.his.common.web.result.PageResult;
 import com.his.common.web.result.Result;
+import com.his.rule.dto.RuleGroupCreateDTO;
 import com.his.rule.entity.RuleGroup;
 import com.his.rule.service.RuleGroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -26,8 +29,8 @@ public class RuleGroupController {
     private final RuleGroupService ruleGroupService;
 
     @GetMapping
-    @Operation(summary = "查询所有启用的规则分组")
-    public Result<List<RuleGroup>> listEnabled() {
+    @Operation(summary = "查询所有规则分组")
+    public Result<List<RuleGroup>> list() {
         return Result.success(ruleGroupService.listEnabled());
     }
 
@@ -35,8 +38,10 @@ public class RuleGroupController {
     @Operation(summary = "分页查询规则分组")
     public Result<PageResult<RuleGroup>> pageList(
             @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "20") Integer pageSize) {
-        IPage<RuleGroup> pageResult = ruleGroupService.pageList(page, pageSize);
+            @RequestParam(defaultValue = "20") Integer pageSize,
+            @RequestParam(required = false) String groupName,
+            @RequestParam(required = false) String status) {
+        IPage<RuleGroup> pageResult = ruleGroupService.pageList(page, pageSize, groupName, status);
         return Result.success(PageResult.of(pageResult));
     }
 
@@ -48,19 +53,15 @@ public class RuleGroupController {
 
     @PostMapping
     @Operation(summary = "创建规则分组")
-    public Result<RuleGroup> create(@RequestParam String groupCode,
-                                    @RequestParam String groupName,
-                                    @RequestParam(required = false) String description) {
-        return Result.success(ruleGroupService.create(groupCode, groupName, description));
+    public Result<RuleGroup> create(@RequestBody @Valid RuleGroupCreateDTO dto) {
+        return Result.success(ruleGroupService.create(dto.getGroupCode(), dto.getGroupName(), dto.getDescription()));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "更新规则分组")
     public Result<RuleGroup> update(@PathVariable Long id,
-                                     @RequestParam(required = false) String groupName,
-                                     @RequestParam(required = false) String description,
-                                     @RequestParam(required = false) Integer priority) {
-        return Result.success(ruleGroupService.update(id, groupName, description, priority));
+                                     @RequestBody RuleGroupUpdateDTO dto) {
+        return Result.success(ruleGroupService.update(id, dto.getGroupName(), dto.getDescription(), dto.getPriority()));
     }
 
     @PutMapping("/{id}/enabled")
@@ -75,5 +76,12 @@ public class RuleGroupController {
     public Result<Void> delete(@PathVariable Long id) {
         ruleGroupService.delete(id);
         return Result.success(null);
+    }
+
+    @Data
+    public static class RuleGroupUpdateDTO {
+        private String groupName;
+        private String description;
+        private Integer priority;
     }
 }

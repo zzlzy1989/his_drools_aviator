@@ -46,10 +46,12 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="handleView(row)">详情</el-button>
+            <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
             <el-button v-if="row.status === 'pending'" link type="success" @click="handleExecute(row)">执行</el-button>
+            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -69,22 +71,40 @@
 
     <el-dialog
       v-model="dialogVisible"
-      title="新建结算"
+      :title="isEdit ? '编辑结算' : '新建结算'"
       width="600px"
       @close="resetForm"
     >
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="患者ID" prop="patientId">
-          <el-input v-model="form.patientId" placeholder="请输入患者ID" />
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
+        <el-form-item label="就诊ID" prop="visitId">
+          <el-input v-model="form.visitId" :disabled="isEdit" placeholder="如: VISIT20260101001" />
         </el-form-item>
-        <el-form-item label="患者姓名" prop="patientName">
-          <el-input v-model="form.patientName" placeholder="请输入患者姓名" />
+        <el-form-item label="患者ID" prop="patientId">
+          <el-input v-model="form.patientId" placeholder="如: P10001" />
+        </el-form-item>
+        <el-form-item label="患者类型" prop="patientType">
+          <el-select v-model="form.patientType" placeholder="请选择" style="width:100%">
+            <el-option label="在职职工" value="employee" />
+            <el-option label="居民医保" value="resident" />
+            <el-option label="医疗救助" value="aid" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="医保类型">
+          <el-select v-model="form.insuranceType" placeholder="请选择" clearable style="width:100%">
+            <el-option label="基本医保" value="basic" />
+            <el-option label="大病保险" value="critical" />
+            <el-option label="补充医保" value="supplement" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="医院等级">
+          <el-select v-model="form.hospitalLevel" placeholder="请选择" clearable style="width:100%">
+            <el-option label="一级" value="LEVEL_1" />
+            <el-option label="二级" value="LEVEL_2" />
+            <el-option label="三级" value="LEVEL_3" />
+          </el-select>
         </el-form-item>
         <el-form-item label="总费用" prop="totalFee">
-          <el-input-number v-model="form.totalFee" :min="0" :precision="2" :step="10" />
-        </el-form-item>
-        <el-form-item label="备注" prop="remarks">
-          <el-input v-model="form.remarks" type="textarea" :rows="3" placeholder="请输入备注" />
+          <el-input-number v-model="form.totalFee" :min="0" :precision="2" :step="100" style="width:100%" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -116,11 +136,14 @@ import { Search, Refresh, Plus } from '@element-plus/icons-vue'
 import {
   getSettlementPage,
   createSettlement,
+  updateSettlement,
+  deleteSettlement,
   executeSettlement,
 } from '@/api/settlement'
 import type {
   SettlementVO,
   CreateSettlementDTO,
+  UpdateSettlementDTO,
   SettlementQueryDTO,
 } from '@/api/settlement'
 
@@ -128,6 +151,8 @@ const loading = ref(false)
 const saving = ref(false)
 const dialogVisible = ref(false)
 const viewVisible = ref(false)
+const isEdit = ref(false)
+const editId = ref<number>(0)
 const page = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
@@ -141,10 +166,12 @@ const queryForm = reactive<SettlementQueryDTO>({
 })
 
 const form = reactive<CreateSettlementDTO>({
+  visitId: '',
   patientId: '',
-  patientName: '',
+  patientType: '',
+  insuranceType: '',
+  hospitalLevel: '',
   totalFee: 0,
-  remarks: '',
 })
 
 const viewData = reactive<SettlementVO>({
@@ -153,8 +180,9 @@ const viewData = reactive<SettlementVO>({
 })
 
 const rules = {
+  visitId: [{ required: true, message: '请输入就诊ID', trigger: 'blur' }],
   patientId: [{ required: true, message: '请输入患者ID', trigger: 'blur' }],
-  patientName: [{ required: true, message: '请输入患者姓名', trigger: 'blur' }],
+  patientType: [{ required: true, message: '请选择患者类型', trigger: 'change' }],
   totalFee: [{ required: true, message: '请输入总费用', trigger: 'blur' }],
 }
 
@@ -180,6 +208,19 @@ function resetQuery() {
 }
 
 function handleAdd() {
+  isEdit.value = false
+  dialogVisible.value = true
+}
+
+function handleEdit(row: SettlementVO) {
+  isEdit.value = true
+  editId.value = row.id
+  form.visitId = row.visitId || ''
+  form.patientId = row.patientId
+  form.patientType = row.patientType || ''
+  form.insuranceType = row.insuranceType || ''
+  form.hospitalLevel = row.hospitalLevel || ''
+  form.totalFee = row.totalFee
   dialogVisible.value = true
 }
 
@@ -193,12 +234,17 @@ async function handleSubmit() {
   if (!valid) return
   saving.value = true
   try {
-    await createSettlement(form)
-    ElMessage.success('创建成功')
+    if (isEdit.value) {
+      await updateSettlement(editId.value, form as UpdateSettlementDTO)
+      ElMessage.success('更新成功')
+    } else {
+      await createSettlement(form)
+      ElMessage.success('创建成功')
+    }
     dialogVisible.value = false
     loadData()
   } catch {
-    ElMessage.error('创建失败')
+    ElMessage.error(isEdit.value ? '更新失败' : '创建失败')
   } finally {
     saving.value = false
   }
@@ -211,11 +257,21 @@ async function handleExecute(row: SettlementVO) {
   loadData()
 }
 
+async function handleDelete(row: SettlementVO) {
+  await ElMessageBox.confirm(`确定删除结算「${row.settlementNo}」？`, '确认删除', { type: 'warning' })
+  await deleteSettlement(row.id)
+  ElMessage.success('删除成功')
+  loadData()
+}
+
 function resetForm() {
+  form.visitId = ''
   form.patientId = ''
-  form.patientName = ''
+  form.patientType = ''
+  form.insuranceType = ''
+  form.hospitalLevel = ''
   form.totalFee = 0
-  form.remarks = ''
+  editId.value = 0
   formRef.value?.resetFields()
 }
 

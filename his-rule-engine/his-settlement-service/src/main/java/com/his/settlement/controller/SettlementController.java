@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.his.common.web.result.PageResult;
 import com.his.common.web.result.Result;
 import com.his.settlement.dto.SettlementDTO;
+import com.his.settlement.dto.SettlementUpdateDTO;
 import com.his.settlement.dto.SettlementVO;
 import com.his.settlement.service.FormulaLoaderService;
 import com.his.settlement.service.SettlementService;
@@ -65,5 +66,19 @@ public class SettlementController {
     @Operation(summary = "根据结算单号查询")
     public Result<SettlementVO> getBySettlementNo(@PathVariable String settlementNo) {
         return Result.success(settlementService.getBySettlementNo(settlementNo));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "更新结算记录")
+    public Result<Void> update(@PathVariable Long id, @RequestBody SettlementUpdateDTO dto) {
+        settlementService.update(id, dto);
+        return Result.success();
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "删除结算记录")
+    public Result<Void> delete(@PathVariable Long id) {
+        settlementService.delete(id);
+        return Result.success();
     }
 }

@@ -10,6 +10,7 @@ import com.his.common.web.context.TenantContext;
 import com.his.common.web.exception.BusinessException;
 import com.his.common.web.service.AuditLogService;
 import com.his.settlement.dto.SettlementDTO;
+import com.his.settlement.dto.SettlementUpdateDTO;
 import com.his.settlement.dto.SettlementVO;
 import com.his.settlement.entity.SettlementResult;
 import com.his.settlement.mapper.SettlementResultMapper;
@@ -216,6 +217,62 @@ public class SettlementService {
             throw new BusinessException("结算记录不存在");
         }
         return convertToVO(result);
+    }
+
+    /**
+     * 更新结算记录
+     */
+    @Transactional
+    public void update(Long id, SettlementUpdateDTO dto) {
+        String tenantId = TenantContext.getTenantId();
+        SettlementResult result = settlementMapper.selectOne(
+                new LambdaQueryWrapper<SettlementResult>()
+                        .eq(SettlementResult::getId, id)
+                        .eq(SettlementResult::getTenantId, tenantId)
+        );
+        if (result == null) {
+            throw new BusinessException("HIS-005", "结算记录不存在");
+        }
+        if (dto.getVisitId() != null) {
+            result.setVisitId(dto.getVisitId());
+        }
+        if (dto.getPatientId() != null) {
+            result.setPatientId(dto.getPatientId());
+        }
+        if (dto.getPatientType() != null) {
+            result.setPatientType(dto.getPatientType());
+        }
+        if (dto.getInsuranceType() != null) {
+            result.setInsuranceType(dto.getInsuranceType());
+        }
+        if (dto.getHospitalLevel() != null) {
+            result.setHospitalLevel(dto.getHospitalLevel());
+        }
+        if (dto.getTotalFee() != null) {
+            result.setTotalFee(dto.getTotalFee());
+        }
+        settlementMapper.updateById(result);
+        auditLogService.log("UPDATE_SETTLEMENT", "SETTLEMENT", String.valueOf(id),
+                result.getSettlementNo(), result);
+    }
+
+    /**
+     * 删除结算记录
+     */
+    @Transactional
+    public void delete(Long id) {
+        String tenantId = TenantContext.getTenantId();
+        SettlementResult result = settlementMapper.selectOne(
+                new LambdaQueryWrapper<SettlementResult>()
+                        .eq(SettlementResult::getId, id)
+                        .eq(SettlementResult::getTenantId, tenantId)
+        );
+        if (result == null) {
+            throw new BusinessException("HIS-005", "结算记录不存在");
+        }
+        settlementMapper.deleteById(id);
+        auditLogService.log("DELETE_SETTLEMENT", "SETTLEMENT", String.valueOf(id),
+                result.getSettlementNo(), result);
     }
 
     /**

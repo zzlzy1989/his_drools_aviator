@@ -6,8 +6,8 @@ export interface RuleGroupVO {
   groupKey: string
   groupName: string
   description?: string
-  category: string
-  sortOrder: number
+  category?: string
+  sortOrder?: number
   status: 'active' | 'inactive'
   tenantId: string
   createBy?: string
@@ -16,25 +16,20 @@ export interface RuleGroupVO {
 }
 
 export interface CreateRuleGroupDTO {
-  groupKey: string
+  groupCode: string
   groupName: string
   description?: string
-  category: string
-  sortOrder?: number
-  status?: string
+  priority?: number
 }
 
 export interface UpdateRuleGroupDTO {
   groupName?: string
   description?: string
-  category?: string
-  sortOrder?: number
-  status?: string
+  priority?: number
 }
 
 export interface RuleGroupQueryDTO {
   groupName?: string
-  category?: string
   status?: string
   tenantId?: string
 }
@@ -65,7 +60,7 @@ export const getRuleGroupById = (id: number): AxiosPromise<RuleGroupVO> => {
   })
 }
 
-export const createRuleGroup = (data: CreateRuleGroupDTO): AxiosPromise<number> => {
+export const createRuleGroup = (data: CreateRuleGroupDTO): AxiosPromise<RuleGroupVO> => {
   return request({
     url: '/api/v1/rule-groups',
     method: 'POST',
@@ -73,7 +68,7 @@ export const createRuleGroup = (data: CreateRuleGroupDTO): AxiosPromise<number> 
   })
 }
 
-export const updateRuleGroup = (id: number, data: UpdateRuleGroupDTO): AxiosPromise<void> => {
+export const updateRuleGroup = (id: number, data: UpdateRuleGroupDTO): AxiosPromise<RuleGroupVO> => {
   return request({
     url: `/api/v1/rule-groups/${id}`,
     method: 'PUT',
@@ -88,9 +83,10 @@ export const deleteRuleGroup = (id: number): AxiosPromise<void> => {
   })
 }
 
-export const toggleRuleGroupStatus = (id: number): AxiosPromise<void> => {
+export const toggleRuleGroupStatus = (id: number, enabled: boolean): AxiosPromise<void> => {
   return request({
-    url: `/api/v1/rule-groups/${id}/toggle`,
-    method: 'POST',
+    url: `/api/v1/rule-groups/${id}/enabled`,
+    method: 'PUT',
+    params: { enabled },
   })
 }
