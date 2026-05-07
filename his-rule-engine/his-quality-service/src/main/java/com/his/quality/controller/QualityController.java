@@ -61,6 +61,12 @@ public class QualityController {
     @PostMapping
     @Operation(summary = "新增质控规则")
     public Result<Void> create(@RequestBody QualityDefinition quality) {
+        if (quality.getItemKey() == null || quality.getItemKey().isEmpty()) {
+            quality.setItemKey("QC_" + System.currentTimeMillis());
+        }
+        if (quality.getStatus() == null) {
+            quality.setStatus("active");
+        }
         qualityDefinitionMapper.insert(quality);
         return Result.success();
     }

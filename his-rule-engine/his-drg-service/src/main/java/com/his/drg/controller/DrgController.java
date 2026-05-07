@@ -60,6 +60,12 @@ public class DrgController {
     @PostMapping
     @Operation(summary = "新增DRG定义")
     public Result<Void> create(@RequestBody DrgDefinition drg) {
+        if (drg.getDrgCode() == null || drg.getDrgCode().isEmpty()) {
+            drg.setDrgCode("DRG_" + System.currentTimeMillis());
+        }
+        if (drg.getStatus() == null) {
+            drg.setStatus("active");
+        }
         drgDefinitionMapper.insert(drg);
         return Result.success();
     }

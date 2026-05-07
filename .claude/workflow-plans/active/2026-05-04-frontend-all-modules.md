@@ -2,7 +2,7 @@
 
 **创建日期**: 2026-05-04
 **状态**: ✅ completed
-**完成日期**: 2026-05-05
+**完成日期**: 2026-05-06
 **优先级**: P0
 
 ---
@@ -15,15 +15,60 @@
 
 | # | 模块 | 路由 | 后端 API | 优先级 | 状态 |
 |---|------|------|---------|--------|------|
-| 1 | 规则组管理 | `/rule-group` | `/api/v1/rule-groups` | P1 | ✅ 已完成 |
-| 2 | 规则定义 | `/rule` | `/api/v1/rules` | P1 | ✅ 已完成 |
-| 3 | 公式管理 | `/formula` | `/api/v1/formulas` | P1 | ✅ 已完成 |
-| 4 | 规则流列表 | `/flow` | `/api/v2/flows` | ✅ 已完成 | ✅ 已完成 |
-| 5 | 规则流设计器 | `/flow/editor/:id` | `/api/v2/flows/*` | ✅ 已完成 | ✅ 已完成 |
-| 6 | 结算管理 | `/settlement` | `/api/v1/settlements` | P2 | ✅ 已完成 |
-| 7 | 用药审核 | `/drug` | `/api/v1/drugs` | P2 | ✅ 已完成 |
-| 8 | 质量控制 | `/quality` | `/api/v1/quality` | P3 | ✅ 已完成 |
-| 9 | DRG管理 | `/drg` | `/api/v1/drg` | P3 | ✅ 已完成 |
+| 1 | 规则组管理 | `/rule-group` | `/api/v1/rule-groups` | P1 | ✅ 增删改查全部完成 |
+| 2 | 规则定义 | `/rule` | `/api/v1/rules` | P1 | ✅ 增删改查全部完成 |
+| 3 | 公式管理 | `/formula` | `/api/v1/formulas` | P1 | ✅ 增删改查全部完成 |
+| 4 | 规则流列表 | `/flow` | `/api/v1/flows` | P1 | ✅ 增删改查全部完成 |
+| 5 | 规则流设计器 | `/flow/editor/:id` | `/api/v1/flows/*` | ✅ 已完成 | ✅ 已完成 |
+| 6 | 结算管理 | `/settlement` | `/api/v1/settlements` | P2 | ✅ 增删改查全部完成 |
+| 7 | 用药审核 | `/drug` | `/api/v1/drugs` | P2 | ✅ 增删改查全部完成 |
+| 8 | 质量控制 | `/quality` | `/api/v1/quality` | P3 | ✅ 增删改查全部完成 |
+| 9 | DRG管理 | `/drg` | `/api/v1/drg` | P3 | ✅ 增删改查全部完成 |
+
+## 2026-05-06 CRUD 修复记录
+
+### 修复内容
+
+| 模块 | 问题 | 修复方式 | 状态 |
+|------|------|---------|------|
+| **规则组** | 前端表单字段 `groupKey` 与后端 `groupCode` 不一致 | 前端API改用 `groupCode`，Entity添加 `@JsonProperty("groupKey")` 映射，前端 `loadData` 时做字段转换 | ✅ |
+| **规则组** | 前端查询参数未传给后端 | `getRuleGroupPage` 添加 `query` 参数，后端 `pageList` 支持 `groupName`/`status` 过滤 | ✅ |
+| **结算管理** | 前端表单字段与后端 `SettlementDTO` 不一致 | 前端表单改为 `visitId/patientType/insuranceType/hospitalLevel/totalFee`；创建 `SettlementUpdateDTO` | ✅ |
+| **结算管理** | 后端缺少更新和删除接口 | `SettlementController` 新增 `PUT /{id}`、`DELETE /{id}` | ✅ |
+| **用药审核** | 数据库 `drug_code` 无默认值导致插入失败 | `DrugController.create()` 自动生成 `drugCode = "DRG" + timestamp` | ✅ |
+| **质量控制** | 数据库 `item_key` 无默认值导致插入失败 | `QualityController.create()` 自动生成 `itemKey = "QC_" + timestamp`，默认 `status = "active"` | ✅ |
+| **DRG管理** | 数据库 `drg_code` 无默认值导致插入失败 | `DrgController.create()` 自动生成 `drgCode = "DRG_" + timestamp`，默认 `status = "active"` | ✅ |
+
+### 修改文件清单
+
+| 文件 | 修改内容 |
+|------|---------|
+| RuleGroupController.java | 添加 `RuleGroupCreateDTO`，支持 `@RequestBody`，分页接口支持 `groupName`/`status` |
+| RuleGroupService.java | `pageList` 添加 `groupName`/`status` 参数过滤 |
+| RuleGroup.java | 添加 `@JsonProperty("groupKey")` 映射 `groupCode` |
+| rule-group.ts (前端API) | DTO 改用 `groupCode`，`getRuleGroupPage` 支持 query 参数 |
+| RuleGroup.vue (前端页面) | 表单改用 `groupCode`/`priority`，`loadData` 字段映射，添加编辑功能 |
+| SettlementController.java | 新增 `PUT /{id}`、`DELETE /{id}` 接口，使用 `SettlementUpdateDTO` |
+| SettlementService.java | 新增 `update()`、`delete()` 方法 |
+| SettlementUpdateDTO.java | 新建 DTO（可选字段） |
+| settlement.ts (前端API) | 添加 `updateSettlement`、`deleteSettlement`，DTO 改为匹配后端字段 |
+| SettlementList.vue (前端页面) | 表单改为 `visitId/patientType/insuranceType/hospitalLevel/totalFee`，添加编辑/删除 |
+| DrugController.java | `create()` 自动生成 `drugCode` |
+| QualityController.java | `create()` 自动生成 `itemKey`，默认 `status = "active"` |
+| DrgController.java | `create()` 自动生成 `drgCode`，默认 `status = "active"` |
+
+### API 验证结果（2026-05-06）
+
+| 模块 | 创建 | 更新 | 删除 | 查询 |
+|------|------|------|------|------|
+| 规则组 | ✅ Code: 0 | ✅ Code: 0 | ✅ Code: 0 | ✅ 正常 |
+| 规则定义 | ✅ Code: 0 | ✅ Code: 0 | ✅ Code: 0 | ✅ 正常 |
+| 公式管理 | ✅ Code: 0 | ✅ Code: 0 | ✅ Code: 0 | ✅ 正常 |
+| 规则流 | ✅ Code: 0 | ✅ Code: 0 | ✅ Code: 0 | ✅ 正常 |
+| 结算管理 | ✅ Code: 0 | ✅ Code: 0 | ✅ Code: 0 | ✅ 正常 |
+| 用药审核 | ✅ Code: 0 | ✅ Code: 0 | ✅ Code: 0 | ✅ 正常 |
+| 质量控制 | ✅ Code: 0 | ✅ Code: 0 | ✅ Code: 0 | ✅ 正常 |
+| DRG管理 | ✅ Code: 0 | ✅ Code: 0 | ✅ Code: 0 | ✅ 正常 |
 
 ## 技术栈
 

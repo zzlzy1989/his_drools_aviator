@@ -221,4 +221,27 @@ V1.0 已完成核心功能开发，所有 7 个微服务已 Docker 部署并正�
 
 ---
 
+## 8. 2026-05-06 CRUD 增删改查完成
+
+### 全模块增删改查验证通过
+
+所有 8 个业务模块的 CRUD（创建/查询/更新/删除）功能全部完成并验证通过。
+
+### 修复内容
+
+| 模块 | 问题 | 修复方式 | 状态 |
+|------|------|---------|------|
+| 规则组 | 前后端字段名不一致 (groupKey vs groupCode) | Entity 添加 `@JsonProperty`，前端API对齐，loadData字段映射 | ✅ |
+| 结算管理 | 前端表单字段与后端DTO不匹配 | 表单改为 visitId/patientType/insuranceType/hospitalLevel/totalFee | ✅ |
+| 结算管理 | 后端缺少 PUT/DELETE 接口 | 新增 update/delete 接口和 SettlementUpdateDTO | ✅ |
+| 用药审核 | 数据库 drug_code 无默认值 | create() 自动生成 drugCode | ✅ |
+| 质量控制 | 数据库 item_key 无默认值 | create() 自动生成 itemKey，默认 status = active | ✅ |
+| DRG管理 | 数据库 drg_code 无默认值 | create() 自动生成 drgCode，默认 status = active | ✅ |
+
+### API 验证结果
+
+所有 8 个模块：创建 ✅、查询 ✅、更新 ✅、删除 ✅
+
+---
+
 *计划创建 | 2026-05-01*
