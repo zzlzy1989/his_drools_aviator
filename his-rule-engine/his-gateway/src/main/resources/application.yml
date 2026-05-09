@@ -15,6 +15,9 @@ spring:
         file-extension: yml
         import-check:
           enabled: false
+    service-registry:
+      auto-registration:
+        enabled: true
     gateway:
       discovery:
         locator:
@@ -24,7 +27,7 @@ spring:
         - id: his-rule-service
           uri: lb://his-rule-service
           predicates:
-            - Path=/api/v1/rules/**
+            - Path=/api/v1/rules/**,/api/v1/flows/**
           filters:
             - StripPrefix=0
         - id: his-formula-service
@@ -57,8 +60,18 @@ spring:
             - Path=/api/v1/drg/**
           filters:
             - StripPrefix=0
+        - id: his-rule-service-v2
+          uri: lb://his-rule-service
+          predicates:
+            - Path=/api/v2/flows/**
+          filters:
+            - StripPrefix=0
 
 logging:
   level:
     com.his.gateway: debug
     org.springframework.cloud.gateway: debug
+
+his:
+  jwt:
+    enabled: false  # 开发阶段关闭JWT认证，前端无登录页面

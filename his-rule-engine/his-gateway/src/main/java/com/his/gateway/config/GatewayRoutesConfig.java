@@ -18,7 +18,7 @@ public class GatewayRoutesConfig {
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
                 .route("rule-service", r -> r
-                        .path("/api/v1/rules/**", "/api/v1/rule-groups/**")
+                        .path("/api/v1/rules/**", "/api/v1/rule-groups/**", "/api/v2/flows/**")
                         .filters(f -> f.stripPrefix(0))
                         .uri("lb://his-rule-service"))
 

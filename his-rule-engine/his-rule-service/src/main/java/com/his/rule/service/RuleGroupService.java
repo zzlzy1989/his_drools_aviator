@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class RuleGroupService {
      * 查询所有启用的规则分组
      */
     public List<RuleGroup> listEnabled() {
-        String tenantId = TenantContext.getTenantId();
+        String tenantId = TenantContext.getTenantId("T001");
         return ruleGroupMapper.selectList(
                 new LambdaQueryWrapper<RuleGroup>()
                         .eq(RuleGroup::getTenantId, tenantId)
@@ -41,15 +42,17 @@ public class RuleGroupService {
     /**
      * 分页查询规则分组
      */
-    public IPage<RuleGroup> pageList(Integer page, Integer pageSize) {
-        String tenantId = TenantContext.getTenantId();
+    public IPage<RuleGroup> pageList(Integer page, Integer pageSize, String groupName, String status) {
+        String tenantId = TenantContext.getTenantId("T001");
         Page<RuleGroup> pageParam = new Page<>(page, pageSize);
-        return ruleGroupMapper.selectPage(pageParam,
-                new LambdaQueryWrapper<RuleGroup>()
-                        .eq(RuleGroup::getTenantId, tenantId)
-                        .eq(RuleGroup::getDeleted, 0)
-                        .orderByAsc(RuleGroup::getPriority)
-        );
+        LambdaQueryWrapper<RuleGroup> wrapper = new LambdaQueryWrapper<RuleGroup>()
+                .eq(RuleGroup::getTenantId, tenantId)
+                .eq(RuleGroup::getDeleted, 0)
+                .like(StringUtils.hasText(groupName), RuleGroup::getGroupName, groupName)
+                .eq("active".equals(status), RuleGroup::getIsEnabled, 1)
+                .eq("inactive".equals(status), RuleGroup::getIsEnabled, 0)
+                .orderByAsc(RuleGroup::getPriority);
+        return ruleGroupMapper.selectPage(pageParam, wrapper);
     }
 
     /**

@@ -22,7 +22,10 @@ public class SettlementResult {
 
     private String patientId;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String patientType;
+
+    private String patientName;
 
     private String insuranceType;
 

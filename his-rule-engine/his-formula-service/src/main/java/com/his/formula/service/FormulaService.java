@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,23 +41,23 @@ public class FormulaService {
      * 分页查询公式
      */
     public IPage<FormulaVO> pageList(Integer page, Integer pageSize, FormulaQueryDTO queryDTO) {
-        String tenantId = TenantContext.getTenantId();
+        String tenantId = TenantContext.getTenantId("T001");
 
         Page<AviatorFormula> pageParam = new Page<>(page, pageSize);
         LambdaQueryWrapper<AviatorFormula> wrapper = new LambdaQueryWrapper<AviatorFormula>()
                 .eq(AviatorFormula::getTenantId, tenantId)
                 .eq(AviatorFormula::getDeleted, 0);
 
-        if (queryDTO.getCategory() != null) {
+        if (StringUtils.hasText(queryDTO.getCategory())) {
             wrapper.eq(AviatorFormula::getCategory, queryDTO.getCategory());
         }
-        if (queryDTO.getStatus() != null) {
+        if (StringUtils.hasText(queryDTO.getStatus())) {
             wrapper.eq(AviatorFormula::getStatus, queryDTO.getStatus());
         }
-        if (queryDTO.getFormulaKey() != null) {
+        if (StringUtils.hasText(queryDTO.getFormulaKey())) {
             wrapper.like(AviatorFormula::getFormulaKey, queryDTO.getFormulaKey());
         }
-        if (queryDTO.getFormulaName() != null) {
+        if (StringUtils.hasText(queryDTO.getFormulaName())) {
             wrapper.like(AviatorFormula::getFormulaName, queryDTO.getFormulaName());
         }
 

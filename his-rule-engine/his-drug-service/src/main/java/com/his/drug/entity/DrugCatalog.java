@@ -28,8 +28,10 @@ public class DrugCatalog {
 
     private String category;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("insuranceType")
     private String reimbursementType;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("unitPrice")
     private BigDecimal limitPrice;
 
     private String hospitalLevel;

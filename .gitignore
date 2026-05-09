@@ -7,7 +7,7 @@
 **/release.properties
 **/dependency-reduced-pom.xml
 **/release-pom.xml
-
+docs/
 # IDE
 .idea/
 *.iml
@@ -45,3 +45,5 @@ coverage/
 *.gcov
 *.gcda
 *.gcno
+his-rule-engine-web/node_modules/
+his-rule-engine-web/dist/

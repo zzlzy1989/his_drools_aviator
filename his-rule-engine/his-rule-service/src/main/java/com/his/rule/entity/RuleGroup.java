@@ -15,6 +15,7 @@ public class RuleGroup {
     @TableId(type = IdType.AUTO)
     private Long id;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("groupKey")
     private String groupCode;
 
     private String groupName;

@@ -79,12 +79,12 @@ his-common/                          # Shared libraries
 
 ### Dependency Stack
 
-- **Spring Boot 3.2.5** + **Spring Cloud 2023.0.1** + **Spring Cloud Alibaba 2023.0.1.0**
+- **Spring Boot 3.5.0** + **Spring Cloud 2025.0.1** + **Spring Cloud Alibaba 2025.1.0.0**
 - **Drools 8.44.0.Final** - Rule engine
 - **Aviator 5.4.3** - Expression evaluation
 - **Caffeine 3.1.8** - Local cache for compiled expressions
 - **MyBatis-Plus 3.5.6** - ORM
-- **Nacos** - Service discovery + configuration center
+- **Nacos 3.2.0** - Service discovery + configuration center (client 3.1.1)
 
 ## Project-Specific Conventions
 
@@ -138,4 +138,15 @@ rule "3. 报销金额计算"
 
 ## Status
 
-The project is in **early development** stage. Most modules have skeleton structure with Application class and basic configuration only. Business logic implementation is pending. Core modules like `his-common-aviator` and `his-common-drools` are defined but contain no Java files yet.
+**功能开发完成，联调通过** (2026-05-01)。所有 7 个微服务正常运行:
+- his-gateway (:9000)
+- his-rule-service (:9001)
+- his-formula-service (:9002)
+- his-settlement-service (:9003)
+- his-drug-service (:9004)
+- his-quality-service (:9005)
+- his-drg-service (:9006)
+
+SCA 已升级至 2025.1.0.0，适配 Nacos 3.2.0。
+
+P2: 单元测试待开始

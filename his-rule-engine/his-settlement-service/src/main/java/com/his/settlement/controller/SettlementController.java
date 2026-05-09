@@ -4,11 +4,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.his.common.web.result.PageResult;
 import com.his.common.web.result.Result;
 import com.his.settlement.dto.SettlementDTO;
+import com.his.settlement.dto.SettlementUpdateDTO;
 import com.his.settlement.dto.SettlementVO;
 import com.his.settlement.service.FormulaLoaderService;
 import com.his.settlement.service.SettlementService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -50,14 +50,15 @@ public class SettlementController {
         return Result.success();
     }
 
-    @GetMapping("/page")
+    @GetMapping
     @Operation(summary = "分页查询结算记录")
     public Result<PageResult<SettlementVO>> pageList(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer pageSize,
+            @RequestParam(required = false) String settlementNo,
             @RequestParam(required = false) String patientId,
             @RequestParam(required = false) String status) {
-        IPage<SettlementVO> pageResult = settlementService.pageList(page, pageSize, patientId, status);
+        IPage<SettlementVO> pageResult = settlementService.pageList(page, pageSize, settlementNo, patientId, status);
         return Result.success(PageResult.of(pageResult));
     }
 
@@ -65,5 +66,19 @@ public class SettlementController {
     @Operation(summary = "根据结算单号查询")
     public Result<SettlementVO> getBySettlementNo(@PathVariable String settlementNo) {
         return Result.success(settlementService.getBySettlementNo(settlementNo));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "更新结算记录")
+    public Result<Void> update(@PathVariable Long id, @RequestBody SettlementUpdateDTO dto) {
+        settlementService.update(id, dto);
+        return Result.success();
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "删除结算记录")
+    public Result<Void> delete(@PathVariable Long id) {
+        settlementService.delete(id);
+        return Result.success();
     }
 }

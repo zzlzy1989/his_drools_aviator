@@ -19,6 +19,8 @@ public class SettlementVO {
 
     private String patientId;
 
+    private String patientName;
+
     private String patientType;
 
     private String insuranceType;
