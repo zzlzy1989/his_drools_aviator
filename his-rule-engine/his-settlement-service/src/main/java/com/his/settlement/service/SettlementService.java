@@ -3,6 +3,7 @@ package com.his.settlement.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.his.common.SettlementFact;
 import com.his.common.SkillContext;
 import com.his.common.SkillResult;
 import com.his.common.ResultLevel;
@@ -14,6 +15,7 @@ import com.his.settlement.dto.SettlementUpdateDTO;
 import com.his.settlement.dto.SettlementVO;
 import com.his.settlement.entity.SettlementResult;
 import com.his.settlement.mapper.SettlementResultMapper;
+import com.his.settlement.pipeline.SkillPipelineExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
@@ -36,6 +39,7 @@ public class SettlementService {
     private final SettlementResultMapper settlementMapper;
     private final AuditLogService auditLogService;
     private final FormulaLoaderService formulaLoaderService;
+    private final SkillPipelineExecutor skillPipelineExecutor;
 
     private static final DateTimeFormatter SNO_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
@@ -71,11 +75,39 @@ public class SettlementService {
 
         settlementMapper.insert(result);
 
-        SkillContext context = new SkillContext();
+        SettlementFact fact = new SettlementFact();
+        fact.setPatientId(dto.getPatientId());
+        fact.setPatientType(dto.getPatientType());
+        fact.setInsuranceType(dto.getInsuranceType());
+        fact.setHospitalLevel(dto.getHospitalLevel());
+        fact.setTotalFee(dto.getTotalFee());
+        fact.setTenantId(tenantId);
+        fact.setSettlementId(String.valueOf(result.getId()));
+
+        SkillContext<SettlementFact> context = new SkillContext<>();
         context.setTenantId(tenantId);
         context.setEventType("EVENT_FEE_SETTLE");
+        context.setPayload(fact);
 
-        executeSettlementSkills(context, result);
+        skillPipelineExecutor.execute(context);
+
+        result.setDeductible(fact.getDeductible());
+        result.setRatio(fact.getRatio());
+
+        if (fact.getTotalFee().compareTo(fact.getDeductible()) <= 0) {
+            result.setReimburseAmount(BigDecimal.ZERO);
+            result.setSelfPayAmount(fact.getTotalFee());
+        } else {
+            BigDecimal reimburseAmount = formulaLoaderService.executeReimburseFormula(
+                    result.getTenantId(),
+                    result.getPatientType(),
+                    result.getTotalFee(),
+                    fact.getDeductible(),
+                    fact.getRatio()
+            );
+            result.setReimburseAmount(reimburseAmount);
+            result.setSelfPayAmount(fact.getTotalFee().subtract(reimburseAmount));
+        }
 
         updateSettlementResult(result, context);
 
@@ -88,74 +120,6 @@ public class SettlementService {
                 result.getSettlementNo(), result);
 
         return convertToVO(result);
-    }
-
-    /**
-     * 执行结算规则
-     */
-    private void executeSettlementSkills(SkillContext context, SettlementResult result) {
-        context.addResult(new SkillResult(ResultLevel.PASS, "System", "结算流程启动"));
-
-        if (result.getPatientType() == null || result.getPatientType().isBlank()) {
-            context.addResult(new SkillResult(ResultLevel.BLOCK, "IdentityCheck", "患者类型缺失"));
-            return;
-        }
-
-        BigDecimal deductible = calculateDeductible(result.getPatientType());
-        result.setDeductible(deductible);
-
-        BigDecimal ratio = calculateRatio(result.getPatientType(), result.getInsuranceType());
-        result.setRatio(ratio);
-
-        if (result.getTotalFee().compareTo(deductible) <= 0) {
-            result.setReimburseAmount(BigDecimal.ZERO);
-            result.setSelfPayAmount(result.getTotalFee());
-            context.addResult(new SkillResult(ResultLevel.WARN, "DeductibleCheck", "未达到起付线"));
-            return;
-        }
-
-        // 使用动态公式引擎计算报销金额
-        BigDecimal reimburseAmount = formulaLoaderService.executeReimburseFormula(
-                result.getTenantId(),
-                result.getPatientType(),
-                result.getTotalFee(),
-                deductible,
-                ratio
-        );
-        result.setReimburseAmount(reimburseAmount);
-        result.setSelfPayAmount(result.getTotalFee().subtract(reimburseAmount));
-
-        context.addResult(new SkillResult(ResultLevel.PASS, "ReimburseCalc", "报销金额计算完成"));
-    }
-
-    /**
-     * 计算起付线
-     */
-    private BigDecimal calculateDeductible(String patientType) {
-        return switch (patientType.toLowerCase()) {
-            case "employee" -> new BigDecimal("1000");
-            case "resident" -> new BigDecimal("500");
-            case "aid" -> new BigDecimal("300");
-            default -> BigDecimal.ZERO;
-        };
-    }
-
-    /**
-     * 计算报销比例
-     */
-    private BigDecimal calculateRatio(String patientType, String insuranceType) {
-        BigDecimal baseRatio = switch (patientType.toLowerCase()) {
-            case "employee" -> new BigDecimal("0.85");
-            case "resident" -> new BigDecimal("0.65");
-            case "aid" -> new BigDecimal("0.50");
-            default -> new BigDecimal("0.00");
-        };
-
-        if ("三级".equals(insuranceType) || "3".equals(insuranceType)) {
-            baseRatio = baseRatio.multiply(new BigDecimal("0.9"));
-        }
-
-        return baseRatio;
     }
 
     /**

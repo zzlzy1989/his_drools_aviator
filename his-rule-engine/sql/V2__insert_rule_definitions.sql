@@ -21,7 +21,7 @@ INSERT INTO `rule_definition` (`rule_group_id`, `rule_key`, `rule_name`, `rule_t
 -- 规则组1：医保结算规则组
 (1, 'rule.reimbursement.identity_check', '患者身份校验规则', 
 'package com.his.rules.reimbursement;
-import com.his.fact.SettlementFact;
+import com.his.common.SettlementFact;
 import com.his.common.ResultLevel;
 
 rule "1. 患者身份校验"
@@ -36,7 +36,7 @@ end',
 
 (1, 'rule.reimbursement.insurance_type_check', '医保类型校验规则',
 'package com.his.rules.reimbursement;
-import com.his.fact.SettlementFact;
+import com.his.common.SettlementFact;
 import com.his.common.ResultLevel;
 
 rule "2. 医保类型校验"
@@ -51,7 +51,7 @@ end',
 
 (1, 'rule.reimbursement.fee_validation', '费用合法性校验规则',
 'package com.his.rules.reimbursement;
-import com.his.fact.SettlementFact;
+import com.his.common.SettlementFact;
 import com.his.common.ResultLevel;
 import java.math.BigDecimal;
 
@@ -67,7 +67,7 @@ end',
 
 (1, 'rule.reimbursement.deductible_check', '起付线校验规则',
 'package com.his.rules.reimbursement;
-import com.his.fact.SettlementFact;
+import com.his.common.SettlementFact;
 import com.his.common.ResultLevel;
 import java.math.BigDecimal;
 
@@ -84,7 +84,7 @@ end',
 
 (1, 'rule.reimbursement.cap_check', '封顶线校验规则',
 'package com.his.rules.reimbursement;
-import com.his.fact.SettlementFact;
+import com.his.common.SettlementFact;
 import com.his.common.ResultLevel;
 import java.math.BigDecimal;
 
@@ -103,7 +103,7 @@ end',
 
 (1, 'rule.reimbursement.settlement_calculation', '报销金额计算规则',
 'package com.his.rules.reimbursement;
-import com.his.fact.SettlementFact;
+import com.his.common.SettlementFact;
 import com.his.helper.AviatorHelper;
 import java.math.BigDecimal;
 
@@ -126,7 +126,7 @@ end',
 -- 规则组2：住院报销规则组
 (2, 'rule.inpatient.admission_check', '住院资格校验规则',
 'package com.his.rules.inpatient;
-import com.his.fact.SettlementFact;
+import com.his.common.SettlementFact;
 import com.his.common.ResultLevel;
 
 rule "1. 住院资格校验"
@@ -140,7 +140,7 @@ end',
 
 (2, 'rule.inpatient.length_of_stay_check', '住院天数校验规则',
 'package com.his.rules.inpatient;
-import com.his.fact.SettlementFact;
+import com.his.common.SettlementFact;
 import com.his.common.ResultLevel;
 
 rule "2. 住院天数校验"
@@ -154,7 +154,7 @@ end',
 
 (2, 'rule.inpatient.icu_fee_check', 'ICU费用校验规则',
 'package com.his.rules.inpatient;
-import com.his.fact.SettlementFact;
+import com.his.common.SettlementFact;
 import com.his.common.ResultLevel;
 import java.math.BigDecimal;
 

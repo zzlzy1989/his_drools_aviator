@@ -1,33 +1,29 @@
-package com.his.common;
+package com.his.fact;
 
+import com.his.common.ResultLevel;
+import com.his.common.SkillResult;
 import lombok.Data;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 费用 Fact 对象，用于费用控制规则。
+ */
 @Data
-public class SettlementFact {
+public class CostFact {
 
-    private String patientId;
-    private String patientName;
-    private String patientType;
     private String tenantId;
-    private String settlementId;
+    private String deptId;
+    private String deptName;
 
     private BigDecimal totalFee;
-    private BigDecimal deductible;
-    private BigDecimal ratio;
-    private BigDecimal finalAmount;
+    private BigDecimal drugFee;
+    private BigDecimal consumableFee;
+    private BigDecimal examFee;
 
-    private String insuranceType;
-    private String hospitalLevel;
-    private LocalDateTime admissionDate;
-    private LocalDateTime dischargeDate;
-
-    private String diagnosisCode;
-    private String drugCode;
-    private Integer drugQuantity;
+    private BigDecimal drugRatio;
+    private BigDecimal consumableRatio;
 
     private List<SkillResult> results = new ArrayList<>();
 

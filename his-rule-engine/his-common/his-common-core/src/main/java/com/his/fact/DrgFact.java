@@ -1,33 +1,36 @@
-package com.his.common;
+package com.his.fact;
 
+import com.his.common.ResultLevel;
+import com.his.common.SkillResult;
 import lombok.Data;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * DRG 分组 Fact 对象，用于 DRG 分组规则。
+ */
 @Data
-public class SettlementFact {
+public class DrgFact {
 
-    private String patientId;
-    private String patientName;
-    private String patientType;
     private String tenantId;
-    private String settlementId;
+    private String visitId;
+    private String patientId;
+
+    private String mainDiagnosis;
+    private List<String> secondaryDiagnoses;
+    private String surgeryCode;
+    private Boolean expectedSurgery;
 
     private BigDecimal totalFee;
-    private BigDecimal deductible;
-    private BigDecimal ratio;
-    private BigDecimal finalAmount;
+    private Integer lengthOfStay;
+    private String dischargeStatus;
 
-    private String insuranceType;
-    private String hospitalLevel;
-    private LocalDateTime admissionDate;
-    private LocalDateTime dischargeDate;
-
-    private String diagnosisCode;
-    private String drugCode;
-    private Integer drugQuantity;
+    // DRG 计算结果
+    private String drgCode;
+    private String drgName;
+    private BigDecimal baseWeight;
+    private BigDecimal expectedFee;
 
     private List<SkillResult> results = new ArrayList<>();
 
