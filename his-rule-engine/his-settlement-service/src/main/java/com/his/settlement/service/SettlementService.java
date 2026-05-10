@@ -50,6 +50,16 @@ public class SettlementService {
     public SettlementVO settle(SettlementDTO dto) {
         String tenantId = TenantContext.getTenantId();
 
+        // 费用不能为负数
+        if (dto.getTotalFee() == null || dto.getTotalFee().compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException("HIS-104", "费用不能为负数");
+        }
+
+        // 患者类型不能为空
+        if (!StringUtils.hasText(dto.getPatientType())) {
+            throw new BusinessException("HIS-102", "患者类型不能为空");
+        }
+
         SettlementResult existing = settlementMapper.selectOne(
                 new LambdaQueryWrapper<SettlementResult>()
                         .eq(SettlementResult::getTenantId, tenantId)

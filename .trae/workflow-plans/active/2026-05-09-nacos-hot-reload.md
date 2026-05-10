@@ -3,7 +3,7 @@ title: "Nacos 配置中心热更新机制"
 type: "feature"
 status: "pending"
 created_at: "2026-05-09"
-updated_at: "2026-05-09"
+updated_at: "2026-05-10"
 completed_at: null
 phase: "Phase 2"
 owner: "developer"
@@ -11,8 +11,9 @@ reviewer: ""
 priority: "P1"
 tags: ["Nacos", "热更新", "配置中心", "动态刷新", "规则引擎"]
 related_files:
-  - "his-rule-engine/"
-  - "his-settlement-service/"
+  - "his-rule-engine/his-rule-service/"
+  - "his-rule-engine/his-formula-service/"
+  - "his-rule-engine/his-settlement-service/"
   - "docker/"
 dependencies:
   - "PLAN-20260509-001"
@@ -22,6 +23,7 @@ dependencies:
 
 > 计划 ID: PLAN-20260509-003  
 > 创建时间: 2026-05-09  
+> 更新时间: 2026-05-10  
 > 状态: ⏳ pending  
 
 ---
@@ -40,6 +42,13 @@ dependencies:
 ### 1.3 范围
 - **包含**: Nacos 监听器、规则刷新器、公式刷新器、刷新 API
 - **不包含**: Nacos 集群部署（运维范畴）
+
+### 1.4 当前架构现状
+| 组件 | 当前状态 | 热更新需求 |
+|------|---------|-----------|
+| his-rule-service (:9001) | 规则管理、规则流、规则分组 | KieBase 热刷新 |
+| his-formula-service (:9002) | Aviator 公式管理 | Expression 缓存刷新 |
+| his-settlement-service (:9003) | 结算服务、规则执行 | 监听刷新事件 |
 
 ---
 
@@ -233,6 +242,7 @@ public class RuleRefresher {
 | 时间 | 操作 | 状态变更 | 备注 |
 |------|------|---------|------|
 | 2026-05-09 | 创建计划 | pending | 初始创建 |
+| 2026-05-10 | 更新计划 | pending | 补充当前架构现状、依赖服务列表 |
 | | | | |
 
 ---
