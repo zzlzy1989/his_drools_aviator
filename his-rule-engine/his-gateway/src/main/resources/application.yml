@@ -75,3 +75,12 @@ logging:
 his:
   jwt:
     enabled: false  # 开发阶段关闭JWT认证，前端无登录页面
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
