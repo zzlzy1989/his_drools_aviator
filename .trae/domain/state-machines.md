@@ -328,4 +328,59 @@ stateDiagram-v2
 
 ---
 
-最后更新: 2026-04-26 | 共 6 个核心状态机
+## SM-07: 规则编排流程（RuleFlow）状态机
+
+```mermaid
+stateDiagram-v2
+    [*] --> Draft: 创建流程
+    
+    Draft --> Editing: 开始编辑
+    Draft --> Draft: 保存草稿
+    
+    Editing --> Draft: 保存草稿
+    Editing --> Validating: 提交校验
+    
+    Validating --> Validated: 拓扑/条件校验通过
+    Validating --> Editing: 校验失败（需修复）
+    
+    Validated --> Active: 发布生效
+    Validated --> Editing: 修改重校
+    
+    Active --> Inactive: 停用
+    Active --> Active: 发布新版本
+    Active --> Archived: 归档
+    
+    Inactive --> Active: 重新启用
+    Inactive --> Archived: 归档
+    
+    Archived --> [*]: 物理删除
+    
+    note right of Draft
+        草稿: 流程基本信息
+        节点和边定义中
+    end note
+    
+    note right of Validating
+        校验中: start/end节点存在
+        无孤立节点/环
+        条件表达式合法
+    end note
+    
+    note right of Active
+        生效: 可被结算调用
+        旧版本自动停用
+        历史记录已保存
+    end note
+```
+
+**状态字段**: `RuleFlow.status` = `draft` | `editing` | `validating` | `validated` | `active` | `inactive` | `archived`
+
+**关键约束**:
+- Draft → Validating 必须包含至少 1 个 start 节点和 1 个 end 节点
+- Validating → Validated 校验拓扑完整性（无孤岛/无死循环）+ Aviator 条件表达式编译成功
+- Active → 新版本发布时，旧版本自动 inactive（同一流程同租户只一个 active）
+- Archived 流程不可恢复，只能作为新流程模板复制
+
+---
+
+最后更新: 2026-05-10 | 共 7 个核心状态机
