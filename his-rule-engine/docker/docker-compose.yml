@@ -194,6 +194,25 @@ services:
       - his-rule-service
       - his-formula-service
 
+  # ===== HIS 监控服务 (9007) =====
+  his-monitor-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        SERVICE_NAME: his-monitor-service
+    container_name: his-monitor-service
+    ports:
+      - "9007:9007"
+    environment:
+      <<: *common-env
+      SERVER_PORT: 9007
+    volumes:
+      - ./logs/monitor-service:/app/logs
+    <<: *common-config
+    depends_on:
+      - his-gateway
+
 networks:
   his-net:
     driver: bridge

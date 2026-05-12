@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * 公式管理 Controller
  */
@@ -77,5 +79,25 @@ public class FormulaController {
     public Result<String> validate(@PathVariable Long id) {
         String message = formulaService.validate(id);
         return Result.success(message);
+    }
+
+    @PostMapping("/{id}/snapshot")
+    @Operation(summary = "保存快照")
+    public Result<Void> saveSnapshot(@PathVariable Long id) {
+        formulaService.saveSnapshot(id);
+        return Result.success(null);
+    }
+
+    @PostMapping("/{id}/rollback")
+    @Operation(summary = "回滚到指定版本")
+    public Result<FormulaVO> rollback(@PathVariable Long id,
+                                       @RequestParam Integer version) {
+        return Result.success(formulaService.rollback(id, version));
+    }
+
+    @GetMapping("/{id}/versions")
+    @Operation(summary = "获取版本历史")
+    public Result<List<FormulaHistoryVO>> getVersionHistory(@PathVariable Long id) {
+        return Result.success(formulaService.getVersionHistory(id));
     }
 }

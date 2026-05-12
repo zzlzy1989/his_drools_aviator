@@ -1,10 +1,10 @@
 ---
 title: "Nacos 配置中心热更新机制"
 type: "feature"
-status: "pending"
+status: "completed"
 created_at: "2026-05-09"
 updated_at: "2026-05-10"
-completed_at: null
+completed_at: "2026-05-12"
 phase: "Phase 2"
 owner: "developer"
 reviewer: ""
@@ -216,13 +216,17 @@ public class RuleRefresher {
 
 ## 5. 验收标准
 
-- [ ] Nacos 配置监听器正常工作
-- [ ] 规则热更新无需重启服务
-- [ ] 公式热更新缓存正确刷新
-- [ ] 刷新失败自动回滚到上一版本
-- [ ] 手动触发刷新 API 可用
-- [ ] 刷新日志和审计记录完整
-- [ ] 灰度发布机制正常
+- [x] Nacos 配置监听器正常工作
+- [x] 规则热更新无需重启服务
+- [x] 公式热更新缓存正确刷新
+- [x] 刷新失败自动回滚到上一版本
+- [x] 手动触发刷新 API 可用
+- [x] 刷新日志和审计记录完整
+- [x] 灰度发布机制正常
+- [x] 公式版本历史记录（更新时自动保存）
+- [x] 公式快照 API
+- [x] 公式回滚 API
+- [x] 公式版本列表 API
 
 ---
 
@@ -245,6 +249,7 @@ public class RuleRefresher {
 | 2026-05-10 | 更新计划 | pending | 补充当前架构现状、依赖服务列表 |
 | 2026-05-10 | Phase 1-3 完成 | in_progress | 配置热更新监听器 + API |
 | 2026-05-10 | 测试通过 | completed | 热更新API + 结算验证 |
+| 2026-05-12 | Phase 4 完成 | completed | 公式历史快照 + 回滚 + 版本列表 |
 
 ---
 
@@ -272,7 +277,19 @@ public class RuleRefresher {
 | `/api/v1/settlements/refresh?tenantId=X&formulaKey=Y` | POST | 指定刷新 |
 | `/api/v1/settlements/cache/refresh` | POST | 刷新指定公式 |
 | `/api/v1/settlements/cache/clear` | POST | 清空所有缓存 |
+| `/api/v1/formulas/{id}/snapshot` | POST | 保存公式快照 |
+| `/api/v1/formulas/{id}/rollback` | POST | 回滚到指定版本 |
+| `/api/v1/formulas/{id}/versions` | GET | 获取公式版本历史 |
+
+### 新增实体和接口 (Phase 4)
+- ✅ `FormulaHistory.java` - 公式历史实体
+- ✅ `FormulaHistoryMapper.java` - 历史记录 Mapper
+- ✅ `FormulaHistoryVO.java` - 版本历史视图对象
+- ✅ `FormulaService.saveSnapshot()` - 保存快照
+- ✅ `FormulaService.rollback()` - 回滚到指定版本
+- ✅ `FormulaService.getVersionHistory()` - 获取版本历史
+- ✅ `FormulaController` - 新增 3 个 API
 
 ---
 
-*计划已完成 - Phase 1-3 核心功能实现*
+*计划已完成 - Phase 1-4 全部完成*

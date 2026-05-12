@@ -22,7 +22,8 @@ dependencies:
 
 > 计划 ID: PLAN-20260510-001  
 > 创建时间: 2026-05-10  
-> 状态: ⏳ pending  
+> 完成时间: 2026-05-10  
+> 状态: ✅ completed  
 
 ---
 
@@ -35,9 +36,9 @@ dependencies:
 
 | 编号 | 问题描述 | 严重程度 | 影响范围 | 状态 |
 |------|---------|---------|---------|------|
-| P01 | 未达起付线时 resultLevel 仍为 PASS | 中 | 结算准确性 | ⏳ |
-| P02 | `/actuator/health` 端点未正确暴露 | 低 | 运维监控 | ⏳ |
-| P03 | 网关返回 404 对 `/actuator/health` | 低 | 网关健康检查 | ⏳ |
+| P01 | 未达起付线时 resultLevel 仍为 PASS | 中 | 结算准确性 | ✅ 已修复 |
+| P02 | `/actuator/health` 端点未正确暴露 | 低 | 运维监控 | ✅ 已修复 |
+| P03 | 网关返回 404 对 `/actuator/health` | 低 | 网关健康检查 | ✅ 已修复 |
 
 ---
 
@@ -135,10 +136,10 @@ dependencies:
 
 ## 4. 验收标准
 
-- [ ] S05 用例返回 resultLevel=BLOCK 或 WARN
-- [ ] 所有服务 `/actuator/health` 返回 200 和 UP 状态
-- [ ] 网关 `/actuator/health` 返回 200 和 UP 状态
-- [ ] 所有现有测试用例仍然通过
+- [x] S05 用例返回 resultLevel=BLOCK 或 WARN
+- [x] 所有服务 `/actuator/health` 返回 200 和 UP 状态
+- [x] 网关 `/actuator/health` 返回 200 和 UP 状态
+- [x] 所有现有测试用例仍然通过
 
 ---
 
@@ -157,8 +158,9 @@ dependencies:
 | 时间 | 操作 | 状态变更 | 备注 |
 |------|------|---------|------|
 | 2026-05-10 | 创建计划 | pending | 基于集成测试报告创建 |
-| | | | |
+| 2026-05-10 | 执行修复 | in_progress | 修复 BLOCK 逻辑、Actuator、网关路由 |
+| 2026-05-10 | 验证通过 | completed | 所有验收标准达成 |
 
 ---
 
-*计划待执行*
+*计划已完成*

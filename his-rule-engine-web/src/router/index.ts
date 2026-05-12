@@ -67,6 +67,18 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/drg/DrgList.vue'),
         meta: { title: 'DRG管理' },
       },
+      {
+        path: 'monitor',
+        name: 'Monitor',
+        component: () => import('@/views/monitor/Dashboard.vue'),
+        meta: { title: '监控大屏' },
+      },
+      {
+        path: 'sandbox',
+        name: 'Sandbox',
+        component: () => import('@/views/sandbox/SandboxPage.vue'),
+        meta: { title: '测试沙箱' },
+      },
     ],
   },
 ]

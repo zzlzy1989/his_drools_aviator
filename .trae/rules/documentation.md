@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+description: 
+---
 # 文档编写规则 - HIS 动态规则中台
 
 ## 触发条件
@@ -5,6 +9,9 @@
 - 创建技术文档
 - 编写 DRL 规则注释
 - 编写 Aviator 公式说明
+- 微服务文档编写
+- API 接口文档
+- 网关配置文档
 
 ---
 
@@ -225,9 +232,124 @@ round(1000 * 0.8 + 4000 * 0.6 + (base - 5000) * 0.4, 2)
 
 ---
 
-## 五、代码 Javadoc 规范
+## 六、微服务文档规范
 
-### 5.1 类级注释
+### 6.1 服务 README 模板
+
+```markdown
+# HIS {服务名称} Service
+
+## 服务职责
+简要描述该微服务的核心职责和业务范围
+
+## 端口与路径
+- 端口: 900X
+- API 路径: /api/v1/{module}/**
+
+## 依赖服务
+| 服务名 | 调用方式 | 说明 |
+|--------|---------|------|
+| his-rule-service | Feign | 获取规则定义和公式 |
+| Nacos | 配置中心 | 动态配置拉取 |
+
+## 核心功能
+1. 功能点 1
+2. 功能点 2
+3. 功能点 3
+
+## 数据库
+- 数据库名: `his_{module}`
+- 核心表: table_1, table_2
+
+## 配置项
+| 配置 Key | 默认值 | 说明 |
+|---------|-------|------|
+| {module}.param1 | 100 | 参数 1 说明 |
+| {module}.param2 | 50 | 参数 2 说明 |
+
+## 健康检查
+- 端点: `/actuator/health`
+- 检查项: 数据库连接、依赖服务连通性
+
+## 部署说明
+- Docker 镜像: `his-{module}-service`
+- JVM 参数: `-Xms512m -Xmx1024m`
+- 资源限制: Memory 1G, CPU 1.0
+```
+
+### 6.2 API 接口文档模板
+
+```markdown
+# {资源名称} API 接口文档
+
+## 接口列表
+
+### 1. 获取{资源}列表
+- **URL**: `GET /api/v1/{resource}`
+- **权限**: `{module}:{resource}:list`
+- **请求参数**:
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| page | Integer | 否 | 页码，默认 1 |
+| pageSize | Integer | 否 | 每页数量，默认 20 |
+| keyword | String | 否 | 搜索关键词 |
+
+- **响应示例**:
+
+```json
+{
+  "code": "0",
+  "data": {
+    "list": [...],
+    "total": 100,
+    "page": 1,
+    "pageSize": 20
+  }
+}
+```
+
+### 2. 创建{资源}
+- **URL**: `POST /api/v1/{resource}`
+- **权限**: `{module}:{resource}:create`
+- **请求体**:
+
+```json
+{
+  "name": "示例名称",
+  "description": "描述信息"
+}
+```
+```
+
+### 6.3 网关路由文档
+
+```markdown
+# 网关路由配置文档
+
+## 路由列表
+
+| 路由 ID | 目标服务 | 匹配路径 | 限流配置 | 鉴权要求 |
+|--------|---------|---------|---------|---------|
+| rule-service | his-rule-service:9001 | /api/v1/rules/** | 100 QPS | JWT |
+| settlement-service | his-settlement-service:9002 | /api/v1/settlements/** | 50 QPS | JWT |
+
+## 全局过滤器
+1. **AuthFilter**: JWT 鉴权，排除路径列表
+2. **RateLimiterFilter**: Redis 限流
+3. **TraceFilter**: 链路追踪 traceId 注入
+4. **CorsFilter**: 跨域配置
+
+## 白名单路径
+- `/api/v1/health` - 健康检查
+- `/api/v1/rules/public/**` - 公开规则查询
+```
+
+---
+
+## 七、代码 Javadoc 规范
+
+### 7.1 类级注释
 
 ```java
 /**
@@ -252,7 +374,7 @@ round(1000 * 0.8 + 4000 * 0.6 + (base - 5000) * 0.4, 2)
 public class RuleEngineTemplate { ... }
 ```
 
-### 5.2 方法级注释
+### 7.2 方法级注释
 
 ```java
 /**
@@ -269,7 +391,7 @@ public SkillContext<?> fireRules(String ruleGroup, Fact fact) { ... }
 
 ---
 
-## 六、检查清单
+## 八、检查清单
 
 - [ ] DRL 文件有完整文件头注释（功能/版本/依赖/作者）
 - [ ] 每条规则有序号和中文名称注释
@@ -278,7 +400,11 @@ public SkillContext<?> fireRules(String ruleGroup, Fact fact) { ... }
 - [ ] Java 类和方法有标准 Javadoc
 - [ ] 公式测试用例覆盖正常和边界场景
 - [ ] 规则间依赖关系通过注释明确标注
+- [ ] 微服务有 README 文档（职责/依赖/配置/部署）
+- [ ] API 接口有完整文档（参数/响应/权限）
+- [ ] 网关路由配置有文档记录
+- [ ] Feign Client 有降级策略说明
 
 ---
 
-最后更新: 2026-04-26 | v1.0 (HIS Drools+Aviator 规则引擎专用)
+最后更新: 2026-05-12 | v1.1 (HIS Drools+Aviator 规则引擎专用 - 微服务架构版)

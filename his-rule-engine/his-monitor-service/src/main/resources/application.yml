@@ -1,0 +1,28 @@
+server:
+  port: 9007
+
+spring:
+  application:
+    name: his-monitor-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:192.168.1.105:8848}
+        namespace: ${NACOS_NAMESPACE:public}
+        group: HIS-RULE-ENGINE
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus,health,metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  level:
+    com.his.monitor: INFO

@@ -47,6 +47,10 @@
           <el-icon><DataAnalysis /></el-icon>
           <span>DRG管理</span>
         </el-menu-item>
+        <el-menu-item index="/monitor">
+          <el-icon><DataLine /></el-icon>
+          <span>监控大屏</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
@@ -85,7 +89,7 @@ import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   HomeFilled, Setting, Document, Coin, Tools,
-  Star, DataAnalysis, User, Connection
+  Star, DataAnalysis, User, Connection, DataLine
 } from '@element-plus/icons-vue'
 
 const router = useRouter()

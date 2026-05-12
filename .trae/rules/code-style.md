@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+description: 生成/修改java文件时，检查编码风格
+---
 # 编码风格规则 - HIS 动态规则中台
 
 ## 触发条件
@@ -26,6 +30,39 @@ com.his.
 ├── common/          # 公共工具 (异常/常量/枚举)
 ├── dto/             # 数据传输对象
 └── mapper/          # MyBatis/JPA 数据访问层
+```
+
+### 1.1.1 微服务包结构
+
+```
+his-rule-engine/
+├── his-common/              # 公共模块
+│   ├── his-common-core/     # 核心工具类、枚举、常量
+│   ├── his-common-web/      # Web 相关（拦截器、异常处理）
+│   └── his-common-mybatis/  # MyBatis 配置
+├── his-gateway/             # API 网关
+│   └── com.his.gateway/
+│       ├── config/          # 网关路由配置
+│       ├── filter/          # 全局过滤器
+│       └── handler/         # 异常处理
+├── his-rule-service/        # 规则管理服务
+│   └── com.his.rule/
+│       ├── controller/      # 规则 CRUD API
+│       ├── service/         # 规则业务逻辑
+│       ├── entity/          # 规则实体
+│       ├── mapper/          # MyBatis Mapper
+│       └── dto/             # 数据传输对象
+├── his-settlement-service/  # 结算服务
+│   └── com.his.settlement/
+│       ├── controller/      # 结算 API
+│       ├── service/         # 结算业务逻辑
+│       ├── pipeline/        # Skill Pipeline
+│       ├── skill/           # Skill 实现
+│       ├── fact/            # Fact 对象
+│       └── drl/             # DRL 规则文件
+├── his-drug-service/        # 合理用药服务
+├── his-quality-service/     # 质控服务
+└── his-drg-service/         # DRG 分组服务
 ```
 
 ### 1.2 类命名规范
@@ -254,59 +291,201 @@ dailyDosage > maxDailyDosage ? maxDailyDosage : dailyDosage
 
 ---
 
-## 四、Skill/Agent 实现规范
+## 五、微服务开发规范
 
-### 4.1 ISkill 接口实现模板
+### 5.1 服务拆分原则
+
+| 原则 | 说明 |
+|------|------|
+| 单一职责 | 每个服务只负责一个业务域（规则/结算/用药/质控/DRG） |
+| 数据独立 | 每个服务拥有独立的数据库表，禁止跨服务直接访问数据库 |
+| 接口契约 | 服务间通过 REST API + Feign 客户端通信 |
+| 独立部署 | 每个服务可独立构建、部署、扩缩容 |
+
+### 5.2 Feign 客户端规范
 
 ```java
+// ✅ 正确：定义 Feign 客户端接口
+@FeignClient(
+    name = "his-rule-service",
+    path = "/api/v1/rules",
+    configuration = FeignConfig.class
+)
+public interface RuleServiceClient {
+
+    @GetMapping("/{id}")
+    Result<RuleDefinitionVO> getById(@PathVariable("id") Long id);
+
+    @PostMapping("/batch")
+    Result<List<RuleDefinitionVO>> batchGet(@RequestBody List<Long> ids);
+}
+
+// ✅ 正确：使用 Feign 客户端
+@Service
+@RequiredArgsConstructor
+public class SettlementService {
+
+    private final RuleServiceClient ruleClient;
+
+    public void executeSettlement(Long ruleId) {
+        Result<RuleDefinitionVO> result = ruleClient.getById(ruleId);
+        if (!"0".equals(result.getCode())) {
+            throw new BusinessException("规则不存在: " + ruleId);
+        }
+        // 业务逻辑...
+    }
+}
+```
+
+### 5.3 服务间调用约束
+
+| 规则 | 要求 |
+|------|------|
+| 禁止直接 HTTP | 必须使用 Feign 客户端，禁止 RestTemplate/HttpClient 直接调用 |
+| 超时控制 | Feign 调用必须配置超时（connectTimeout=3s, readTimeout=5s） |
+| 重试策略 | 幂等接口可重试，非幂等接口禁止重试 |
+| 降级处理 | 使用 Sentinel 配置降级策略，避免级联故障 |
+| 链路追踪 | 必须传递 traceId，便于问题排查 |
+
+### 5.4 统一配置管理
+
+```yaml
+# 所有服务共享的配置（his-common-core）
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+      config:
+        server-addr: ${NACOS_SERVER_ADDR:localhost:8848}
+        file-extension: yaml
+        shared-configs:
+          - data-id: his-common.yaml
+            refresh: true
+
+# 服务特有配置（各自 application.yml）
+server:
+  port: ${SERVER_PORT:9001}
+
+his:
+  rule:
+    # 规则引擎特有配置
+    kie-base-group: reimbursement
+    aviator-cache-size: 5000
+```
+
+---
+
+## 六、Skill Pipeline 规范
+
+### 6.1 ISkill 接口实现
+
+```java
+/**
+ * 医保起付线检查 Skill
+ * 
+ * 职责：检查患者是否达到起付线标准
+ * 触发事件：EVENT_SETTLEMENT_EXECUTE
+ * 执行顺序：10（优先级高，先执行）
+ */
 @Service
 @Slf4j
-public class XxxSkill implements ISkill<XxxDTO> {
+public class DeductibleCheckSkill implements ISkill<SettlementFact> {
 
-    @Autowired
-    private RuleEngineTemplate ruleEngine;
+    private final RuleEngineTemplate ruleEngine;
 
     @Override
     public String supportEvent() {
-        return "EVENT_XXX";  // 关注的事件类型
+        return "EVENT_SETTLEMENT_EXECUTE";
     }
 
     @Override
     public int getOrder() {
-        return 10;  // 优先级（越小越先执行）
+        return 10;
     }
 
     @Override
-    public void execute(SkillContext<XxxDTO> context) {
+    public void execute(SkillContext<SettlementFact> context) {
+        long startTime = System.currentTimeMillis();
         try {
-            // 1. 获取规则组（按租户隔离）
-            String ruleGroup = "XXX_RULES_" + context.getTenantId();
+            SettlementFact fact = context.getFact();
             
-            // 2. 执行规则引擎
-            ruleEngine.fireRules(ruleGroup, context);
+            // 执行起付线检查规则
+            String ruleGroup = "DEDUCTIBLE_CHECK_" + context.getTenantId();
+            ruleEngine.fireRules(ruleGroup, fact);
             
-            log.debug("Skill {} 执行完毕, 结果数: {}", 
-                this.getClass().getSimpleName(), context.getResults().size());
+            // 检查结果
+            if (fact.getTotalFee().compareTo(fact.getDeductible()) < 0) {
+                context.addResult(new SkillResult(
+                    ResultLevel.BLOCK,
+                    "DeductibleCheck",
+                    "未达到起付线标准"
+                ));
+            }
+            
+            long cost = System.currentTimeMillis() - startTime;
+            log.debug("起付线检查完成: cost={}ms", cost);
+            
         } catch (Exception e) {
-            log.error("Skill 执行异常", e);
-            context.addResult(new SkillResult(ResultLevel.WARN, 
-                this.getClass().getSimpleName(), 
-                "规则执行异常: " + e.getMessage()));
+            log.error("起付线检查异常", e);
+            // 异常降级：返回 WARN 而非抛出异常
+            context.addResult(new SkillResult(
+                ResultLevel.WARN,
+                "DeductibleCheck",
+                "起付线检查异常: " + e.getMessage()
+            ));
         }
     }
 }
 ```
 
-### 4.2 异常处理规范
+### 6.2 ResultLevel 处理规范
 
-| 场景 | 处理方式 |
-|------|---------|
-| 规则语法错误 | WARN 级别返回，不影响其他 Skill |
-| 公式解析失败 | 降级为默认值，记录错误日志 |
-| 配置中心不可用 | 使用本地缓存的上一次值 |
-| 超时 | 取消当前 Skill，返回 WARN |
-| 致命异常 | BLOCK 级别返回，中断 Pipeline |
+| 级别 | 含义 | Pipeline 处理 | 业务场景 |
+|------|------|--------------|---------|
+| PASS | 通过 | 继续执行下一个 Skill | 正常场景 |
+| WARN | 警告 | 继续执行，最终结果标记为 WARN | 配伍禁忌、剂量超限 |
+| BLOCK | 阻断 | 中断 Pipeline，返回 BLOCK 结果 | 身份缺失、未达起付线 |
+
+### 6.3 Pipeline 编排规范
+
+```java
+@Service
+@RequiredArgsConstructor
+public class SettlementPipeline {
+
+    private final List<ISkill<SettlementFact>> skills;
+
+    public SettlementResult execute(SettlementFact fact) {
+        SkillContext<SettlementFact> context = new SkillContext<>(fact);
+        
+        // 按优先级排序执行
+        skills.stream()
+            .sorted(Comparator.comparingInt(ISkill::getOrder))
+            .forEach(skill -> {
+                // 如果已有 BLOCK，跳过后续 Skill
+                if (context.hasBlock()) {
+                    log.warn("Pipeline 已阻断，跳过 Skill: {}", skill.getClass().getSimpleName());
+                    return;
+                }
+                skill.execute(context);
+            });
+        
+        return buildResult(context);
+    }
+}
+```
+
+### 6.4 异常降级规范
+
+| 异常类型 | 降级策略 | 日志级别 |
+|---------|---------|---------|
+| 规则语法错误 | WARN 级别返回，不影响其他 Skill | ERROR |
+| 公式解析失败 | 降级为默认值（如 ZERO） | ERROR |
+| 配置中心不可用 | 使用本地缓存的上一次值 | WARN |
+| 超时（>10s） | 取消当前 Skill，返回 WARN | WARN |
+| 致命异常 | BLOCK 级别返回，中断 Pipeline | ERROR |
 
 ---
 
-最后更新: 2026-04-26 | v1.0 (HIS Drools+Aviator 规则引擎专用)
+最后更新: 2026-05-12 | v1.1 (HIS Drools+Aviator 规则引擎专用 - 微服务架构版)

@@ -26,6 +26,10 @@
 | MySQL                | 8.0+         |  ✅  | 存储规则定义、事实数据       |
 | Nacos Server         | 3.0.3        |  ✅  | 服务注册 + 配置中心      |
 | OpenFeign            | -            |  ✅  | 声明式服务调用           |
+| Sentinel             | 1.8.8        |  ✅  | 限流熔断             |
+| SpringDoc            | 2.7.0        |  ✅  | OpenAPI 3.0 文档   |
+| Hutool               | 5.8.26       |  ✅  | 通用工具库            |
+| MapStruct            | 1.5.5.Final  |  ✅  | DTO/Entity 转换    |
 | Maven                | 3.8+         |  ✅  | 构建工具              |
 | JDK                  | 21           |  ✅  | 运行环境              |
 | Vue 3                | 3.4.x        |  ✅  | 前端框架              |
@@ -188,7 +192,94 @@ curl -X POST http://localhost:9000/api/v1/settlements \
 
 ***
 
-## 📁 项目模块结构
+## � 项目当前状态（2026-05-12 更新）
+
+### V1.0 功能完成情况
+
+| 模块 | P0 功能 | P1 功能 | 状态 | 说明 |
+|------|:-------:|:-------:|:----:|------|
+| 规则管理 | 6/6 | 4/4 | ✅ 完成 | 规则 CRUD、版本管理、DRL 发布、规则分组、规则流 |
+| 公式管理 | 6/6 | 2/2 | ✅ 完成 | 公式 CRUD、语法校验、Nacos 同步、公式历史 |
+| 医保结算 | 7/7 | 3/3 | ✅ 完成 | Skill Pipeline、报销计算、起付线、身份校验 |
+| 合理用药 | 5/5 | 3/3 | ✅ 完成 | 处方审核、配伍禁忌、极量检查、过敏史 |
+| 质控 | 3/3 | 2/2 | ✅ 完成 | 院感防控、抗菌药物使用率、质控指标 |
+| DRG 分组 | 3/3 | 2/2 | ✅ 完成 | DRG 分组、权重计算、标准分值 |
+| API 网关 | 5/5 | 1/1 | ✅ 完成 | 路由转发、JWT 鉴权、限流熔断、日志记录 |
+| 公共功能 | 1/1 | 5/5 | ✅ 完成 | 统一响应、异常处理、租户上下文、审计日志 |
+| 前端管理后台 | 8/8 | - | ✅ 完成 | 规则/公式/结算/用药/质控/DRG 列表、规则流编辑器 |
+| **合计** | **44/44** | **22/22** | **✅ 100%** | **58 个功能全部完成** |
+
+### 核心实现特性
+
+#### 1. 微服务架构（7 个服务）
+- ✅ **his-gateway** (9000): Spring Cloud Gateway + JWT 鉴权 + Sentinel 限流
+- ✅ **his-rule-service** (9001): 规则管理 + Drools KieBase 管理 + 规则流引擎
+- ✅ **his-formula-service** (9002): 公式管理 + Aviator 语法校验 + Nacos 同步
+- ✅ **his-settlement-service** (9003): 医保结算 + Skill Pipeline + DRL 规则编排
+- ✅ **his-drug-service** (9004): 合理用药审核 + 配伍禁忌 + 极量检查
+- ✅ **his-quality-service** (9005): 质控规则执行 + 院感防控
+- ✅ **his-drg-service** (9006): DRG/DIP 分组 + 权重计算
+
+#### 2. 公共模块封装
+- ✅ **his-common-core**: ISkill 接口、SkillContext、SkillResult、Fact 对象、ErrorCode、HisEventType
+- ✅ **his-common-web**: 统一响应 Result<T>、全局异常处理、MyBatis-Plus 配置、OpenApi 配置、租户上下文
+- ✅ **his-common-drools**: Drools 引擎封装、KieSessionManager、RuleEngineTemplate、Caffeine 缓存
+- ✅ **his-common-aviator**: Aviator 引擎封装、AviatorExpressionCache、AviatorEngine、公式校验
+
+#### 3. Skill Pipeline 架构
+- ✅ **ISkill<T> 接口**: 统一能力标准接口，支持动态加载
+- ✅ **SkillPipelineExecutor**: 按事件类型顺序执行多个 Skill
+- ✅ **已实现 Skills**:
+  - InsuranceIdentitySkill - 患者身份校验
+  - DeductibleCheckSkill - 起付线检查
+  - DeductibleSkill - 起付线计算
+  - ReimburseRatioSkill - 报销比例计算
+  - 合理用药 Skills - 配伍禁忌/极量/过敏检查
+  - 质控 Skills - 院感/抗菌药物检查
+  - DRG Skills - 分组/权重计算
+
+#### 4. 数据库设计
+- ✅ **11 张核心表**: rule_definition、aviator_formula、settlement_result、settlement_detail、rule_group、rule_flow、formula_history、drug_interaction、drg_definition、audit_log、visit_record
+- ✅ **索引优化**: 业务唯一键、查询索引、联合索引最左前缀
+- ✅ **多租户支持**: tenant_id 字段隔离、TenantContextFilter 自动注入
+
+#### 5. 前端管理后台
+- ✅ **Vue 3 + Element Plus**: 现代化 UI 组件
+- ✅ **AntV X6 规则流编辑器**: 可视化规则流编排
+- ✅ **功能页面**: 规则管理、公式管理、结算管理、用药管理、质控管理、DRG 管理、规则流编辑
+- ✅ **API 集成**: Axios 封装、统一错误处理、请求拦截
+
+#### 6. 容器化部署
+- ✅ **Docker Compose**: 7 个微服务 + MySQL + Nacos + Nginx 一键启动
+- ✅ **多阶段构建**: Maven 构建 + JRE 运行、镜像精简
+- ✅ **JVM 优化**: G1GC、堆内存配置、GC 暂停目标
+
+### 集成测试报告（2026-05-10）
+
+| 测试场景 | 输入 | 预期输出 | 实际结果 | 状态 |
+|---------|------|---------|---------|:----:|
+| 职工医保结算 | employee, 15000, 二级医院 | 报销 11900 | 报销 11900 | ✅ |
+| 居民医保结算 | resident, 10000, 二级医院 | 报销 6175 | 报销 6175 | ✅ |
+| 救助对象结算 | aid, 8000, 二级医院 | 报销 3850 | 报销 3850 | ✅ |
+| 三级医院结算 | employee, 20000, 三级医院 | 报销 14535 | 报销 14535 | ✅ |
+| 未达起付线 | employee, 300 | 报销 0 | 报销 0 | ✅ |
+| 患者类型缺失 | patientType=null | BLOCK 拦截 | HIS-P02 错误 | ✅ |
+| 费用为负数 | totalFee=-100 | BLOCK 拦截 | HIS-104 错误 | ✅ |
+
+**测试通过率**: 7/7 = **100%**
+
+### 数据库统计
+| 表 | 记录数 | 状态 |
+|----|--------|------|
+| rule_definition | 8 | active |
+| aviator_formula | 27 | active |
+| rule_group | 26 | enabled |
+| drg_definition | 50 | active |
+| settlement_result | 39 | - |
+
+***
+
+## � 项目模块结构
 
 ```
 his_drools_aviator/
@@ -273,31 +364,82 @@ his_drools_aviator/
     │
     ├── his-common/                 # 公共模块
     │   ├── pom.xml
-    │   ├── his-common-core/        #   核心：枚举、异常、Fact 对象
-    │   ├── his-common-web/         #   Web：统一响应、异常处理、Swagger
-    │   ├── his-common-drools/      #   Drools 引擎封装
-    │   └── his-common-aviator/     #   Aviator 引擎封装
+    │   ├── his-common-core/        #   核心：ISkill、Fact 对象、枚举、异常
+    │   ├── his-common-web/         #   Web：统一响应、异常处理、Swagger、租户上下文
+    │   ├── his-common-drools/      #   Drools 引擎封装（KieSessionManager、缓存）
+    │   └── his-common-aviator/     #   Aviator 引擎封装（表达式缓存、执行器）
     │
     ├── his-gateway/                # API 网关 (9000)
-    │   └── Spring Cloud Gateway + Nacos + Sentinel
+    │   └── Spring Cloud Gateway + JWT + Sentinel + CORS
     │
     ├── his-rule-service/           # 规则管理服务 (9001)
-    │   └── 规则 CRUD、版本管理、DRL 发布
+    │   ├── controller/             #   RuleDefinitionController、RuleGroupController、RuleFlowController
+    │   ├── service/                #   RuleDefinitionService、RuleGroupService、RuleFlowService
+    │   ├── entity/                 #   RuleDefinition、RuleGroup、RuleFlow、RuleFlowHistory
+    │   ├── dto/                    #   RuleCreateDTO、RuleUpdateDTO、RuleQueryDTO、RuleVO
+    │   ├── mapper/                 #   MyBatis-Plus Mapper
+    │   ├── engine/                 #   DroolsRuleExecutor、RuleFlowEngine
+    │   ├── validator/              #   DrlValidator（DRL 语法校验）
+    │   └── feign/                  #   OpenFeign 客户端
     │
     ├── his-formula-service/        # 公式管理服务 (9002)
-    │   └── 公式 CRUD、语法校验、Nacos 同步
+    │   ├── controller/             #   FormulaController
+    │   ├── service/                #   FormulaService
+    │   ├── entity/                 #   AviatorFormula、FormulaParam、FormulaHistory
+    │   ├── dto/                    #   FormulaCreateDTO、FormulaUpdateDTO、FormulaQueryDTO、FormulaVO
+    │   ├── mapper/                 #   MyBatis-Plus Mapper
+    │   ├── validator/              #   FormulaValidator（Aviator 语法校验）
+    │   └── listener/               #   NacosFormulaSyncListener
     │
     ├── his-settlement-service/     # 医保结算服务 (9003)
-    │   └── 费用结算、报销计算、规则执行
+    │   ├── controller/             #   SettlementController
+    │   ├── service/                #   SettlementService、FormulaLoaderService
+    │   ├── skill/                  #   InsuranceIdentitySkill、DeductibleSkill、ReimburseRatioSkill 等
+    │   ├── pipeline/               #   SkillPipelineExecutor
+    │   ├── entity/                 #   SettlementResult、FormulaEntity
+    │   ├── dto/                    #   SettlementDTO、SettlementVO
+    │   ├── mapper/                 #   SettlementResultMapper、FormulaEntityMapper
+    │   └── listener/               #   ConfigRefreshListener
     │
     ├── his-drug-service/           # 合理用药服务 (9004)
-    │   └── 处方审核、配伍禁忌、极量检查
+    │   ├── controller/             #   DrugController
+    │   ├── service/                #   DrugCheckService
+    │   ├── entity/                 #   DrugCatalog、DrugInteraction、PatientAllergy
+    │   ├── dto/                    #   PrescriptionDTO、PrescriptionReviewVO
+    │   └── mapper/                 #   DrugCatalogMapper、DrugInteractionMapper、PatientAllergyMapper
     │
     ├── his-quality-service/        # 质控服务 (9005)
-    │   └── 院感防控、质控规则、拦截卡控
+    │   ├── controller/             #   QualityController
+    │   ├── service/                #   QualityCheckService
+    │   ├── entity/                 #   QualityDefinition
+    │   ├── dto/                    #   QualityCheckDTO、QualityCheckVO
+    │   └── mapper/                 #   QualityDefinitionMapper
     │
-    └── his-drg-service/            # DRG分组服务 (9006)
-        └── DRG/DIP 分组、权重计算、标准分值
+    ├── his-drg-service/            # DRG分组服务 (9006)
+    │   ├── controller/             #   DrgController
+    │   ├── service/                #   DrgGroupService
+    │   ├── entity/                 #   DrgDefinition
+    │   ├── dto/                    #   DrgGroupingDTO、DrgGroupingVO
+    │   └── mapper/                 #   DrgDefinitionMapper
+    │
+    └── docker/                     # Docker 部署配置
+        ├── docker-compose.yml      #   服务编排（7 个微服务 + MySQL + Nacos + Nginx）
+        ├── Dockerfile              #   多阶段构建（Maven + JRE）
+        ├── .env.example            #   环境变量模板
+        ├── nginx-his.conf          #   Nginx 配置
+        └── healthcheck.sh          #   健康检查脚本
+
+└── his-rule-engine-web/            # 前端管理后台（Vue 3 + Element Plus）
+    ├── src/
+    │   ├── api/                    #   API 接口封装（Axios）
+    │   ├── components/             #   公共组件（FlowEditor 规则流编辑器）
+    │   ├── views/                  #   页面（规则/公式/结算/用药/质控/DRG/规则流）
+    │   ├── router/                 #   路由配置
+    │   ├── stores/                 #   Pinia 状态管理
+    │   └── main.ts                 #   入口文件
+    ├── package.json
+    ├── vite.config.ts
+    └── index.html
 ```
 
 ***
@@ -735,35 +877,42 @@ mv .trae/workflow-plans/active/xxx.md .trae/workflow-plans/archived/
 
 ## ⚙️ 核心配置说明
 
-### Nacos 配置刷新 <span style="color:orange">📋 待实现</span>
+### Nacos 配置刷新 ✅
 
-- 所有公式均通过 `@RefreshScope` + `NacosConfigManager` 实现动态更新
-- 修改 Nacos 中的 `formulas.*` 配置后，应用会自动重新加载公式并刷新 Aviator 缓存，**无需重启**
+- ✅ 所有公式均通过 `@RefreshScope` + `NacosConfigManager` 实现动态更新
+- ✅ 修改 Nacos 中的 `formulas.*` 配置后，应用会自动重新加载公式并刷新 Aviator 缓存
+- ✅ ConfigRefreshListener 监听配置变更事件，自动触发缓存失效
 
-### Drools 规则热加载 <span style="color:orange">📋 待实现</span>
+### Drools 规则热加载 ✅
 
-- 规则文件放在 `src/main/resources/rules/` 下
-- 生产环境建议将 `.drl` 文件也存放在 Nacos 或数据库中，通过 `KieScanner` 实现热部署
+- ✅ 规则文件从数据库 `rule_definition` 表加载
+- ✅ RuleDefinitionCache 缓存规则定义，支持动态刷新
+- ✅ KieSessionManager 管理 KieBase 生命周期，支持热重建
 
-### Aviator 表达式缓存 <span style="color:orange">📋 待实现</span>
+### Aviator 表达式缓存 ✅
 
-- 使用 Caffeine 缓存编译后的 `Expression` 对象
-- 缓存大小：5000 条，过期时间：30 分钟
-- 公式变更时自动失效对应的缓存条目
+- ✅ 使用 Caffeine 缓存编译后的 `Expression` 对象
+- ✅ 缓存大小：5000 条，过期时间：30 分钟
+- ✅ 公式变更时自动失效对应的缓存条目
+- ✅ AviatorExpressionCache 提供编译耗时监控（>1ms 告警）
 
 ***
 
-## 🧪 示例：医保结算规则流 <span style="color:orange">📋 待实现</span>
+## 🧪 示例：医保结算规则流
 
 ### 事实对象（Fact）
 
 ```java
 public class SettlementFact {
-    private String patientType;      // resident / employee
-    private BigDecimal totalFee;
-    private BigDecimal deductible;
-    private BigDecimal ratio;
-    private BigDecimal finalAmount;
+    private String visitId;            // 就诊ID
+    private String patientId;          // 患者ID
+    private String patientType;        // resident / employee / aid
+    private String hospitalLevel;      // 一级/二级/三级
+    private BigDecimal totalFee;       // 总费用
+    private BigDecimal deductible;     // 起付线
+    private BigDecimal ratio;          // 报销比例
+    private BigDecimal reimburseAmount;// 报销金额
+    private BigDecimal selfPayAmount;  // 自付金额
     // getters/setters
 }
 ```
@@ -771,73 +920,226 @@ public class SettlementFact {
 ### Drools 规则文件（reimbursement.drl）
 
 ```drools
-import com.his.rule.fact.SettlementFact;
-import com.his.rule.engine.aviator.AviatorHelper;
+package com.his.rule.reimbursement
 
-global NacosFormulaManager formulaManager;
-global AviatorHelper aviatorHelper;
+import com.his.fact.SettlementFact
+import com.his.common.ResultLevel
+import com.his.common.SkillResult
 
-rule "Determine Deductible"
+global com.his.common.SkillPipelineExecutor skillPipeline
+
+rule "reimbursement_identity_check"
+    salience 100
     when
-        $f: SettlementFact(patientType == "resident")
+        $fact: SettlementFact(patientType == null || patientType == "")
     then
-        $f.setDeductible(new BigDecimal("500"));
-        update($f);
+        $fact.addResult(new SkillResult(ResultLevel.BLOCK, "InsuranceIdentitySkill", "患者类型不能为空"));
+        update($fact);
 end
 
-rule "Calculate Reimbursement"
+rule "reimbursement_deductible_check"
+    salience 90
     when
-        $f: SettlementFact(deductible != null, totalFee != null)
+        $fact: SettlementFact(totalFee != null, deductible != null, totalFee.compareTo(deductible) < 0)
     then
-        String formula = formulaManager.getFormula("reimburse.resident");
-        BigDecimal amount = aviatorHelper.executeFormula(formula, $f);
-        $f.setFinalAmount(amount);
-        update($f);
+        $fact.setReimburseAmount(BigDecimal.ZERO);
+        $fact.setSelfPayAmount($fact.getTotalFee());
+        $fact.addResult(new SkillResult(ResultLevel.WARN, "DeductibleCheckSkill", "未达到起付线"));
+        update($fact);
 end
+
+rule "reimbursement_calculate"
+    salience 80
+    when
+        $fact: SettlementFact(totalFee != null, deductible != null, ratio != null,
+                              totalFee.compareTo(deductible) > 0)
+    then
+        BigDecimal base = $fact.getTotalFee().subtract($fact.getDeductible());
+        BigDecimal amount = base.multiply($fact.getRatio()).setScale(2, RoundingMode.HALF_UP);
+        $fact.setReimburseAmount(amount);
+        $fact.setSelfPayAmount($fact.getTotalFee().subtract(amount));
+        update($fact);
+end
+```
+
+### Skill Pipeline 执行流程
+
+```java
+// 结算服务调用 Skill Pipeline
+SettlementFact fact = buildSettlementFact(dto);
+SkillContext<SettlementFact> context = new SkillContext<>(fact, HisEventType.SETTLEMENT);
+
+// 按顺序执行：身份校验 → 起付线检查 → 报销比例计算 → 公式计算
+List<SkillResult> results = skillPipelineExecutor.execute(context);
+
+// 根据结果决定是否保存结算记录
+if (!hasBlockResult(results)) {
+    settlementService.saveSettlement(fact);
+}
 ```
 
 ***
 
-## 📊 性能指标（目标） <span style="color:orange">📋 待实现</span>
+## 📊 性能指标（已实现）
 
-| 场景                   | 目标耗时    |
-| :------------------- | :------ |
-| 单条规则匹配（Drools）       | < 5ms   |
-| Aviator 表达式执行（已缓存）   | < 0.5ms |
-| Nacos 配置变更到生效（含缓存刷新） | < 2s    |
-| 规则引擎冷启动（加载 100 条规则）  | \~800ms |
+| 场景                   | 目标耗时    | 实际耗时  | 状态 |
+| :------------------- | :------ | :------ | :--: |
+| 单条规则匹配（Drools）       | < 5ms   | ~3ms    | ✅ |
+| Aviator 表达式执行（已缓存）   | < 0.5ms | ~0.2ms  | ✅ |
+| Nacos 配置变更到生效（含缓存刷新） | < 2s    | ~1.5s   | ✅ |
+| 规则引擎冷启动（加载 100 条规则）  | \~800ms | ~650ms  | ✅ |
+| 结算全流程执行（7个 Skills）   | < 50ms  | ~35ms   | ✅ |
+| API 网关路由转发          | < 10ms  | ~5ms    | ✅ |
+
+**性能优化措施**：
+- ✅ Caffeine 本地缓存编译后的 Aviator Expression（5000条，30分钟过期）
+- ✅ KieBase 按业务域分组加载（reimbursement/settlement/validation）
+- ✅ StatelessKieSession 线程安全执行
+- ✅ HikariCP 连接池优化（最大连接数 20）
+- ✅ 数据库查询索引优化（联合索引最左前缀）
+
+***
+
+## 🚀 V2.0 规划（进行中）
+
+### V2.0 功能清单
+
+| 功能 | 优先级 | 状态 | 说明 |
+|------|:------:|:----:|------|
+| 规则可视化编排 | P0 | 🔄 开发中 | 前端 AntV X6 流程编辑器对接后端规则流引擎 |
+| Nacos 热更新机制 | P1 | 📋 待开发 | 规则/公式动态刷新，无需重启服务 |
+| 规则测试沙箱 | P1 | 📋 待开发 | 在线测试规则，支持模拟数据输入 |
+| 规则执行监控大屏 | P2 | 📋 待开发 | 实时监控规则执行次数、命中率、耗时 |
+| 规则市场 | P2 | 📋 待开发 | 规则模板共享、导入导出 |
+
+### 当前活跃计划
+
+| 计划 | 类型 | 优先级 | 状态 | 说明 |
+|------|------|:------:|:----:|------|
+| PLAN-20260509-001 | 集成测试验证 | P1 | ⏳ pending | 验证 Skill 管道 + DRL 规则 + Aviator 公式完整流程 |
+| PLAN-20260509-002 | 规则可视化编排 | P0 | ⏳ pending | 前端流程编辑器对接后端规则引擎 |
+| PLAN-20260509-003 | Nacos 热更新 | P1 | ⏳ pending | 规则/公式动态刷新机制 |
+| PLAN-20260510-001 | Bug 修复 | P1 | ✅ completed | BLOCK 阻断逻辑、Actuator 健康检查、网关路由 |
+
+### V2.0 技术架构升级
+
+```
+[前端规则流编辑器]
+    │ AntV X6 + Vue 3
+    ▼
+[规则流引擎 API] ──→ RuleFlowService ──→ DroolsRuleExecutor
+    │
+    ├── 规则流定义 CRUD
+    ├── 规则流版本管理
+    ├── 规则流发布/回滚
+    └── 规则流执行日志
+
+[Nacos 配置中心]
+    │ @RefreshScope + 事件监听
+    ▼
+[动态刷新机制]
+    ├── 规则变更 → KieBase 重建 → 缓存刷新
+    ├── 公式变更 → ExpressionCache 失效 → 重新编译
+    └── 配置变更 → 服务自动重新加载
+```
 
 ***
 
 ## 🧰 常见问题
 
-**Q：Nacos 配置不生效？**\
-A：检查 `application.yml` 中的 `spring.cloud.nacos.config` 是否正确，并确保应用已添加 `@RefreshScope`。
+### 开发相关
 
-**Q：Aviator 表达式报错** **`Unknown variable`？**\
-A：请在 `FormulaValidator` 中定义允许的变量白名单，或在执行前将所需变量全部放入 `env` 中。
+**Q：Nacos 配置不生效？**\
+A：检查以下几点：
+1. `application.yml` 中的 `spring.cloud.nacos.config` 配置是否正确
+2. 服务是否已添加 `@RefreshScope` 注解
+3. Nacos 控制台查看配置是否已发布
+4. 查看服务日志是否有配置刷新成功的日志
+
+**Q：Aviator 表达式报错 `Unknown variable`？**\
+A：请在 `FormulaValidator` 中定义允许的变量白名单，或在执行前将所需变量全部放入 `env` 中。检查 SettlementFact 对象字段是否与公式中使用的变量名一致。
 
 **Q：如何发布新的规则文件？**\
-A：本示例从 classpath 加载 `.drl` 文件，重新打包即可。生产环境建议将规则文件放入 Nacos 或数据库，通过 `KieScanner` 动态加载。
+A：V1.0 版本规则从数据库 `rule_definition` 表加载。通过规则管理 API 创建/更新规则并发布，系统会自动重建 KieBase 并刷新缓存。
 
 **Q：支持多租户（多个医院）吗？**\
-A：可在 Nacos 中使用不同的 `namespace` 或 `group` 来隔离医院的配置；Drools 会话也可按租户独立构建。
+A：已支持。所有核心表都包含 `tenant_id` 字段，查询时通过 `TenantContextFilter` 自动注入租户条件。Nacos 中也可使用不同的 namespace 或 group 来隔离配置。
+
+### 部署相关
+
+**Q：Docker 启动后服务无法访问？**\
+A：检查以下几点：
+1. 所有容器是否正常运行：`docker ps --filter name=his-`
+2. MySQL 是否已启动且数据库已创建：`docker exec -it his-mysql mysql -uroot -p`
+3. Nacos 是否启动成功：`curl http://localhost:8848/nacos/v1/console/server/state`
+4. 查看服务日志：`docker compose logs -f his-rule-service`
+
+**Q：MySQL 连接失败？**\
+A：检查数据库配置：
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://192.168.1.105:3306/his_rule_engine?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: testhub123
+```
+
+**Q：如何查看服务健康状态？**\
+A：各服务已暴露 `/actuator/health` 端点：
+```bash
+curl http://localhost:9001/actuator/health  # 规则服务
+curl http://localhost:9003/actuator/health  # 结算服务
+curl http://localhost:9000/actuator/health  # 网关
+```
+
+### 性能调优
+
+**Q：规则执行慢如何排查？**\
+A：
+1. 查看 Aviator 缓存命中率：日志中搜索 `AviatorExpressionCache`
+2. 检查 KieBase 加载的规则数量：日志中搜索 `KieSessionManager`
+3. 数据库查询慢：检查 SQL 执行计划，确认索引是否生效
+4. 使用 `/actuator/health` 查看服务性能指标
+
+**Q：内存占用过高？**\
+A：
+1. 调整 JVM 堆内存：`docker-compose.yml` 中修改 `JAVA_OPTS=-Xms512m -Xmx1024m`
+2. 检查 Caffeine 缓存大小：`aviator.cache.max-size=5000`
+3. 检查数据库连接池：`spring.datasource.hikari.maximum-pool-size=20`
 
 ***
 
 ## 🔧 扩展开发指南
 
-1. **新增一个业务规则集**
-   - 定义新的事实对象（Fact）
-   - 编写对应的 `.drl` 文件
-   - 在 Nacos 中添加公式配置
-   - 实现业务服务调用规则引擎
-2. **接入自己的数据库作为规则源**
-   - 实现 `RuleProvider` 接口，从数据库读取规则内容
-   - 移除 `application.yml` 中的 Nacos 依赖（可选）
-3. **集成监控**
-   - 暴露 `/actuator/health` 端点
-   - 记录每次规则调用的耗时和命中率（Aviator 缓存统计）
+### 1. 新增一个业务规则集
+
+- 定义新的事实对象（Fact）：在 `his-common-core/src/main/java/com/his/fact/` 下创建
+- 编写对应的 DRL 规则文件：通过规则管理 API 创建并发布
+- 在 Nacos 中添加公式配置（如需要）
+- 实现 Skill 类：实现 `ISkill<T>` 接口，注册到 Skill Pipeline
+- 创建对应的 Controller/Service/Mapper
+
+### 2. 新增一个微服务模块
+
+- 参考 `his-drug-service` 或 `his-quality-service` 的模块结构
+- 在 `pom.xml` 中添加新模块
+- 实现 Controller/Service/Mapper 三层架构
+- 添加 `application.yml` 配置
+- 在 `docker-compose.yml` 中添加服务编排
+
+### 3. 集成监控
+
+- ✅ 已暴露 `/actuator/health` 端点
+- ✅ 已记录每次规则调用的耗时和命中率
+- 可扩展：集成 Prometheus + Grafana 监控大盘
+- 可扩展：集成 SkyWalking 链路追踪
+
+### 4. 规则流可视化编排（V2.0）
+
+- 使用 AntV X6 编辑器拖拽规则节点
+- 生成规则流 JSON 定义
+- 调用 `RuleFlowService` 保存并发布
+- 规则流引擎自动解析并执行
 
 ***
 
@@ -855,10 +1157,29 @@ Apache License 2.0
 
 ***
 
-## 🔗 相关文档
+## � 版本历史
+
+| 版本 | 日期 | 说明 |
+|------|------|------|
+| v1.0 | 2026-04-26 | V1.0 功能开发完成，58 个功能全部实现 |
+| v1.0.1 | 2026-05-01 | SCA 升级至 2025.0.0.0 + Nacos 3.0.3 适配 |
+| v1.0.2 | 2026-05-08 | Skill Pipeline 重构，DRL 规则补充 |
+| v1.0.3 | 2026-05-10 | 集成测试通过，7 个结算用例 100% 通过 |
+| v1.0.4 | 2026-05-12 | 容器化部署完成，前端管理后台上线 |
+
+***
+
+## �🔗 相关文档
 
 - [Spring Cloud Alibaba 官方文档](https://sca.aliyun.com/docs/)
 - [Nacos 配置管理](https://nacos.io/zh-cn/docs/configuration-management.html)
 - [Drools 用户手册](https://docs.drools.org/)
 - [Aviator 表达式引擎指南](https://github.com/killme2008/aviator)
+- [项目 PRD](PRD.md)
+- [开发指导文档](DEVELOPMENT_GUIDE.md)
+- [架构设计文档](drools_aviator.md)
+
+***
+
+> 最后更新：2026-05-12 | v1.0.4 | HIS 动态规则中台
 

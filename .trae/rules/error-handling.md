@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+description: 
+---
 # 错误处理规范 - HIS 动态规则中台
 
 ## 触发条件
@@ -16,16 +20,18 @@
 HIS-{模块编号}{序列号}
 ```
 
-| 模块 | 前缀 | 范围 |
-|------|------|------|
-| 通用错误 | HIS-0 | 001~099 |
-| 结算模块 | HIS-1 | 100~199 |
-| 用药审核 | HIS-2 | 200~299 |
-| 规则引擎 | HIS-3 | 300~399 |
-| 公式引擎 | HIS-4 | 400~499 |
-| Agent/Skill | HIS-5 | 500~599 |
-| 配置中心 | HIS-6 | 600~699 |
-| 缓存服务 | HIS-7 | 700~799 |
+| 模块 | 前缀 | 范围 | 所属服务 |
+|------|------|------|---------|
+| 通用错误 | HIS-0 | 001~099 | 公共模块 |
+| 规则管理 | HIS-1 | 100~199 | his-rule-service |
+| 结算模块 | HIS-2 | 200~299 | his-settlement-service |
+| 用药审核 | HIS-3 | 300~399 | his-drug-service |
+| 质控模块 | HIS-4 | 400~499 | his-quality-service |
+| DRG 模块 | HIS-5 | 500~599 | his-drg-service |
+| 公式引擎 | HIS-6 | 600~699 | his-rule-service |
+| 网关错误 | HIS-7 | 700~799 | his-gateway |
+| 配置中心 | HIS-8 | 800~899 | 公共模块 |
+| 缓存服务 | HIS-9 | 900~999 | 公共模块 |
 
 ### 1.2 核心错误码清单
 
@@ -38,45 +44,64 @@ public enum ErrorCode {
     UNAUTHORIZED("HIS-003", "未授权访问"),
     FORBIDDEN("HIS-004", "无权限操作"),
     RESOURCE_NOT_FOUND("HIS-005", "资源不存在: {}"),
+    TENANT_NOT_FOUND("HIS-006", "租户不存在: {}"),
     SYSTEM_ERROR("HIS-099", "系统内部错误"),
 
-    // ===== 结算模块 (1xx) =====
-    PATIENT_ID_MISSING("HIS-101", "患者ID缺失"),
-    PATIENT_TYPE_INVALID("HIS-102", "无效的患者类型: {}"),
-    SETTLEMENT_IN_PROGRESS("HIS-103", "该患者存在进行中的结算"),
-    FEE_NEGATIVE("HIS-104", "费用不能为负数"),
-    DEDUCTIBLE_NOT_FOUND("HIS-105", "未找到对应患者类型的起付线配置"),
+    // ===== 规则管理 (1xx) =====
+    RULE_NOT_FOUND("HIS-101", "规则未找到: {}"),
+    RULE_PARSE_ERROR("HIS-102", "规则解析错误: {}"),
+    RULE_PUBLISH_FAILED("HIS-103", "规则发布失败: {}"),
+    RULE_GROUP_NOT_FOUND("HIS-104", "规则组未找到: {}"),
+    RULE_VERSION_CONFLICT("HIS-105", "规则版本冲突"),
 
-    // ===== 用药审核 (2xx) =====
-    PRESCRIPTION_EMPTY("HIS-201", "处方为空"),
-    DRUG_NOT_FOUND("HIS-202", "药品未找到: {}"),
-    INCOMPATIBILITY_DETECTED("HIS-203", "检测到配伍禁忌: {}"),
-    DOSAGE_EXCEEDED("HIS-204", "用药剂量超限: 当前{}, 上限{}"),
+    // ===== 结算模块 (2xx) =====
+    PATIENT_ID_MISSING("HIS-201", "患者ID缺失"),
+    PATIENT_TYPE_INVALID("HIS-202", "无效的患者类型: {}"),
+    SETTLEMENT_IN_PROGRESS("HIS-203", "该患者存在进行中的结算"),
+    FEE_NEGATIVE("HIS-204", "费用不能为负数"),
+    DEDUCTIBLE_NOT_FOUND("HIS-205", "未找到对应患者类型的起付线配置"),
+    SETTLEMENT_BLOCKED("HIS-206", "结算被阻断: {}"),
+    SETTLEMENT_DUPLICATE("HIS-207", "重复结算请求"),
 
-    // ===== 规则引擎 (3xx) =====
-    RULE_NOT_FOUND("HIS-301", "规则未找到: {}"),
-    RULE_PARSE_ERROR("HIS-302", "规则解析错误: {}"),
-    RULE_EXECUTION_TIMEOUT("HIS-303", "规则执行超时({}ms)"),
-    FACT_INVALID("HIS-304", "Fact 对象无效: 缺少必要字段 {}"),
+    // ===== 用药审核 (3xx) =====
+    PRESCRIPTION_EMPTY("HIS-301", "处方为空"),
+    DRUG_NOT_FOUND("HIS-302", "药品未找到: {}"),
+    INCOMPATIBILITY_DETECTED("HIS-303", "检测到配伍禁忌: {}"),
+    DOSAGE_EXCEEDED("HIS-304", "用药剂量超限: 当前{}, 上限{}"),
+    CONTRAINDICATION_DETECTED("HIS-305", "检测到禁忌: {}"),
 
-    // ===== 公式引擎 (4xx) =====
-    FORMULA_NOT_FOUND("HIS-401", "公式未找到: {}"),
-    FORMULA_SYNTAX_ERROR("HIS-402", "公式语法错误: {}"),
-    FORMULA_EXECUTION_ERROR("HIS-403", "公式执行错误: {}"),
-    FORMULA_LENGTH_EXCEEDED("HIS-404", "公式长度超限(最大512字符)"),
+    // ===== 质控模块 (4xx) =====
+    INDICATOR_NOT_FOUND("HIS-401", "质控指标未找到: {}"),
+    INDICATOR_CALC_FAILED("HIS-402", "指标计算失败: {}"),
+    QUALITY_CHECK_FAILED("HIS-403", "质控校验未通过: {}"),
 
-    // ===== Agent/Skill (5xx) =====
-    SKILL_NOT_REGISTERED("HIS-501", "未注册的Skill: {}"),
-    PIPELINE_BLOCKED("HIS-502", "Pipeline被阻断: 由{}触发"),
-    SKILL_EXECUTION_FAILED("HIS-503", "Skill执行失败: {}"),
+    // ===== DRG 模块 (5xx) =====
+    DRG_NOT_FOUND("HIS-501", "DRG分组未找到: {}"),
+    DRG_GROUP_FAILED("HIS-502", "DRG分组失败: {}"),
+    DRG_AMBIGUOUS("HIS-503", "DRG分组歧义: {}"),
+    ICD_CODE_INVALID("HIS-504", "ICD编码无效: {}"),
 
-    // ===== 配置中心 (6xx) =====
-    NACOS_CONNECT_FAILED("HIS-601", "Nacos连接失败: {}"),
-    CONFIG_NOT_FOUND("HIS-602", "配置项未找到: {}"),
-    CONFIG_REFRESH_FAILED("HIS-603", "配置刷新失败: {}"),
+    // ===== 公式引擎 (6xx) =====
+    FORMULA_NOT_FOUND("HIS-601", "公式未找到: {}"),
+    FORMULA_SYNTAX_ERROR("HIS-602", "公式语法错误: {}"),
+    FORMULA_EXECUTION_ERROR("HIS-603", "公式执行错误: {}"),
+    FORMULA_LENGTH_EXCEEDED("HIS-604", "公式长度超限(最大512字符)"),
+    FORMULA_INJECTION_DETECTED("HIS-605", "检测到公式注入风险"),
 
-    // ===== 缓存服务 (7xx) =====
-    CACHE_OPERATION_FAILED("HIS-701", "缓存操作失败");
+    // ===== 网关错误 (7xx) =====
+    GATEWAY_ROUTE_NOT_FOUND("HIS-701", "网关路由未找到: {}"),
+    GATEWAY_RATE_LIMIT("HIS-702", "请求过于频繁，请稍后重试"),
+    GATEWAY_TIMEOUT("HIS-703", "网关超时: {}服务响应超时"),
+    GATEWAY_CIRCUIT_BREAK("HIS-704", "服务熔断: {}"),
+
+    // ===== 配置中心 (8xx) =====
+    NACOS_CONNECT_FAILED("HIS-801", "Nacos连接失败: {}"),
+    CONFIG_NOT_FOUND("HIS-802", "配置项未找到: {}"),
+    CONFIG_REFRESH_FAILED("HIS-803", "配置刷新失败: {}"),
+
+    // ===== 缓存服务 (9xx) =====
+    CACHE_OPERATION_FAILED("HIS-901", "缓存操作失败"),
+    CACHE_EXPIRED("HIS-902", "缓存已过期");
 
     private final String code;
     private final String message;
@@ -213,7 +238,106 @@ public class Result<T> {
 
 ---
 
-## 四、异常处理原则
+## 五、微服务错误传播
+
+### 5.1 Feign 错误解码器
+
+```java
+public class FeignErrorDecoder implements ErrorDecoder {
+
+    private final ErrorDecoder defaultDecoder = new Default();
+
+    @Override
+    public Exception decode(String methodKey, Response response) {
+        try {
+            String body = Util.toString(response.body().asReader(StandardCharsets.UTF_8));
+            Result<?> result = JSON.parseObject(body, Result.class);
+            
+            if (result != null && !"0".equals(result.getCode())) {
+                // 将远程错误转换为本地异常
+                return new HisException(
+                    ErrorCode.valueOf(result.getCode()),
+                    result.getMessage()
+                );
+            }
+        } catch (IOException e) {
+            log.error("Feign 响应解析失败", e);
+        }
+        return defaultDecoder.decode(methodKey, response);
+    }
+}
+```
+
+### 5.2 网关错误响应统一格式
+
+```java
+@Component
+public class GlobalErrorWebExceptionHandler implements ErrorWebExceptionHandler {
+
+    @Override
+    public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
+        ServerHttpResponse response = exchange.getResponse();
+        
+        Result<Void> errorResult;
+        if (ex instanceof ResponseStatusException rse) {
+            response.setStatusCode(rse.getStatusCode());
+            errorResult = Result.fail(
+                mapHttpStatusToCode(rse.getStatusCode()),
+                rse.getReason()
+            );
+        } else if (ex instanceof HisException he) {
+            errorResult = Result.fail(he.getCode(), he.getMessage());
+        } else {
+            response.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
+            errorResult = Result.fail(
+                ErrorCode.SYSTEM_ERROR.getCode(),
+                "系统繁忙，请稍后重试"
+            );
+        }
+        
+        // 写入统一格式错误响应
+        byte[] bytes = JSON.toJSONString(errorResult).getBytes(StandardCharsets.UTF_8);
+        DataBuffer buffer = response.bufferFactory().wrap(bytes);
+        return response.writeWith(Mono.just(buffer));
+    }
+}
+```
+
+### 5.3 链路追踪 traceId 传递
+
+| 层级 | 实现方式 |
+|------|---------|
+| 网关层 | 生成 traceId 放入请求头 `X-Trace-Id` |
+| Feign 调用 | 通过 `RequestInterceptor` 自动传递 traceId |
+| 日志输出 | 使用 MDC 存储 traceId，日志格式包含 `%X{traceId}` |
+| 错误响应 | 错误响应中包含 traceId 便于问题排查 |
+
+```java
+// MDC 过滤器
+@Component
+public class TraceIdFilter implements Filter {
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
+        HttpServletRequest req = (HttpServletRequest) request;
+        String traceId = req.getHeader("X-Trace-Id");
+        if (traceId == null) {
+            traceId = UUID.randomUUID().toString().replace("-", "");
+        }
+        MDC.put("traceId", traceId);
+        try {
+            chain.doFilter(request, response);
+        } finally {
+            MDC.remove("traceId");
+        }
+    }
+}
+```
+
+---
+
+## 六、异常处理原则
 
 | 原则 | 说明 |
 |------|------|
@@ -222,7 +346,9 @@ public class Result<T> {
 | **敏感信息隐藏** | 生产环境不返回堆栈、SQL、完整异常信息给前端 |
 | **审计日志** | 所有 ERROR 级别异常必须写入审计日志 |
 | **多语言** | message 支持国际化（通过错误码映射多语言文本） |
+| **微服务错误透传** | Feign 调用错误解码为本地异常，保持错误码一致性 |
+| **网关统一错误格式** | 所有错误通过网关返回统一 Result\<T\> 格式 |
 
 ---
 
-最后更新: 2026-04-26 | v1.0 (HIS 规则引擎错误处理规范)
+最后更新: 2026-05-12 | v1.1 (HIS 规则引擎错误处理规范 - 微服务架构版)

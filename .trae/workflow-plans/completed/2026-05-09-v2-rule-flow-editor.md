@@ -1,10 +1,10 @@
 ---
 title: "V2.0 规则可视化编排"
 type: "feature"
-status: "pending"
+status: "completed"
 created_at: "2026-05-09"
 updated_at: "2026-05-10"
-completed_at: null
+completed_at: "2026-05-11"
 phase: "Phase 2"
 owner: "developer"
 reviewer: ""
@@ -181,11 +181,13 @@ CREATE TABLE `flow_definition` (
 
 - [x] flow_definition 表结构正确创建
 - [x] 后端 11 个 API 全部实现
-- [ ] 前端流程编辑器可拖拽创建节点
-- [ ] 流程图可保存到数据库
-- [ ] 流程图可解析为可执行的 Skill/DRL/Formula 序列
-- [ ] 流程可正确执行并返回结果
-- [ ] 支持流程版本管理
+- [x] 前端流程编辑器可拖拽创建节点
+- [x] 流程图可保存到数据库
+- [x] 流程图可解析为可执行的 Skill/DRL/Formula 序列
+- [x] 流程可正确执行并返回结果
+- [x] 支持流程版本管理
+- [x] 公式结果写入指定 resultField（如 reimburse_amount）
+- [x] 公式节点 shallow copy 防止序列化循环
 
 ---
 
@@ -211,6 +213,8 @@ CREATE TABLE `flow_definition` (
 | 2026-05-10 | 流程执行测试 | completed | 验证完整执行路径: start→condition→formula→condition→end |
 | 2026-05-10 | Drools集成 | completed | DroolsRuleExecutor + Feign Client |
 | 2026-05-10 | Aviator集成 | completed | 通过 his-formula-service 调用公式执行 |
+| 2026-05-11 | 公式结果写入字段 | completed | executeFormulaNode shallow copy 防止序列化自引用 |
+| 2026-05-11 | 公式执行验证 | completed | reimburse_amount = 6375.0 ✅ |
 
 ---
 
@@ -230,15 +234,17 @@ CREATE TABLE `flow_definition` (
 - RuleFlowEngine.executeNode() 先添加 NodeResult 再执行（修复 condition 节点查找问题）
 - findNextNode() 根据 edges 正确查找下一个节点
 - findNextNodeByCondition() 根据 label=true/false 查找条件分支
+- executeFormulaNode() shallow copy 防止序列化自引用（depth 1000 exceeded）
+- FormulaResult record 支持 result() 和 updatedFact() 分离
 
-### 验证结果 (2026-05-10)
+### 验证结果 (2026-05-11)
 ```
-执行路径: start-1 → cond-identity → formula-reimburse → cond-cap → end-1
-条件节点 expression: patientType != null / total_fee < 200000
-公式节点 formulaKey: formula.calc.reimburse
-公式表达式: (total_fee - deductible) * reimburse_ratio
-公式执行结果: _formulaResult = 6800.0 / 7820.0 ✅
-执行成功: 所有节点正常推进，结果正确
+执行路径: start-1 → cond-1 → formula-1 → end-1
+输入: {"patientType":"EMPLOYEE","totalFee":8000,"deductible":500,"ratio":0.85}
+输出: reimburse_amount = 6375.0 ✅ (计算正确: (8000-500)*0.85 = 6375)
+
+公式: (totalFee - deductible) * ratio
+公式Key: formula.reimburse.employee.basic
 ```
 
 ### 新增组件
