@@ -75,6 +75,19 @@ logging:
 his:
   jwt:
     enabled: false  # 开发阶段关闭JWT认证，前端无登录页面
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://localhost:8080
+      - http://localhost:8999
+      - http://127.0.0.1:3000
+      - http://127.0.0.1:8080
+      - http://127.0.0.1:8999
+      - http://192.168.1.105:8999
+    allowed-methods: GET,POST,PUT,DELETE,OPTIONS,PATCH
+    allowed-headers: Origin,Content-Type,Accept,X-Tenant-Id,Authorization
+    allow-credentials: true
+    max-age: 3600
 
 management:
   endpoints:

@@ -45,6 +45,7 @@ public class RuleFlowVO {
         private String formulaKey;
         private String subFlowId;
         private Integer timeout;
+        private String resultField; // 公式/规则结果写入的字段名
         private Map<String, Object> position;
         private Map<String, Object> params;
     }

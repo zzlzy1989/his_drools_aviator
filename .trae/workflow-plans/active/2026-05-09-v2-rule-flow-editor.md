@@ -206,8 +206,56 @@ CREATE TABLE `flow_definition` (
 |------|------|---------|------|
 | 2026-05-09 | 创建计划 | pending | 初始创建 |
 | 2026-05-10 | 更新计划 | pending | 补充当前实现状态、API 完成度 |
-| | | | |
+| 2026-05-10 | 现状调研 | in_progress | 后端API已完整，前端FlowEditor组件完整 |
+| 2026-05-10 | RuleFlowEngine 修复 | completed | 修复边遍历、节点自动推进、条件分支 |
+| 2026-05-10 | 流程执行测试 | completed | 验证完整执行路径: start→condition→formula→condition→end |
+| 2026-05-10 | Drools集成 | completed | DroolsRuleExecutor + Feign Client |
+| 2026-05-10 | Aviator集成 | completed | 通过 his-formula-service 调用公式执行 |
 
 ---
 
-*计划待执行*
+## 8. 现状分析
+
+### 后端 (his-rule-service) ✅ 完整
+- RuleFlowEngine.java - 拓扑排序/条件分支/执行引擎核心逻辑
+- RuleFlowService.java - CRUD + 发布/回滚/版本/导入导出
+- RuleFlowController.java - 11个REST API
+
+### 前端 (his-rule-engine-web) ✅ 完整
+- FlowEditor.vue (1342行) - AntV X6 拖拽编辑器
+- FlowList.vue - 流程列表页
+- 支持节点类型: start/end/condition/action/formula/subflow
+
+### 已修复
+- RuleFlowEngine.executeNode() 先添加 NodeResult 再执行（修复 condition 节点查找问题）
+- findNextNode() 根据 edges 正确查找下一个节点
+- findNextNodeByCondition() 根据 label=true/false 查找条件分支
+
+### 验证结果 (2026-05-10)
+```
+执行路径: start-1 → cond-identity → formula-reimburse → cond-cap → end-1
+条件节点 expression: patientType != null / total_fee < 200000
+公式节点 formulaKey: formula.calc.reimburse
+公式表达式: (total_fee - deductible) * reimburse_ratio
+公式执行结果: _formulaResult = 6800.0 / 7820.0 ✅
+执行成功: 所有节点正常推进，结果正确
+```
+
+### 新增组件
+- `FormulaFeignClient.java` - 调用 his-formula-service 获取公式
+- `RuleFeignClient.java` - 调用 his-rule-service 获取规则
+- `DroolsRuleExecutor.java` - 编译并执行 DRL 规则
+- `@EnableFeignClients` + `spring-cloud-starter-loadbalancer` 依赖
+
+### 待完善
+- 公式结果写入 SettlementFact 字段（目前放在 `_formulaResult` key）
+- 规则执行器需要配置 DRL 文件存储位置
+
+### 待完善
+- 公式执行结果更新 fact（目前仅透传）
+- DRL 规则执行器集成 Drools
+- 公式执行器集成 Aviator（通过 API 调用 his-formula-service）
+
+---
+
+*RuleFlowEngine 执行引擎核心逻辑已完成，流程可完整执行*

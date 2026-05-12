@@ -60,7 +60,7 @@ public class RuleFlowEngine {
             log.info("规则流拓扑排序结果: {}", sortedNodes);
 
             // 从开始节点执行
-            executeNode(startNode.getNodeId(), nodeMap, fact, ruleExecutor, formulaExecutor, result);
+            executeNode(startNode.getNodeId(), nodeMap, flow.getEdges(), fact, ruleExecutor, formulaExecutor, result);
 
         } catch (Exception e) {
             log.error("规则流执行失败", e);
@@ -75,6 +75,7 @@ public class RuleFlowEngine {
      * 执行单个节点
      */
     private Object executeNode(String nodeId, Map<String, FlowNode> nodeMap,
+                               List<FlowEdge> edges,
                                Object fact, RuleExecutor ruleExecutor,
                                FormulaExecutor formulaExecutor, ExecutionResult result) {
         FlowNode node = nodeMap.get(nodeId);
@@ -90,19 +91,42 @@ public class RuleFlowEngine {
         Object nodeOutput = null;
 
         try {
+            nodeResult.setSuccess(true);
+            nodeResult.setOutput(nodeOutput);
+            // 先添加到列表，供 condition 等节点在执行过程中查找
+            result.getNodeResults().add(nodeResult);
+
             nodeOutput = switch (node.getType()) {
                 case "start" -> executeStartNode(node, fact);
                 case "end" -> executeEndNode(node, fact);
-                case "condition" -> executeConditionNode(node, nodeMap, fact, ruleExecutor, formulaExecutor, result);
+                case "condition" -> executeConditionNode(node, nodeMap, edges, fact, ruleExecutor, formulaExecutor, result);
                 case "action" -> executeActionNode(node, fact, ruleExecutor);
-                case "formula" -> executeFormulaNode(node, fact, formulaExecutor);
+                case "formula" -> {
+                    // 获取结果字段名
+                    String resultField = node.getResultField();
+                    FormulaResult fr = executeFormulaNode(node, fact, formulaExecutor);
+                    // 如果指定了结果字段，将结果写入 updatedFact
+                    if (resultField != null && fr.result() != null && fr.updatedFact() instanceof Map) {
+                        ((Map<String, Object>) fr.updatedFact()).put(resultField, fr.result());
+                        log.info("公式结果写入字段: field={}, value={}", resultField, fr.result());
+                    }
+                    yield fr.updatedFact();
+                }
                 case "subflow" -> executeSubflowNode(node, fact, ruleExecutor, formulaExecutor);
                 default -> throw new IllegalArgumentException("不支持的节点类型: " + node.getType());
             };
 
             nodeResult.setSuccess(true);
             nodeResult.setOutput(nodeOutput);
-            result.getNodeResults().add(nodeResult);
+
+            // 非条件节点执行完成后，自动查找下一个节点
+            if (!"condition".equals(node.getType()) && !"end".equals(node.getType())) {
+                String nextNodeId = findNextNode(nodeId, edges);
+                if (nextNodeId != null && !result.getExecutionPath().contains(nextNodeId)) {
+                    result.getExecutionPath().add(nextNodeId);
+                    executeNode(nextNodeId, nodeMap, edges, nodeOutput, ruleExecutor, formulaExecutor, result);
+                }
+            }
 
         } catch (Exception e) {
             log.error("节点执行失败: nodeId={}", nodeId, e);
@@ -115,6 +139,44 @@ public class RuleFlowEngine {
 
         nodeResult.setDurationMs(System.currentTimeMillis() - startTime);
         return nodeResult.isSuccess() ? nodeOutput : fact;
+    }
+
+    /**
+     * 查找下一个节点（无条件）
+     */
+    private String findNextNode(String currentNodeId, List<FlowEdge> edges) {
+        if (edges == null || edges.isEmpty()) {
+            return null;
+        }
+        for (FlowEdge edge : edges) {
+            if (currentNodeId.equals(edge.getSource())) {
+                return edge.getTarget();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 根据条件结果查找下一个节点
+     * 边的 label 为 "true" 或 "false"，对应条件表达式结果
+     */
+    private String findNextNodeByCondition(String nodeId, List<FlowEdge> edges, boolean conditionResult) {
+        if (edges == null || edges.isEmpty()) {
+            return null;
+        }
+        String targetLabel = conditionResult ? "true" : "false";
+        for (FlowEdge edge : edges) {
+            if (nodeId.equals(edge.getSource()) && targetLabel.equals(edge.getLabel())) {
+                return edge.getTarget();
+            }
+        }
+        // 如果没有匹配的 label，返回第一条边（默认路径）
+        for (FlowEdge edge : edges) {
+            if (nodeId.equals(edge.getSource())) {
+                return edge.getTarget();
+            }
+        }
+        return null;
     }
 
     /**
@@ -137,6 +199,7 @@ public class RuleFlowEngine {
      * 执行条件节点
      */
     private Object executeConditionNode(FlowNode node, Map<String, FlowNode> nodeMap,
+                                        List<FlowEdge> edges,
                                         Object fact, RuleExecutor ruleExecutor,
                                         FormulaExecutor formulaExecutor, ExecutionResult result) {
         log.info("执行条件节点: {}, expression={}", node.getNodeId(), node.getExpression());
@@ -144,17 +207,13 @@ public class RuleFlowEngine {
         // 解析条件表达式
         boolean conditionResult = evaluateCondition(node.getExpression(), fact);
 
-        // 获取分支
-        Map<String, String> branches = node.getBranches();
-        String nextNodeId = conditionResult ?
-            (branches != null ? branches.get("true") : null) :
-            (branches != null ? branches.get("false") : null);
+        // 获取分支 - 优先使用边的 label 来判断
+        String nextNodeId = findNextNodeByCondition(node.getNodeId(), edges, conditionResult);
 
         NodeResult nodeResult = result.getNodeResults().stream()
             .filter(r -> r.getNodeId().equals(node.getNodeId()))
             .findFirst()
             .orElseThrow();
-        nodeResult.setBranches(branches);
         nodeResult.setConditionResult(conditionResult);
 
         if (nextNodeId == null) {
@@ -166,7 +225,7 @@ public class RuleFlowEngine {
         result.getExecutionPath().add(nextNodeId);
 
         // 执行下一个节点
-        return executeNode(nextNodeId, nodeMap, fact, ruleExecutor, formulaExecutor, result);
+        return executeNode(nextNodeId, nodeMap, edges, fact, ruleExecutor, formulaExecutor, result);
     }
 
     /**
@@ -187,17 +246,36 @@ public class RuleFlowEngine {
     /**
      * 执行公式节点（调用Aviator公式）
      */
-    private Object executeFormulaNode(FlowNode node, Object fact, FormulaExecutor formulaExecutor) {
+    private FormulaResult executeFormulaNode(FlowNode node, Object fact, FormulaExecutor formulaExecutor) {
         String formulaKey = node.getFormulaKey();
         log.info("执行公式节点: {}, formulaKey={}", node.getNodeId(), formulaKey);
 
         if (formulaExecutor == null) {
             log.warn("公式执行器为空，跳过公式执行");
-            return fact;
+            return new FormulaResult(null, fact);
         }
 
-        return formulaExecutor.execute(formulaKey, fact);
+        Object result = formulaExecutor.execute(formulaKey, fact);
+
+        // 如果指定了 resultField，创建 shallow copy 写入结果，避免序列化时自引用
+        String resultField = node.getResultField();
+        Object updatedFact = fact;
+        if (resultField != null && result != null && fact instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> originalMap = (Map<String, Object>) fact;
+            Map<String, Object> clonedMap = new java.util.LinkedHashMap<>(originalMap);
+            clonedMap.put(resultField, result);
+            updatedFact = clonedMap;
+            log.info("公式结果写入字段: field={}, value={}", resultField, result);
+        }
+
+        return new FormulaResult(result, updatedFact);
     }
+
+    /**
+     * 公式执行结果
+     */
+    public record FormulaResult(Object result, Object updatedFact) {}
 
     /**
      * 执行子流程节点
@@ -340,6 +418,8 @@ public class RuleFlowEngine {
         private String formulaKey;
         private String subFlowId;
         private Integer timeout;
+        private String resultField;  // 公式/规则结果写入的字段名
+        private Map<String, Object> params;  // 节点参数
     }
 
     @Data

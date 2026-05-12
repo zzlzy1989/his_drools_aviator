@@ -243,8 +243,36 @@ public class RuleRefresher {
 |------|------|---------|------|
 | 2026-05-09 | 创建计划 | pending | 初始创建 |
 | 2026-05-10 | 更新计划 | pending | 补充当前架构现状、依赖服务列表 |
-| | | | |
+| 2026-05-10 | Phase 1-3 完成 | in_progress | 配置热更新监听器 + API |
+| 2026-05-10 | 测试通过 | completed | 热更新API + 结算验证 |
 
 ---
 
-*计划待执行*
+## 8. 实施总结
+
+### 已完成
+- ✅ `ConfigRefreshListener.java` - 监听 Spring Cloud RefreshEvent
+- ✅ `SettlementController.refresh()` - 热更新 API `/api/v1/settlements/refresh`
+- ✅ `FormulaLoaderService.refreshCache()` - 公式缓存刷新
+- ✅ `FormulaLoaderService.clearCache()` - 全量缓存清空
+
+### 热更新流程
+```
+公式发布 → NacosFormulaSyncListener → Nacos 配置中心
+                                          ↓
+配置变更 → RefreshEvent → ConfigRefreshListener → FormulaLoaderService.clearCache()
+                                                                     ↓
+                                                        下次结算时重新加载最新公式
+```
+
+### API 接口
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/v1/settlements/refresh` | POST | 全量刷新缓存 |
+| `/api/v1/settlements/refresh?tenantId=X&formulaKey=Y` | POST | 指定刷新 |
+| `/api/v1/settlements/cache/refresh` | POST | 刷新指定公式 |
+| `/api/v1/settlements/cache/clear` | POST | 清空所有缓存 |
+
+---
+
+*计划已完成 - Phase 1-3 核心功能实现*

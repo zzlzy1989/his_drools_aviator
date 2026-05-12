@@ -5,11 +5,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.his.common.aviator.helper.AviatorHelper;
 import com.his.common.web.context.TenantContext;
 import com.his.rule.dto.*;
 import com.his.rule.entity.RuleFlow;
 import com.his.rule.entity.RuleFlowHistory;
 import com.his.rule.engine.RuleFlowEngine;
+import com.his.rule.engine.DroolsRuleExecutor;
+import com.his.rule.feign.FormulaFeignClient;
 import com.his.rule.mapper.RuleFlowMapper;
 import com.his.rule.mapper.RuleFlowHistoryMapper;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -35,6 +40,8 @@ public class RuleFlowService {
     private final RuleFlowHistoryMapper ruleFlowHistoryMapper;
     private final RuleFlowEngine ruleFlowEngine;
     private final ObjectMapper objectMapper;
+    private final FormulaFeignClient formulaFeignClient;
+    private final DroolsRuleExecutor droolsRuleExecutor;
 
     /**
      * 分页查询规则流
@@ -259,15 +266,47 @@ public class RuleFlowService {
 
         // 构建执行器
         RuleFlowEngine.RuleExecutor ruleExecutor = (ruleKey, fact) -> {
-            // TODO: 调用实际的规则引擎执行DRL规则
+            // 调用 Drools 执行 DRL 规则
             log.info("执行规则: ruleKey={}", ruleKey);
-            return fact;
+            return droolsRuleExecutor.execute(ruleKey, fact);
         };
 
         RuleFlowEngine.FormulaExecutor formulaExecutor = (formulaKey, fact) -> {
-            // TODO: 调用Aviator执行公式
+            // 调用 his-formula-service 获取公式并执行
             log.info("执行公式: formulaKey={}", formulaKey);
-            return fact;
+            try {
+                // 1. 获取公式详情
+                var formulaResult = formulaFeignClient.getByKey(formulaKey);
+                if (formulaResult == null || !"0".equals(formulaResult.getCode()) || formulaResult.getData() == null) {
+                    log.error("公式不存在或获取失败: formulaKey={}", formulaKey);
+                    return fact;
+                }
+
+                // 2. 获取公式表达式
+                Map<String, Object> formulaData = formulaResult.getData();
+                String expression = (String) formulaData.get("expression");
+                if (expression == null || expression.isBlank()) {
+                    log.error("公式表达式为空: formulaKey={}", formulaKey);
+                    return fact;
+                }
+
+                // 3. 克隆 fact 以避免修改原对象
+                Map<String, Object> env = new java.util.LinkedHashMap<>();
+                if (fact instanceof Map) {
+                    env.putAll((Map<String, Object>) fact);
+                }
+
+                // 4. 使用 Aviator 执行公式
+                Object result = AviatorHelper.execute(expression, env);
+                log.info("公式执行完成: formulaKey={}, result={}", formulaKey, result);
+
+                // 5. 返回计算结果（不是整个fact）
+                return result;
+
+            } catch (Exception e) {
+                log.error("公式执行异常: formulaKey={}, error={}", formulaKey, e.getMessage(), e);
+                return fact;
+            }
         };
 
         // 解析fact

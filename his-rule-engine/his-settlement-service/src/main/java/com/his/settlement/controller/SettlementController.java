@@ -50,6 +50,21 @@ public class SettlementController {
         return Result.success();
     }
 
+    @PostMapping("/refresh")
+    @Operation(summary = "强制刷新缓存（热更新）")
+    public Result<Void> forceRefresh(
+            @RequestParam(required = false) String tenantId,
+            @RequestParam(required = false) String formulaKey) {
+        if (formulaKey != null && tenantId != null) {
+            formulaLoaderService.refreshCache(tenantId, formulaKey);
+            log.info("指定刷新: tenantId={}, formulaKey={}", tenantId, formulaKey);
+        } else {
+            formulaLoaderService.clearCache();
+            log.info("全量刷新缓存");
+        }
+        return Result.success();
+    }
+
     @GetMapping
     @Operation(summary = "分页查询结算记录")
     public Result<PageResult<SettlementVO>> pageList(

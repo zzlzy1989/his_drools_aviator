@@ -78,6 +78,20 @@ public class RuleDefinitionService {
     }
 
     /**
+     * 根据规则Key获取规则
+     */
+    public RuleDefinition getByKey(String ruleKey) {
+        String tenantId = TenantContext.getTenantId("T001");
+        return ruleDefinitionMapper.selectOne(
+            new LambdaQueryWrapper<RuleDefinition>()
+                .eq(RuleDefinition::getTenantId, tenantId)
+                .eq(RuleDefinition::getRuleKey, ruleKey)
+                .eq(RuleDefinition::getDeleted, 0)
+                .eq(RuleDefinition::getStatus, "active")
+        );
+    }
+
+    /**
      * 创建规则
      */
     @Transactional
