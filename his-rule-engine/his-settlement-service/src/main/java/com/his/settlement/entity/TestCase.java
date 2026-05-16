@@ -30,6 +30,8 @@ public class TestCase {
 
     private String lastResult;
 
+    private LocalDateTime lastExecutionTime;
+
     private String tenantId;
 
     private String createBy;

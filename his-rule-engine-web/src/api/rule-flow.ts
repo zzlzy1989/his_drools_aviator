@@ -170,3 +170,28 @@ export const importFlow = (flowJson: string, tenantId?: string): AxiosPromise<nu
     params: { tenantId },
   })
 }
+
+export interface FlowExecutionResult {
+  success: boolean
+  errorMessage?: string
+  executionPath: string[]
+  nodeResults: Array<{
+    nodeId: string
+    nodeType: string
+    nodeLabel: string
+    success: boolean
+    output?: any
+    errorMessage?: string
+    conditionResult?: boolean
+    durationMs: number
+  }>
+}
+
+export const executeFlow = (id: number, factJson: string): AxiosPromise<FlowExecutionResult> => {
+  return request({
+    url: `/api/v1/flows/${id}/execute`,
+    method: 'POST',
+    data: factJson,
+    headers: { 'Content-Type': 'application/json' },
+  })
+}

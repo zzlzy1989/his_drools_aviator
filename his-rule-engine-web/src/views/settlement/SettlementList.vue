@@ -16,6 +16,17 @@
             <el-option label="已拒绝" value="rejected" />
           </el-select>
         </el-form-item>
+        <el-form-item label="开始日期">
+          <el-date-picker v-model="queryForm.startDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 140px" />
+        </el-form-item>
+        <el-form-item label="结束日期">
+          <el-date-picker v-model="queryForm.endDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 140px" />
+        </el-form-item>
+        <el-form-item label="金额范围">
+          <el-input v-model="queryForm.minAmount" placeholder="最小" style="width: 100px" />
+          <span style="padding: 0 4px">-</span>
+          <el-input v-model="queryForm.maxAmount" placeholder="最大" style="width: 100px" />
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="loadData">查询</el-button>
           <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
@@ -163,6 +174,10 @@ const queryForm = reactive<SettlementQueryDTO>({
   settlementNo: '',
   patientId: '',
   status: '',
+  startDate: '',
+  endDate: '',
+  minAmount: undefined,
+  maxAmount: undefined,
 })
 
 const form = reactive<CreateSettlementDTO>({
@@ -203,6 +218,10 @@ function resetQuery() {
   queryForm.settlementNo = ''
   queryForm.patientId = ''
   queryForm.status = ''
+  queryForm.startDate = ''
+  queryForm.endDate = ''
+  queryForm.minAmount = undefined
+  queryForm.maxAmount = undefined
   page.value = 1
   loadData()
 }

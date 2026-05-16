@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 公式管理 Controller
@@ -93,6 +94,13 @@ public class FormulaController {
     public Result<FormulaVO> rollback(@PathVariable Long id,
                                        @RequestParam Integer version) {
         return Result.success(formulaService.rollback(id, version));
+    }
+
+    @PostMapping("/{id}/test")
+    @Operation(summary = "测试公式")
+    public Result<Object> test(@PathVariable Long id, @RequestBody Map<String, Object> params) {
+        Object result = formulaService.test(id, params);
+        return Result.success(result);
     }
 
     @GetMapping("/{id}/versions")

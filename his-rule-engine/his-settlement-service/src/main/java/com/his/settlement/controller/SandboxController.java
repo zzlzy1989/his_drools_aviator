@@ -3,6 +3,7 @@ package com.his.settlement.controller;
 import com.his.common.web.result.Result;
 import com.his.settlement.dto.TestDataSetDTO;
 import com.his.settlement.service.SandboxService;
+import com.his.settlement.service.TestReportService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,7 @@ import java.util.Map;
 public class SandboxController {
 
     private final SandboxService sandboxService;
+    private final TestReportService testReportService;
 
     /**
      * 数据集列表
@@ -76,5 +78,15 @@ public class SandboxController {
     @PostMapping("/batch-execute/{dataSetId}")
     public Result<List<Map<String, Object>>> batchExecute(@PathVariable Long dataSetId) {
         return Result.success(sandboxService.batchExecute(dataSetId));
+    }
+
+    /**
+     * 生成测试报告
+     */
+    @GetMapping("/report/{dataSetId}")
+    public Result<String> generateReport(@PathVariable Long dataSetId) {
+        List<Map<String, Object>> results = sandboxService.batchExecute(dataSetId);
+        String html = testReportService.generateHtmlReport(dataSetId, results);
+        return Result.success(html);
     }
 }

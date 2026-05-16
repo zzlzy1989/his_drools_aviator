@@ -72,8 +72,12 @@ public class SettlementController {
             @RequestParam(defaultValue = "20") Integer pageSize,
             @RequestParam(required = false) String settlementNo,
             @RequestParam(required = false) String patientId,
-            @RequestParam(required = false) String status) {
-        IPage<SettlementVO> pageResult = settlementService.pageList(page, pageSize, settlementNo, patientId, status);
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) Double minAmount,
+            @RequestParam(required = false) Double maxAmount) {
+        IPage<SettlementVO> pageResult = settlementService.pageList(page, pageSize, settlementNo, patientId, status, startDate, endDate, minAmount, maxAmount);
         return Result.success(PageResult.of(pageResult));
     }
 

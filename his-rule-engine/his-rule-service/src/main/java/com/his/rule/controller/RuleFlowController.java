@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.his.common.web.result.PageResult;
 import com.his.common.web.result.Result;
 import com.his.rule.dto.*;
+import com.his.rule.engine.RuleFlowEngine;
 import com.his.rule.entity.RuleFlow;
 import com.his.rule.service.RuleFlowService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -143,8 +144,8 @@ public class RuleFlowController {
      */
     @PostMapping("/{id}/execute")
     @Operation(summary = "执行规则流")
-    public Result<String> execute(@PathVariable Long id, @RequestBody(required = false) String factJson) {
-        String result = ruleFlowService.executeFlow(id, factJson);
+    public Result<RuleFlowEngine.ExecutionResult> execute(@PathVariable Long id, @RequestBody(required = false) String factJson) {
+        RuleFlowEngine.ExecutionResult result = ruleFlowService.executeFlow(id, factJson);
         return Result.success(result);
     }
 }

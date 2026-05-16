@@ -44,6 +44,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '规则流设计器' },
       },
       {
+        path: 'flow/history/:id',
+        name: 'FlowHistory',
+        component: () => import('@/views/flow/FlowHistory.vue'),
+        meta: { title: '版本历史' },
+      },
+      {
         path: 'settlement',
         name: 'Settlement',
         component: () => import('@/views/settlement/SettlementList.vue'),
@@ -78,6 +84,12 @@ const routes: RouteRecordRaw[] = [
         name: 'Sandbox',
         component: () => import('@/views/sandbox/SandboxPage.vue'),
         meta: { title: '测试沙箱' },
+      },
+      {
+        path: 'market',
+        name: 'Market',
+        component: () => import('@/views/market/MarketPage.vue'),
+        meta: { title: '规则市场' },
       },
     ],
   },

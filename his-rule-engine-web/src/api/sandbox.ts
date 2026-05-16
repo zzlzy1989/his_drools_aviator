@@ -8,6 +8,7 @@ export interface TestCaseDTO {
   expected?: Record<string, any>
   status?: number
   lastResult?: string
+  lastExecutionTime?: string
 }
 
 export interface TestDataSetDTO {
@@ -16,6 +17,26 @@ export interface TestDataSetDTO {
   description?: string
   category?: string
   testCases?: TestCaseDTO[]
+}
+
+export interface ExecuteResult {
+  caseId: string
+  caseName: string
+  input: Record<string, any>
+  actual: {
+    deductible?: number
+    ratio?: number
+    finalAmount?: number
+    reimburseAmount?: number
+    selfPayAmount?: number
+    resultLevel?: string
+    skillResults?: Array<{ level: string; source: string; message?: string }>
+  }
+  expected: Record<string, any>
+  diff: Array<{ field: string; expected: string; actual: string }>
+  elapsed: string
+  status: 'PASS' | 'FAILED' | 'ERROR'
+  message: string
 }
 
 export function listDatasets(category?: string) {
@@ -43,5 +64,9 @@ export function executeCase(caseId: number) {
 }
 
 export function batchExecute(dataSetId: number) {
-  return request.post<any, Record<string, any>[]>(`/api/v1/sandbox/batch-execute/${dataSetId}`, {})
+  return request.post<any, ExecuteResult[]>(`/api/v1/sandbox/batch-execute/${dataSetId}`, {})
+}
+
+export function getReport(dataSetId: number): Promise<any> {
+  return request.get(`/api/v1/sandbox/report/${dataSetId}`)
 }

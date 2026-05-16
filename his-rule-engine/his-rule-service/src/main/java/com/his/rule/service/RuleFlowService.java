@@ -254,7 +254,7 @@ public class RuleFlowService {
     /**
      * 执行规则流
      */
-    public String executeFlow(Long id, String factJson) {
+    public RuleFlowEngine.ExecutionResult executeFlow(Long id, String factJson) {
         RuleFlow flow = ruleFlowMapper.selectById(id);
         if (flow == null) {
             throw new RuntimeException("规则流不存在: id=" + id);
@@ -284,7 +284,7 @@ public class RuleFlowService {
 
                 // 2. 获取公式表达式
                 Map<String, Object> formulaData = formulaResult.getData();
-                String expression = (String) formulaData.get("expression");
+                String expression = (String) formulaData.get("formulaText");
                 if (expression == null || expression.isBlank()) {
                     log.error("公式表达式为空: formulaKey={}", formulaKey);
                     return fact;
@@ -320,16 +320,9 @@ public class RuleFlowService {
         }
 
         // 执行规则流
-        RuleFlowEngine.ExecutionResult result = ruleFlowEngine.execute(
+        return ruleFlowEngine.execute(
             flow.getFlowDefinition(), fact, ruleExecutor, formulaExecutor
         );
-
-        // 返回执行结果JSON
-        try {
-            return objectMapper.writeValueAsString(result);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("执行结果序列化失败: " + e.getMessage());
-        }
     }
 
     // ==================== 私有方法 ====================

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.his.common.web.context.TenantContext;
 import com.his.common.web.exception.BusinessException;
 import com.his.common.web.service.AuditLogService;
+import com.his.common.aviator.engine.AviatorEngine;
 import com.his.formula.dto.*;
 import com.his.formula.entity.AviatorFormula;
 import com.his.formula.entity.FormulaParam;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -39,6 +41,7 @@ public class FormulaService {
     private final FormulaValidator formulaValidator;
     private final AuditLogService auditLogService;
     private final ApplicationEventPublisher eventPublisher;
+    private final AviatorEngine aviatorEngine;
 
     /**
      * 分页查询公式
@@ -363,6 +366,21 @@ public class FormulaService {
             vo.setChangeTime(h.getChangeTime());
             return vo;
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * 测试公式执行
+     */
+    public Object test(Long id, Map<String, Object> params) {
+        AviatorFormula formula = formulaMapper.selectById(id);
+        if (formula == null || formula.getDeleted() == 1) {
+            throw new BusinessException("HIS-401", "公式不存在");
+        }
+        long start = System.currentTimeMillis();
+        Object result = aviatorEngine.execute(formula.getFormulaText(), params);
+        long elapsed = System.currentTimeMillis() - start;
+        log.info("公式测试: id={}, formulaKey={}, elapsed={}ms", id, formula.getFormulaKey(), elapsed);
+        return result;
     }
 
     /**

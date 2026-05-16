@@ -2,22 +2,30 @@ package com.his.settlement.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.his.common.SettlementFact;
+import com.his.common.SkillContext;
+import com.his.common.SkillResult;
+import com.his.common.ResultLevel;
 import com.his.common.web.context.TenantContext;
 import com.his.settlement.dto.TestDataSetDTO;
 import com.his.settlement.entity.TestCase;
 import com.his.settlement.entity.TestDataSet;
 import com.his.settlement.mapper.TestCaseMapper;
 import com.his.settlement.mapper.TestDataSetMapper;
+import com.his.settlement.pipeline.SkillPipelineExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -31,6 +39,8 @@ public class SandboxService {
     private final TestDataSetMapper dataSetMapper;
     private final TestCaseMapper testCaseMapper;
     private final ObjectMapper objectMapper;
+    private final SkillPipelineExecutor skillPipelineExecutor;
+    private final FormulaLoaderService formulaLoaderService;
 
     /**
      * 列表查询
@@ -131,39 +141,95 @@ public class SandboxService {
     }
 
     /**
-     * 执行单个测试用例
+     * 执行单个测试用例（真实规则执行）
      */
+    @SuppressWarnings("unchecked")
     public Map<String, Object> executeTestCase(Long caseId) {
         TestCase testCase = testCaseMapper.selectById(caseId);
         if (testCase == null || testCase.getDeleted() == 1) {
             throw new RuntimeException("测试用例不存在");
         }
 
+        long startTime = System.currentTimeMillis();
+        Map<String, Object> execResult = new LinkedHashMap<>();
+        execResult.put("caseId", testCase.getCaseId());
+        execResult.put("caseName", testCase.getCaseName());
+
         try {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> fact = objectMapper.readValue(testCase.getFactJson(), Map.class);
+            // 1. 解析输入 Fact
+            Map<String, Object> factMap = objectMapper.readValue(testCase.getFactJson(), Map.class);
+            execResult.put("input", factMap);
 
-            Map<String, Object> result = Map.of(
-                "caseId", testCase.getCaseId(),
-                "caseName", testCase.getCaseName(),
-                "input", fact,
-                "status", "SUCCESS",
-                "message", "执行成功"
-            );
+            // 2. 构建 SettlementFact 对象
+            SettlementFact fact = buildSettlementFact(factMap, testCase.getTenantId());
 
-            testCase.setLastResult("SUCCESS");
+            // 3. 构建 SkillContext 并执行 Skill 管道
+            SkillContext<SettlementFact> context = new SkillContext<>();
+            context.setTenantId(testCase.getTenantId());
+            context.setEventType("EVENT_FEE_SETTLE");
+            context.setPayload(fact);
+
+            skillPipelineExecutor.execute(context);
+
+            // 4. 执行公式计算（报销金额）
+            BigDecimal reimburseAmount = BigDecimal.ZERO;
+            if (fact.getTotalFee() != null && fact.getDeductible() != null && fact.getRatio() != null) {
+                if (fact.getTotalFee().compareTo(fact.getDeductible()) > 0) {
+                    reimburseAmount = formulaLoaderService.executeReimburseFormula(
+                            testCase.getTenantId(),
+                            fact.getPatientType(),
+                            fact.getTotalFee(),
+                            fact.getDeductible(),
+                            fact.getRatio()
+                    );
+                }
+            }
+            fact.setFinalAmount(reimburseAmount);
+
+            // 5. 收集执行结果
+            Map<String, Object> actualOutput = buildOutputMap(fact, context);
+
+            // 6. 解析期望输出
+            Map<String, Object> expected = new LinkedHashMap<>();
+            if (StringUtils.hasText(testCase.getExpectedJson())) {
+                expected = objectMapper.readValue(testCase.getExpectedJson(), Map.class);
+            }
+
+            // 7. 对比实际与期望
+            List<Map<String, String>> diffs = compareResults(expected, actualOutput);
+
+            long elapsed = System.currentTimeMillis() - startTime;
+            execResult.put("actual", actualOutput);
+            execResult.put("expected", expected);
+            execResult.put("diff", diffs);
+            execResult.put("elapsed", elapsed + "ms");
+
+            if (diffs.isEmpty()) {
+                execResult.put("status", "PASS");
+                execResult.put("message", "测试通过");
+                testCase.setLastResult("PASS");
+            } else {
+                execResult.put("status", "FAILED");
+                execResult.put("message", "存在 " + diffs.size() + " 项不匹配");
+                testCase.setLastResult("FAILED");
+            }
+            testCase.setLastExecutionTime(LocalDateTime.now());
             testCaseMapper.updateById(testCase);
 
-            return result;
+            log.info("测试用例执行完成: caseId={}, status={}, elapsed={}ms, diffs={}",
+                    testCase.getCaseId(), execResult.get("status"), elapsed, diffs.size());
+
+            return execResult;
+
         } catch (Exception e) {
             log.error("执行测试用例失败: caseId={}", caseId, e);
-            testCase.setLastResult("FAILED");
+            testCase.setLastResult("ERROR");
+            testCase.setLastExecutionTime(LocalDateTime.now());
             testCaseMapper.updateById(testCase);
-            return Map.of(
-                "caseId", testCase.getCaseId(),
-                "status", "FAILED",
-                "message", e.getMessage()
-            );
+
+            execResult.put("status", "ERROR");
+            execResult.put("message", e.getMessage());
+            return execResult;
         }
     }
 
@@ -235,5 +301,160 @@ public class SandboxService {
         }).collect(Collectors.toList()));
 
         return dto;
+    }
+
+    /**
+     * 构建 SettlementFact 对象
+     */
+    @SuppressWarnings("unchecked")
+    private SettlementFact buildSettlementFact(Map<String, Object> factMap, String tenantId) {
+        SettlementFact fact = new SettlementFact();
+        fact.setTenantId(tenantId);
+        fact.setPatientId((String) factMap.get("patientId"));
+        fact.setPatientName((String) factMap.get("patientName"));
+        fact.setPatientType((String) factMap.get("patientType"));
+        fact.setInsuranceType((String) factMap.get("insuranceType"));
+        fact.setHospitalLevel((String) factMap.get("hospitalLevel"));
+        fact.setSettlementId((String) factMap.get("settlementId"));
+        fact.setDiagnosisCode((String) factMap.get("diagnosisCode"));
+
+        // BigDecimal 字段处理
+        Object totalFee = factMap.get("totalFee");
+        if (totalFee instanceof Number) {
+            fact.setTotalFee(BigDecimal.valueOf(((Number) totalFee).doubleValue()));
+        }
+
+        Object deductible = factMap.get("deductible");
+        if (deductible instanceof Number) {
+            fact.setDeductible(BigDecimal.valueOf(((Number) deductible).doubleValue()));
+        }
+
+        Object ratio = factMap.get("ratio");
+        if (ratio instanceof Number) {
+            fact.setRatio(BigDecimal.valueOf(((Number) ratio).doubleValue()));
+        }
+
+        Object finalAmount = factMap.get("finalAmount");
+        if (finalAmount instanceof Number) {
+            fact.setFinalAmount(BigDecimal.valueOf(((Number) finalAmount).doubleValue()));
+        }
+
+        return fact;
+    }
+
+    /**
+     * 构建输出结果 Map
+     */
+    private Map<String, Object> buildOutputMap(SettlementFact fact, SkillContext<SettlementFact> context) {
+        Map<String, Object> output = new LinkedHashMap<>();
+
+        // 基础字段
+        if (fact.getDeductible() != null) {
+            output.put("deductible", fact.getDeductible());
+        }
+        if (fact.getRatio() != null) {
+            output.put("ratio", fact.getRatio());
+        }
+        if (fact.getFinalAmount() != null) {
+            output.put("finalAmount", fact.getFinalAmount());
+        }
+
+        // 报销金额（从 fact.results 收集）
+        BigDecimal reimburseAmount = fact.getFinalAmount();
+        if (reimburseAmount == null && fact.getTotalFee() != null && fact.getDeductible() != null
+                && fact.getTotalFee().compareTo(fact.getDeductible()) > 0) {
+            // 兜底：基于比例计算
+            if (fact.getRatio() != null) {
+                reimburseAmount = fact.getTotalFee().subtract(fact.getDeductible())
+                        .multiply(fact.getRatio()).setScale(2, java.math.RoundingMode.HALF_UP);
+            }
+        }
+        output.put("reimburseAmount", reimburseAmount != null ? reimburseAmount : BigDecimal.ZERO);
+
+        // 自付金额
+        if (fact.getTotalFee() != null && reimburseAmount != null) {
+            output.put("selfPayAmount", fact.getTotalFee().subtract(reimburseAmount));
+        }
+
+        // Skill 结果汇总
+        List<Map<String, Object>> skillResults = new ArrayList<>();
+        for (SkillResult sr : context.getResults()) {
+            Map<String, Object> srMap = new LinkedHashMap<>();
+            srMap.put("level", sr.getLevel().name());
+            srMap.put("source", sr.getSource());
+            srMap.put("message", sr.getMessage());
+            skillResults.add(srMap);
+        }
+        output.put("skillResults", skillResults);
+
+        // 整体结果等级
+        output.put("resultLevel", context.hasBlock() ? "BLOCK" :
+                context.getResults().stream().anyMatch(r -> r.getLevel() == ResultLevel.WARN) ? "WARN" : "PASS");
+
+        return output;
+    }
+
+    /**
+     * 对比实际结果与期望结果（智能数值比较）
+     */
+    @SuppressWarnings("unchecked")
+    private List<Map<String, String>> compareResults(Map<String, Object> expected, Map<String, Object> actual) {
+        List<Map<String, String>> diffs = new ArrayList<>();
+
+        for (String key : expected.keySet()) {
+            Object expVal = expected.get(key);
+            Object actVal = actual.get(key);
+
+            if (!isEqual(expVal, actVal)) {
+                diffs.add(Map.of(
+                        "field", key,
+                        "expected", formatValue(expVal),
+                        "actual", formatValue(actVal)
+                ));
+            }
+        }
+
+        return diffs;
+    }
+
+    /**
+     * 判断两个值是否相等（支持数值类型自动转换）
+     */
+    private boolean isEqual(Object a, Object b) {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+
+        // 数值类型比较：BigDecimal / Number / String 数字
+        if (isNumeric(a) && isNumeric(b)) {
+            BigDecimal ba = toBigDecimal(a);
+            BigDecimal bb = toBigDecimal(b);
+            // 允许 0.001 的误差（处理浮点精度问题）
+            return ba.subtract(bb).abs().compareTo(new BigDecimal("0.001")) < 0;
+        }
+
+        return Objects.equals(a, b);
+    }
+
+    private boolean isNumeric(Object v) {
+        return v instanceof Number || v instanceof String;
+    }
+
+    private BigDecimal toBigDecimal(Object v) {
+        if (v instanceof BigDecimal bd) return bd;
+        if (v instanceof Number num) return BigDecimal.valueOf(num.doubleValue());
+        if (v instanceof String s) {
+            try { return new BigDecimal(s); } catch (Exception e) { return BigDecimal.ZERO; }
+        }
+        return BigDecimal.ZERO;
+    }
+
+    private String formatValue(Object v) {
+        if (v == null) return "null";
+        if (v instanceof BigDecimal bd) return bd.stripTrailingZeros().toPlainString();
+        if (v instanceof Number num) {
+            if (num.doubleValue() == num.longValue()) return String.valueOf(num.longValue());
+            return String.valueOf(num.doubleValue());
+        }
+        return String.valueOf(v);
     }
 }

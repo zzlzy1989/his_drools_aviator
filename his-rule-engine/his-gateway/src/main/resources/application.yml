@@ -27,7 +27,7 @@ spring:
         - id: his-rule-service
           uri: lb://his-rule-service
           predicates:
-            - Path=/api/v1/rules/**,/api/v1/flows/**
+            - Path=/api/v1/rules/**,/api/v1/flows/**,/api/v1/audit-logs/**
           filters:
             - StripPrefix=0
         - id: his-formula-service
@@ -39,7 +39,7 @@ spring:
         - id: his-settlement-service
           uri: lb://his-settlement-service
           predicates:
-            - Path=/api/v1/settlements/**
+            - Path=/api/v1/settlements/**,/api/v1/sandbox/**
           filters:
             - StripPrefix=0
         - id: his-drug-service
@@ -64,6 +64,18 @@ spring:
           uri: lb://his-rule-service
           predicates:
             - Path=/api/v2/flows/**
+          filters:
+            - StripPrefix=0
+        - id: his-market-service
+          uri: lb://his-market-service
+          predicates:
+            - Path=/api/v1/market/**
+          filters:
+            - StripPrefix=0
+        - id: his-monitor-service
+          uri: lb://his-monitor-service
+          predicates:
+            - Path=/api/v1/monitor/**
           filters:
             - StripPrefix=0
 

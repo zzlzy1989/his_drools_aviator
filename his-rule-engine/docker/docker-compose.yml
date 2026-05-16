@@ -213,6 +213,25 @@ services:
     depends_on:
       - his-gateway
 
+  # ===== HIS 规则市场服务 (9008) =====
+  his-market-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        SERVICE_NAME: his-market-service
+    container_name: his-market-service
+    ports:
+      - "9008:9008"
+    environment:
+      <<: *common-env
+      SERVER_PORT: 9008
+    volumes:
+      - ./logs/market-service:/app/logs
+    <<: *common-config
+    depends_on:
+      - his-gateway
+
 networks:
   his-net:
     driver: bridge
