@@ -27,6 +27,8 @@
         <module>his-drug-service</module>
         <module>his-quality-service</module>
         <module>his-drg-service</module>
+        <module>his-monitor-service</module>
+        <module>his-market-service</module>
     </modules>
 
     <properties>

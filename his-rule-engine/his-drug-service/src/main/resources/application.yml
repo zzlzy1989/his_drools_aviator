@@ -48,3 +48,12 @@ drools:
 logging:
   level:
     com.his.drug: debug
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

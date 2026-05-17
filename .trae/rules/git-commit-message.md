@@ -1,8 +1,8 @@
 ---
-alwaysApply: true
+alwaysApply: false
+description: 
 scene: git_message
 ---
-
 # Git Commit Message 规则
 
 ## 提交格式

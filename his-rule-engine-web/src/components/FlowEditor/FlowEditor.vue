@@ -24,6 +24,8 @@
         <el-badge v-if="errors.length" :value="errors.length" class="badge" />
       </el-button>
       <el-button :icon="Rank" @click="autoLayout">自动布局</el-button>
+      <el-button :icon="VideoPlay" @click="handleRealExecute" :disabled="!flowId">执行</el-button>
+      <el-button v-if="flowId" :icon="Connection" @click="handleViewHistory">历史</el-button>
       <div class="flow-editor__status">
         <el-tag v-if="store.isDirty" type="warning" size="small">未保存</el-tag>
         <el-tag v-else type="success" size="small">已保存</el-tag>
@@ -159,6 +161,13 @@
                   @change="handleNodeUpdate"
                 />
               </el-form-item>
+              <el-form-item label="结果字段">
+                <el-input
+                  v-model="store.selectedNode.resultField"
+                  placeholder="结果写入的字段名"
+                  @change="handleNodeUpdate"
+                />
+              </el-form-item>
             </template>
             <template v-else-if="store.selectedNode.type === 'subflow'">
               <el-form-item label="子流程ID">
@@ -227,7 +236,7 @@ import {
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import { useFlowEditorStore } from '@/stores/flow-editor'
-import { getFlowById, createFlow, updateFlow, publishFlow, exportFlow } from '@/api/rule-flow'
+import { getFlowById, createFlow, updateFlow, publishFlow, exportFlow, executeFlow } from '@/api/rule-flow'
 import type { NodeDTO, NodeType } from './types'
 
 interface NodeTypeConfig {
@@ -895,6 +904,57 @@ function handleExport() {
     .catch(() => ElMessage.error('导出失败'))
 }
 
+async function handleRealExecute() {
+  if (!flowId.value) {
+    ElMessage.warning('请先保存规则流')
+    return
+  }
+
+  try {
+    const { value: inputData } = await ElMessageBox.prompt('请输入测试数据 (JSON)', '执行规则流', {
+      confirmButtonText: '执行',
+      cancelButtonText: '取消',
+      inputValue: JSON.stringify({ patientType: 'employee', totalFee: 10000, deductible: 1000, ratio: 0.85 }, null, 2),
+      inputType: 'textarea',
+    })
+
+    const factJson = JSON.stringify(JSON.parse(inputData || '{}'))
+
+    const result = await executeFlow(Number(flowId.value), factJson)
+    const data = result.data as any
+
+    const msg = data.success
+      ? `执行成功，路径: ${data.executionPath?.join(' → ')}`
+      : `执行失败: ${data.errorMessage}`
+
+    ElMessage({
+      type: data.success ? 'success' : 'error',
+      message: msg,
+      duration: 5000,
+    })
+
+    // 显示执行结果详情
+    if (data.nodeResults && data.nodeResults.length > 0) {
+      const detailMsg = data.nodeResults
+        .map((n: any) => `${n.nodeLabel}: ${n.success ? '✓' : '✗'} (${n.durationMs}ms)`)
+        .join('\n')
+      ElMessage.info({ message: detailMsg, duration: 8000 })
+    }
+
+    log.info('规则流执行结果:', data)
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error('执行失败: ' + (error.message || '未知错误'))
+    }
+  }
+}
+
+function handleViewHistory() {
+  if (flowId.value) {
+    router.push(`/flow/history/${flowId.value}`)
+  }
+}
+
 function handleImport() {
   const input = document.createElement('input')
   input.type = 'file'
@@ -919,6 +979,38 @@ function handleImport() {
 }
 
 function handleNodeUpdate() {
+  // 同步条件节点分支与连线
+  if (store.selectedNode?.type === 'condition' && graph) {
+    const nodeId = store.selectedNode.nodeId
+    const { true: trueTarget, false: falseTarget } = store.selectedNode.branches || {}
+
+    // 更新true分支连线
+    if (trueTarget) {
+      const trueEdge = graph.getEdges().find(e => {
+        if (e.getSourceCellId() !== nodeId) return false
+        const label = e.getLabelAt(0)?.attrs?.label?.text
+        return label === 'true' || label === '是'
+      })
+      if (trueEdge && trueEdge.getTargetCellId() !== trueTarget) {
+        trueEdge.setTarget(trueTarget)
+        // 同步更新store中的edge数据
+        store.updateEdge(nodeId, trueEdge.getTargetCellId(), { target: trueTarget })
+      }
+    }
+
+    // 更新false分支连线
+    if (falseTarget) {
+      const falseEdge = graph.getEdges().find(e => {
+        if (e.getSourceCellId() !== nodeId) return false
+        const label = e.getLabelAt(0)?.attrs?.label?.text
+        return label === 'false' || label === '否'
+      })
+      if (falseEdge && falseEdge.getTargetCellId() !== falseTarget) {
+        falseEdge.setTarget(falseTarget)
+        store.updateEdge(nodeId, falseEdge.getTargetCellId(), { target: falseTarget })
+      }
+    }
+  }
   renderGraph(store.flowDefinition)
 }
 

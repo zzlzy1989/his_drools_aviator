@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+description: 数据库规范
+---
 # 数据库规范 - HIS 动态规则中台
 
 ## 触发条件
@@ -151,6 +155,106 @@ CREATE TABLE `settlement_record` (
     KEY `idx_patient` (`patient_id`),
     KEY `idx_tenant_time` (`tenant_id`, `create_time`)
 ) ENGINE=InnoDB COMMENT='结算记录';
+
+-- 结算明细表
+CREATE TABLE `settlement_detail` (
+    `id`              BIGINT        NOT NULL AUTO_INCREMENT,
+    `settlement_id`   BIGINT        NOT NULL COMMENT '结算记录ID',
+    `fee_item_name`   VARCHAR(128)  NOT NULL COMMENT '费用项目名称',
+    `fee_amount`      DECIMAL(14,2) NOT NULL COMMENT '费用金额',
+    `reimburse_ratio` DECIMAL(5,4)  NOT NULL DEFAULT 0 COMMENT '报销比例',
+    `reimburse_amount`DECIMAL(14,2) NOT NULL DEFAULT 0 COMMENT '报销金额',
+    `self_pay_amount` DECIMAL(14,2) NOT NULL DEFAULT 0 COMMENT '自付金额',
+    `tenant_id`       VARCHAR(64)   NOT NULL DEFAULT '',
+    `create_time`     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_settlement` (`settlement_id`)
+) ENGINE=InnoDB COMMENT='结算明细';
+```
+
+#### DRG 相关表
+
+```sql
+-- DRG 分组定义表
+CREATE TABLE `drg_definition` (
+    `id`              BIGINT       NOT NULL AUTO_INCREMENT,
+    `drg_code`        VARCHAR(32)  NOT NULL COMMENT 'DRG编码',
+    `drg_name`        VARCHAR(128) NOT NULL COMMENT 'DRG名称',
+    `mdc_code`        VARCHAR(32)  NOT NULL COMMENT 'MDC编码(主要诊断大类)',
+    `base_weight`     DECIMAL(8,4) NOT NULL COMMENT '基础权重',
+    `relative_weight` DECIMAL(8,4) NOT NULL COMMENT '相对权重',
+    `avg_los`         INT          DEFAULT NULL COMMENT '平均住院日',
+    `avg_cost`        DECIMAL(14,2)DEFAULT NULL COMMENT '平均费用',
+    `status`          TINYINT      NOT NULL DEFAULT 1 COMMENT '状态: 0=停用 1=启用',
+    `version`         VARCHAR(32)  NOT NULL DEFAULT 'CHS-DRG-1.0' COMMENT 'DRG版本',
+    `tenant_id`       VARCHAR(64)  NOT NULL DEFAULT '',
+    `create_time`     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time`     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_drg_code_version` (`drg_code`, `version`, `tenant_id`),
+    KEY `idx_mdc` (`mdc_code`)
+) ENGINE=InnoDB COMMENT='DRG分组定义';
+
+-- DRG 分组记录表
+CREATE TABLE `drg_group_record` (
+    `id`              BIGINT        NOT NULL AUTO_INCREMENT,
+    `medical_record_no` VARCHAR(64) NOT NULL COMMENT '病案号',
+    `patient_id`      VARCHAR(64)   NOT NULL COMMENT '患者ID',
+    `main_diagnosis`  VARCHAR(128)  NOT NULL COMMENT '主要诊断ICD编码',
+    `secondary_diagnosis` TEXT      DEFAULT NULL COMMENT '次要诊断ICD编码(JSON数组)',
+    `surgery_code`    TEXT          DEFAULT NULL COMMENT '手术操作编码(JSON数组)',
+    `drg_code`        VARCHAR(32)   DEFAULT NULL COMMENT '分组结果DRG编码',
+    `drg_name`        VARCHAR(128)  DEFAULT NULL COMMENT '分组结果DRG名称',
+    `weight`          DECIMAL(8,4)  DEFAULT NULL COMMENT '权重',
+    `payment_amount`  DECIMAL(14,2) DEFAULT NULL COMMENT '支付金额',
+    `group_status`    TINYINT       NOT NULL DEFAULT 0 COMMENT '分组状态: 0=成功 1=未入组 2=歧义',
+    `tenant_id`       VARCHAR(64)   NOT NULL DEFAULT '',
+    `create_time`     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_medical_record` (`medical_record_no`, `tenant_id`),
+    KEY `idx_drg_code` (`drg_code`),
+    KEY `idx_tenant_time` (`tenant_id`, `create_time`)
+) ENGINE=InnoDB COMMENT='DRG分组记录';
+```
+
+#### 质控相关表
+
+```sql
+-- 质控指标定义表
+CREATE TABLE `quality_indicator` (
+    `id`              BIGINT       NOT NULL AUTO_INCREMENT,
+    `indicator_code`  VARCHAR(64)  NOT NULL COMMENT '指标编码',
+    `indicator_name`  VARCHAR(128) NOT NULL COMMENT '指标名称',
+    `category`        VARCHAR(64)  NOT NULL COMMENT '分类: 过程/结果/结构',
+    `formula`         TEXT         DEFAULT NULL COMMENT '计算公式',
+    `target_value`    VARCHAR(64)  DEFAULT NULL COMMENT '目标值',
+    `unit`            VARCHAR(32)  DEFAULT NULL COMMENT '单位',
+    `threshold_low`   DECIMAL(10,4)DEFAULT NULL COMMENT '下限阈值',
+    `threshold_high`  DECIMAL(10,4)DEFAULT NULL COMMENT '上限阈值',
+    `status`          TINYINT      NOT NULL DEFAULT 1 COMMENT '状态: 0=停用 1=启用',
+    `tenant_id`       VARCHAR(64)  NOT NULL DEFAULT '',
+    `create_time`     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time`     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_indicator_code` (`indicator_code`, `tenant_id`)
+) ENGINE=InnoDB COMMENT='质控指标定义';
+
+-- 质控结果表
+CREATE TABLE `quality_result` (
+    `id`              BIGINT        NOT NULL AUTO_INCREMENT,
+    `indicator_id`    BIGINT        NOT NULL COMMENT '指标ID',
+    `indicator_code`  VARCHAR(64)   NOT NULL COMMENT '指标编码',
+    `indicator_value` DECIMAL(14,4) DEFAULT NULL COMMENT '指标实际值',
+    `is_qualified`    TINYINT       NOT NULL COMMENT '是否达标: 0=否 1=是',
+    `deviation`       DECIMAL(10,4) DEFAULT NULL COMMENT '偏差值',
+    `stat_date`       DATE          NOT NULL COMMENT '统计日期',
+    `detail_json`     JSON          DEFAULT NULL COMMENT '明细数据',
+    `tenant_id`       VARCHAR(64)   NOT NULL DEFAULT '',
+    `create_time`     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_indicator_date` (`indicator_id`, `stat_date`),
+    KEY `idx_tenant_date` (`tenant_id`, `stat_date`)
+) ENGINE=InnoDB COMMENT='质控结果';
 ```
 
 #### Skill 执行日志表
@@ -175,20 +279,30 @@ CREATE TABLE `skill_execution_log` (
 
 ---
 
-## 三、索引策略
+## 六、微服务数据库隔离
 
-| 场景 | 必须建索引 |
-|------|-----------|
-| 租户查询 | `tenant_id` （每张表必须有） |
-| 状态筛选 | `(status, tenant_id)` 联合索引 |
-| 时间范围查询 | `(tenant_id, create_time)` 联合索引 |
-| 外键关联 | 关联字段单独索引 |
-| 唯一约束 | 业务唯一键（如 settlement_no）|
-| 公式查找 | `(formula_key, tenant_id)` 唯一索引 |
+### 6.1 数据库分配
+
+| 微服务 | 数据库/Schema | 核心表 |
+|--------|--------------|--------|
+| his-rule-service | `his_rule` | rule_definition, rule_group, formula, formula_history |
+| his-settlement-service | `his_settlement` | settlement_record, settlement_detail, skill_execution_log |
+| his-drug-service | `his_drug` | drug_interaction, drug_limit, prescription_record |
+| his-quality-service | `his_quality` | quality_indicator, quality_result |
+| his-drg-service | `his_drg` | drg_definition, drg_group_record |
+
+### 6.2 跨服务数据访问规则
+
+| 规则 | 要求 |
+|------|------|
+| 禁止跨库 JOIN | 每个服务只能访问自己的数据库/表 |
+| 数据共享 | 通过 Feign 客户端调用其他服务 API 获取数据 |
+| 数据冗余 | 允许适度冗余（如结算服务缓存规则快照） |
+| 最终一致性 | 使用事件驱动（Spring Cloud Stream）保证数据最终一致 |
 
 ---
 
-## 四、SQL 编写规范
+## 七、SQL 编写规范
 
 | 规则 | 要求 |
 |------|------|
@@ -201,7 +315,7 @@ CREATE TABLE `skill_execution_log` (
 
 ---
 
-## 五、数据迁移
+## 八、数据迁移
 
 | 规则 | 要求 |
 |------|------|
@@ -209,7 +323,8 @@ CREATE TABLE `skill_execution_log` (
 | 脚本命名 | `V{版本}__{描述}.sql` 如 `V1__init_schema.sql` |
 | 回滚支持 | 每个迁移脚本配套回滚脚本 |
 | 禁止操作 | 迁移脚本中禁止 `DROP DATABASE/TABLE/TRUNCATE` |
+| 服务隔离 | 每个微服务独立管理自己的迁移脚本 |
 
 ---
 
-最后更新: 2026-04-26 | v1.0 (HIS 规则引擎数据库规范)
+最后更新: 2026-05-12 | v1.1 (HIS 规则引擎数据库规范 - 微服务架构版)

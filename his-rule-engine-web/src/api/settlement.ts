@@ -46,8 +46,10 @@ export interface SettlementQueryDTO {
   settlementNo?: string
   patientId?: string
   status?: string
-  startTime?: string
-  endTime?: string
+  startDate?: string
+  endDate?: string
+  minAmount?: number
+  maxAmount?: number
   tenantId?: string
 }
 

@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+description: 
+---
 # Docker 部署规范 - HIS 动态规则中台
 
 ## 触发条件
@@ -13,11 +17,16 @@
 
 | 服务 | 端口 | 说明 | 对外暴露 |
 |------|------|------|---------|
-| Spring Boot 应用 | **8080** | 主服务（API + 规则引擎） | ⚠️ 内网/Nginx 代理 |
-| Nacos | **8848** | 配置中心（如自建） | ❌ 仅内网 |
+| his-gateway | **9000** | API 网关入口 | ✅ 是 |
+| his-rule-service | **9001** | 规则管理服务 | ❌ 仅内网/网关 |
+| his-settlement-service | **9002** | 结算服务 | ❌ 仅内网/网关 |
+| his-drug-service | **9003** | 合理用药服务 | ❌ 仅内网/网关 |
+| his-quality-service | **9004** | 质控服务 | ❌ 仅内网/网关 |
+| his-drg-service | **9005** | DRG 分组服务 | ❌ 仅内网/网关 |
+| Nacos | **8848** | 配置中心 | ❌ 仅内网 |
 | MySQL | **3306** | 数据库 | ❌ 仅内网 |
 | Redis | **6379** | 缓存（可选） | ❌ 仅内网 |
-| Nginx | **80/443** | 反向代理入口 | ✅ 是 |
+| Sentinel Dashboard | **8081** | 限流监控面板 | ⚠️ 管理端口 |
 
 ---
 
@@ -60,12 +69,14 @@ ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
 ### 镜像标签规范
 
 ```
-{镜像名}:{版本}-{日期}
+{服务名}:{版本}-{日期}
 
 示例:
-his-rule-engine:v1.0.0-20260426
-his-rule-engine:latest          # 仅用于开发环境
-his-rule-engine:stable           # 当前稳定版
+his-gateway:v1.1.0-20260512
+his-rule-service:v1.1.0-20260512
+his-settlement-service:v1.1.0-20260512
+his-rule-service:latest          # 仅用于开发环境
+his-rule-service:stable           # 当前稳定版
 ```
 
 ---
@@ -84,43 +95,74 @@ docker/
 │   ├── init-db.sh              # 数据库初始化
 │   └── healthcheck.sh          # 健康检查脚本
 └── config/
-    └── application-prod.yml    # 生产环境配置覆盖
+    ├── gateway.yml             # 网关配置
+    ├── application-prod.yml    # 生产环境配置覆盖
+    └── sentinel-rules.yml      # Sentinel 限流规则
 ```
 
-### 主编排文件模板
+### 微服务主编排文件模板
 
 ```yaml
 version: '3.8'
 
 services:
-  # === HIS 规则引擎主服务 ===
-  app:
+  # === API 网关 ===
+  gateway:
     build:
       context: ..
-      dockerfile: docker/Dockerfile
-    container_name: his-rule-engine
+      dockerfile: his-gateway/Dockerfile
+    container_name: his-gateway
     ports:
-      - "8080:8080"
+      - "9000:9000"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - NACOS_SERVER_ADDR=nacos:8848
+      - SENTINEL_DASHBOARD_ADDR=sentinel:8081
+    depends_on:
+      nacos:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - his-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+
+  # === 规则管理服务 ===
+  rule-service:
+    build:
+      context: ..
+      dockerfile: his-rule-service/Dockerfile
+    container_name: his-rule-service
+    ports:
+      - "9001:9001"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - DB_HOST=mysql
       - DB_PORT=3306
-      - DB_NAME=his_rule_engine
+      - DB_NAME=his_rule
       - DB_USER=his_app
       - DB_PASSWORD=${DB_PASSWORD}
       - NACOS_SERVER_ADDR=nacos:8848
       - AVIATOR_CACHE_MAX_SIZE=5000
       - DROOLS_RULE_SCAN_INTERVAL=60
     volumes:
-      - ../logs:/app/logs
-      - ../data/rules:/app/data/rules
+      - ../logs/rule:/app/logs
     depends_on:
       mysql:
         condition: service_healthy
       nacos:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:9001/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -134,6 +176,161 @@ services:
           memory: 2G
           cpus: '2.0'
 
+  # === 结算服务 ===
+  settlement-service:
+    build:
+      context: ..
+      dockerfile: his-settlement-service/Dockerfile
+    container_name: his-settlement-service
+    ports:
+      - "9002:9002"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=his_settlement
+      - DB_USER=his_app
+      - DB_PASSWORD=${DB_PASSWORD}
+      - NACOS_SERVER_ADDR=nacos:8848
+      - RULE_SERVICE_URL=http://rule-service:9001
+    volumes:
+      - ../logs/settlement:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+      rule-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9002/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - his-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+
+  # === 合理用药服务 ===
+  drug-service:
+    build:
+      context: ..
+      dockerfile: his-drug-service/Dockerfile
+    container_name: his-drug-service
+    ports:
+      - "9003:9003"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=his_drug
+      - DB_USER=his_app
+      - DB_PASSWORD=${DB_PASSWORD}
+      - NACOS_SERVER_ADDR=nacos:8848
+    volumes:
+      - ../logs/drug:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9003/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - his-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+
+  # === 质控服务 ===
+  quality-service:
+    build:
+      context: ..
+      dockerfile: his-quality-service/Dockerfile
+    container_name: his-quality-service
+    ports:
+      - "9004:9004"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=his_quality
+      - DB_USER=his_app
+      - DB_PASSWORD=${DB_PASSWORD}
+      - NACOS_SERVER_ADDR=nacos:8848
+    volumes:
+      - ../logs/quality:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9004/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - his-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+
+  # === DRG 分组服务 ===
+  drg-service:
+    build:
+      context: ..
+      dockerfile: his-drg-service/Dockerfile
+    container_name: his-drg-service
+    ports:
+      - "9005:9005"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=his_drg
+      - DB_USER=his_app
+      - DB_PASSWORD=${DB_PASSWORD}
+      - NACOS_SERVER_ADDR=nacos:8848
+    volumes:
+      - ../logs/drg:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+      nacos:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9005/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - his-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+
   # === MySQL ===
   mysql:
     image: mysql:8.0
@@ -142,7 +339,7 @@ services:
       - "3306:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=his_rule_engine
+      - MYSQL_DATABASE=his_rule
       - MYSQL_CHARACTER_SET_SERVER=utf8mb4
       - MYSQL_COLLATION_SERVER=utf8mb4_general_ci
     command:
@@ -193,6 +390,23 @@ services:
       - his-net
     restart: unless-stopped
 
+  # === Sentinel Dashboard (限流监控) ===
+  sentinel:
+    image: bladex/sentinel-dashboard:1.8.8
+    container_name: his-sentinel
+    ports:
+      - "8081:8081"
+    environment:
+      - JAVA_OPTS=-Dserver.port=8081 -Dcsp.sentinel.dashboard.server=localhost:8081
+    networks:
+      - his-net
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
   # === Redis (可选，二级缓存) ===
   redis:
     image: redis:7-alpine
@@ -229,9 +443,14 @@ volumes:
 
 | 服务 | 检查方式 | 端点 | 预期响应 |
 |------|---------|------|---------|
-| Spring Boot App | HTTP GET | `/api/health` | `{"status":"UP","components":{...}}` |
-| MySQL | TCP | `3306` | 连接成功 |
+| Gateway | HTTP GET | `/actuator/health` | `{"status":"UP"}` |
+| Rule Service | HTTP GET | `/actuator/health` | `{"status":"UP"}` |
+| Settlement Service | HTTP GET | `/actuator/health` | `{"status":"UP"}` |
+| Drug Service | HTTP GET | `/actuator/health` | `{"status":"UP"}` |
+| Quality Service | HTTP GET | `/actuator/health` | `{"status":"UP"}` |
+| DRG Service | HTTP GET | `/actuator/health` | `{"status":"UP"}` |
 | Nacos | HTTP GET | `/nacos/v1/console/health/liveness` | JSON OK |
+| MySQL | TCP | `3306` | 连接成功 |
 | Redis | CLI | `redis-cli ping` | `PONG` |
 
 ### Spring Boot Health Check 实现
@@ -281,8 +500,8 @@ public class HealthController {
 
 | 参数 | 开发环境 | 生产环境 | 说明 |
 |------|---------|---------|------|
-| `-Xms` | 256m | 512m | 初始堆内存 |
-| `-Xmx` | 1g | 2g | 最大堆内存 |
+| `-Xms` | 256m | 512m-1024m | 初始堆内存（规则/结算服务建议 1024m） |
+| `-Xmx` | 1g | 2g-4g | 最大堆内存（规则/结算服务建议 4g） |
 | GC 算法 | G1GC | G1GC | 低延迟适合规则引擎 |
 | `MaxGCPauseMillis` | 200ms | 200ms | GC 最大停顿时间 |
 | Metaspace | 128m | 256m | 元空间（DRL编译占用较多） |
@@ -300,6 +519,11 @@ public class HealthController {
 
 # SPRING 相关
 -Dspring.main.lazy-initialization=true      # 延迟初始化(加快启动)
+
+# SENTINEL 相关
+-Dcsp.sentinel.dashboard.server=sentinel:8081  # Sentinel Dashboard 地址
+-Dcsp.sentinel.api.port=8719                    # Sentinel API 端口
+-Dproject.name=his-rule-service                 # 服务名称
 ```
 
 ---
@@ -313,12 +537,14 @@ public class HealthController {
 | `SPRING_PROFILES_ACTIVE` | 环境 Profile | ✅ 必须 | dev/test/prod/docker |
 | `DB_HOST` | 数据库地址 | ✅ 必须 | mysql / 192.168.1.100 |
 | `DB_PORT` | 数据库端口 | ✅ 必须 | 3306 |
-| `DB_NAME` | 数据库名 | ✅ 必须 | his_rule_engine |
+| `DB_NAME` | 数据库名 | ✅ 必须 | his_rule / his_settlement |
 | `DB_USER` | 数据库用户 | ✅ 必须 | his_app |
 | `DB_PASSWORD` | 数据库密码 | ✅ 必须 | *** |
 | `NACOS_SERVER_ADDR` | Nacos 地址 | ✅ 必须 | nacos:8848 |
 | `NACOS_NAMESPACE` | Nacos 命名空间 | 可选 | his_prod |
 | `NACOS_GROUP` | 配置分组 | 可选 | RULE_ENGINE |
+| `SENTINEL_DASHBOARD_ADDR` | Sentinel 地址 | 可选 | sentinel:8081 |
+| `SERVER_PORT` | 服务端口 | ✅ 必须 | 9001/9002/9003/9004/9005 |
 
 ### 环境变量文件
 
@@ -354,17 +580,18 @@ NACOS_AUTH_TOKEN=nacos-auth-token-if-enabled
 docker compose up -d
 
 # 查看日志
-docker compose logs -f app
-docker compose logs --tail=200 app
+docker compose logs -f gateway
+docker compose logs -f rule-service
+docker compose logs --tail=200 settlement-service
 
 # 重启单个服务
-docker compose restart app
+docker compose restart rule-service
 
 # 进入容器调试
-docker compose exec app sh
+docker compose exec rule-service sh
 
 # 数据库备份
-docker compose exec mysqldump -u root -p his_rule_engine > backup_$(date +%Y%m%d).sql
+docker compose exec mysql mysqldump -u root -p his_rule > backup_$(date +%Y%m%d).sql
 
 # 规则热更新验证
 curl -X POST http://localhost:8080/api/v1/config/push -H "Content-Type: application/json"
@@ -376,8 +603,8 @@ docker stats --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}"
 docker system prune -f          # ⚠️ 确认后再执行
 
 # 查看 JVM 状态
-docker compose exec app jinfo 1  # PID 通常为 1
-docker compose exec app jstat -gcutil 1 1s  # GC 统计
+docker compose exec rule-service jinfo 1  # PID 通常为 1
+docker compose exec rule-service jstat -gcutil 1 1s  # GC 统计
 ```
 
 ---
@@ -392,7 +619,10 @@ docker compose exec app jstat -gcutil 1 1s  # GC 统计
 - [ ] 健康检查端点已对接监控系统（Prometheus/Grafana）
 - [ ] 日志收集已接入（ELK/Loki）
 - [ ] 敏感配置已加密存储（Nacos 加密或 Apollo 加密）
+- [ ] Sentinel 限流规则已配置
+- [ ] 各服务依赖关系正确（depends_on）
+- [ ] 网关路由配置正确
 
 ---
 
-最后更新: 2026-04-26 | v1.0 (HIS Drools+Aviator 规则引擎专用)
+最后更新: 2026-05-12 | v1.1 (HIS Drools+Aviator 规则引擎专用 - 微服务架构版)

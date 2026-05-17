@@ -49,3 +49,12 @@ logging:
   level:
     com.his.formula: debug
     com.googlecode.aviator: info
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

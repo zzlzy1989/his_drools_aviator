@@ -27,7 +27,7 @@ spring:
         - id: his-rule-service
           uri: lb://his-rule-service
           predicates:
-            - Path=/api/v1/rules/**,/api/v1/flows/**
+            - Path=/api/v1/rules/**,/api/v1/flows/**,/api/v1/audit-logs/**
           filters:
             - StripPrefix=0
         - id: his-formula-service
@@ -39,7 +39,7 @@ spring:
         - id: his-settlement-service
           uri: lb://his-settlement-service
           predicates:
-            - Path=/api/v1/settlements/**
+            - Path=/api/v1/settlements/**,/api/v1/sandbox/**
           filters:
             - StripPrefix=0
         - id: his-drug-service
@@ -66,6 +66,18 @@ spring:
             - Path=/api/v2/flows/**
           filters:
             - StripPrefix=0
+        - id: his-market-service
+          uri: lb://his-market-service
+          predicates:
+            - Path=/api/v1/market/**
+          filters:
+            - StripPrefix=0
+        - id: his-monitor-service
+          uri: lb://his-monitor-service
+          predicates:
+            - Path=/api/v1/monitor/**
+          filters:
+            - StripPrefix=0
 
 logging:
   level:
@@ -75,3 +87,25 @@ logging:
 his:
   jwt:
     enabled: false  # 开发阶段关闭JWT认证，前端无登录页面
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://localhost:8080
+      - http://localhost:8999
+      - http://127.0.0.1:3000
+      - http://127.0.0.1:8080
+      - http://127.0.0.1:8999
+      - http://192.168.1.105:8999
+    allowed-methods: GET,POST,PUT,DELETE,OPTIONS,PATCH
+    allowed-headers: Origin,Content-Type,Accept,X-Tenant-Id,Authorization
+    allow-credentials: true
+    max-age: 3600
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

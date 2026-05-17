@@ -1,0 +1,2105 @@
+{
+  "info": {
+    "name": "HIS Rule Engine API",
+    "description": "HIS动态规则中台接口测试集 - 包含规则管理、规则流、规则分组、公式管理、医保结算、用药审核、质控管理、DRG分组",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:9001",
+      "type": "string"
+    },
+    {
+      "key": "tenantId",
+      "value": "tenant_001",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. 规则管理 API (his-rule-service:9001)",
+      "item": [
+        {
+          "name": "R01 - 分页查询规则",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules?page=1&pageSize=20&category=reimbursement&status=draft",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "rules"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "category",
+                  "value": "reimbursement"
+                },
+                {
+                  "key": "status",
+                  "value": "draft"
+                }
+              ]
+            },
+            "description": "分页查询规则列表"
+          },
+          "response": [
+            {
+              "name": "成功响应",
+              "status": "OK",
+              "code": 200,
+              "body": "{\"code\":\"0\",\"data\":{\"list\":[{\"id\":1,\"ruleKey\":\"rule.reimbursement.inpatient\",\"ruleName\":\"住院医保报销规则\",\"category\":\"reimbursement\",\"status\":\"draft\",\"version\":1,\"tenantId\":\"tenant_001\",\"createTime\":\"2026-05-10T10:00:00\"}],\"total\":1,\"page\":1,\"pageSize\":20},\"message\":\"操作成功\",\"timestamp\":1746835200000}"
+            }
+          ]
+        },
+        {
+          "name": "R02 - 规则详情",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "rules",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "根据ID查询规则详情"
+          },
+          "response": [
+            {
+              "name": "成功响应",
+              "status": "OK",
+              "code": 200,
+              "body": "{\"code\":\"0\",\"data\":{\"id\":1,\"ruleKey\":\"rule.reimbursement.inpatient\",\"ruleName\":\"住院医保报销规则\",\"ruleText\":\"package com.his.rules\n\nrule \\\"住院医保报销\\\"\n    salience 100\n    when\n        : SettlementFact(patientType == \\\"INPATIENT\\\")\n    then\n        .setReimburseAmount(.getTotalFee().multiply(new java.math.BigDecimal(\\\"0.75\\\")));\nend\",\"category\":\"reimbursement\",\"status\":\"draft\",\"version\":1},\"message\":\"操作成功\",\"timestamp\":1746835200000}"
+            }
+          ]
+        },
+        {
+          "name": "R03 - 创建规则",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "rules"
+              ],
+              "query": []
+            },
+            "description": "创建新规则（草稿状态）",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"ruleKey\": \"rule.reimbursement.inpatient\",\n    \"ruleName\": \"住院医保报销规则\",\n    \"ruleText\": \"package com.his.rules\\n\\nimport com.his.settlement.dto.SettlementFact\\n\\nrule \\\"住院医保报销规则\\\"\\n    salience 100\\n    when\\n        : SettlementFact(patientType == \\\"INPATIENT\\\")\\n    then\\n        .setReimburseAmount(.getTotalFee().multiply(new java.math.BigDecimal(\\\"0.75\\\")));\\nend\",\n    \"category\": \"reimbursement\",\n    \"description\": \"住院患者医保报销比例75%\",\n    \"salience\": 100\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "成功响应",
+              "status": "OK",
+              "code": 200,
+              "body": "{\"code\":\"0\",\"data\":{\"id\":1,\"ruleKey\":\"rule.reimbursement.inpatient\",\"ruleName\":\"住院医保报销规则\",\"status\":\"draft\",\"version\":1},\"message\":\"操作成功\",\"timestamp\":1746835200000}"
+            }
+          ]
+        },
+        {
+          "name": "R04 - 更新规则",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "rules",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "更新规则内容（仅草稿状态可更新）",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"ruleName\": \"住院医保报销规则（更新）\",\n    \"ruleText\": \"package com.his.rules\\n\\nrule \\\"住院医保报销规则\\\"\\n    salience 100\\n    when\\n        : SettlementFact(patientType == \\\"INPATIENT\\\")\\n    then\\n        .setReimburseAmount(.getTotalFee().multiply(new java.math.BigDecimal(\\\"0.80\\\")));\\nend\",\n    \"description\": \"住院患者医保报销比例调整为80%\",\n    \"salience\": 100\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "R05 - 删除规则",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "rules",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "删除规则（软删除）"
+          },
+          "response": []
+        },
+        {
+          "name": "R06 - 校验规则",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules/1/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "rules",
+                "1",
+                "validate"
+              ],
+              "query": []
+            },
+            "description": "校验规则DRL语法"
+          },
+          "response": []
+        },
+        {
+          "name": "R07 - 发布规则",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rules/1/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "rules",
+                "1",
+                "publish"
+              ],
+              "query": []
+            },
+            "description": "发布规则使其生效（版本递增）"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. 规则流管理 API (his-rule-service:9001)",
+      "item": [
+        {
+          "name": "F01 - 分页查询规则流",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/flows?page=1&pageSize=20&category=settlement&status=draft",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "flows"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "category",
+                  "value": "settlement"
+                },
+                {
+                  "key": "status",
+                  "value": "draft"
+                }
+              ]
+            },
+            "description": "分页查询规则流列表"
+          },
+          "response": []
+        },
+        {
+          "name": "F02 - 规则流详情",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/flows/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "flows",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "获取规则流详情（含流程定义JSON）"
+          },
+          "response": []
+        },
+        {
+          "name": "F03 - 创建规则流",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/flows",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "flows"
+              ],
+              "query": []
+            },
+            "description": "创建新规则流（草稿状态）",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"flowKey\": \"flow.settlement.inpatient\",\n    \"flowName\": \"住院结算流程\",\n    \"category\": \"settlement\",\n    \"description\": \"住院患者医保结算流程：身份校验→起付线→报销比例→金额计算\",\n    \"flowDefinition\": {\n        \"nodes\": [\n            {\n                \"nodeId\": \"start\",\n                \"type\": \"start\",\n                \"label\": \"开始\",\n                \"x\": 100,\n                \"y\": 200\n            },\n            {\n                \"nodeId\": \"check_identity\",\n                \"type\": \"action\",\n                \"label\": \"医保身份校验\",\n                \"ruleKey\": \"rule.insurance.identity\",\n                \"x\": 300,\n                \"y\": 200\n            },\n            {\n                \"nodeId\": \"calc_deductible\",\n                \"type\": \"formula\",\n                \"label\": \"计算起付线\",\n                \"formulaKey\": \"formula.deductible\",\n                \"x\": 500,\n                \"y\": 200\n            },\n            {\n                \"nodeId\": \"calc_reimburse\",\n                \"type\": \"formula\",\n                \"label\": \"计算报销金额\",\n                \"formulaKey\": \"formula.reimburse\",\n                \"x\": 700,\n                \"y\": 200\n            },\n            {\n                \"nodeId\": \"end\",\n                \"type\": \"end\",\n                \"label\": \"结束\",\n                \"x\": 900,\n                \"y\": 200\n            }\n        ],\n        \"edges\": [\n            {\n                \"source\": \"start\",\n                \"target\": \"check_identity\"\n            },\n            {\n                \"source\": \"check_identity\",\n                \"target\": \"calc_deductible\"\n            },\n            {\n                \"source\": \"calc_deductible\",\n                \"target\": \"calc_reimburse\"\n            },\n            {\n                \"source\": \"calc_reimburse\",\n                \"target\": \"end\"\n            }\n        ]\n    }\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "F04 - 更新规则流",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/flows/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "flows",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "更新规则流（仅草稿状态可更新）",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"flowName\": \"住院结算流程（更新）\",\n    \"description\": \"更新结算流程描述\",\n    \"changeDescription\": \"新增自付比例计算节点\",\n    \"flowDefinition\": {\n        \"nodes\": [\n            {\n                \"nodeId\": \"start\",\n                \"type\": \"start\",\n                \"label\": \"开始\",\n                \"x\": 100,\n                \"y\": 200\n            },\n            {\n                \"nodeId\": \"check_identity\",\n                \"type\": \"action\",\n                \"label\": \"医保身份校验\",\n                \"ruleKey\": \"rule.insurance.identity\",\n                \"x\": 300,\n                \"y\": 200\n            },\n            {\n                \"nodeId\": \"calc_deductible\",\n                \"type\": \"formula\",\n                \"label\": \"计算起付线\",\n                \"formulaKey\": \"formula.deductible\",\n                \"x\": 500,\n                \"y\": 200\n            },\n            {\n                \"nodeId\": \"calc_reimburse\",\n                \"type\": \"formula\",\n                \"label\": \"计算报销金额\",\n                \"formulaKey\": \"formula.reimburse\",\n                \"x\": 700,\n                \"y\": 200\n            },\n            {\n                \"nodeId\": \"calc_self_pay\",\n                \"type\": \"formula\",\n                \"label\": \"计算自付金额\",\n                \"formulaKey\": \"formula.self_pay\",\n                \"x\": 900,\n                \"y\": 200\n            },\n            {\n                \"nodeId\": \"end\",\n                \"type\": \"end\",\n                \"label\": \"结束\",\n                \"x\": 1100,\n                \"y\": 200\n            }\n        ],\n        \"edges\": [\n            {\n                \"source\": \"start\",\n                \"target\": \"check_identity\"\n            },\n            {\n                \"source\": \"check_identity\",\n                \"target\": \"calc_deductible\"\n            },\n            {\n                \"source\": \"calc_deductible\",\n                \"target\": \"calc_reimburse\"\n            },\n            {\n                \"source\": \"calc_reimburse\",\n                \"target\": \"calc_self_pay\"\n            },\n            {\n                \"source\": \"calc_self_pay\",\n                \"target\": \"end\"\n            }\n        ]\n    }\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "F05 - 删除规则流",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/flows/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "flows",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "删除规则流"
+          },
+          "response": []
+        },
+        {
+          "name": "F06 - 发布规则流",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/flows/1/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "flows",
+                "1",
+                "publish"
+              ],
+              "query": []
+            },
+            "description": "发布规则流使其生效"
+          },
+          "response": []
+        },
+        {
+          "name": "F07 - 回滚规则流",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/flows/1/rollback?targetVersion=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "flows",
+                "1",
+                "rollback"
+              ],
+              "query": [
+                {
+                  "key": "targetVersion",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "回滚到指定历史版本"
+          },
+          "response": []
+        },
+        {
+          "name": "F08 - 获取版本历史",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/flows/1/versions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "flows",
+                "1",
+                "versions"
+              ],
+              "query": []
+            },
+            "description": "获取规则流版本历史"
+          },
+          "response": []
+        },
+        {
+          "name": "F09 - 导出规则流JSON",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/flows/1/export",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "flows",
+                "1",
+                "export"
+              ],
+              "query": []
+            },
+            "description": "导出规则流JSON定义"
+          },
+          "response": []
+        },
+        {
+          "name": "F10 - 导入规则流JSON",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/flows/import?tenantId=tenant_001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "flows",
+                "import"
+              ],
+              "query": [
+                {
+                  "key": "tenantId",
+                  "value": "tenant_001"
+                }
+              ]
+            },
+            "description": "导入规则流JSON定义",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"flowKey\": \"flow.settlement.inpatient\",\n    \"flowName\": \"住院结算流程\",\n    \"category\": \"settlement\",\n    \"flowDefinition\": {\n        \"nodes\": [\n            {\n                \"nodeId\": \"start\",\n                \"type\": \"start\",\n                \"label\": \"开始\",\n                \"x\": 100,\n                \"y\": 200\n            },\n            {\n                \"nodeId\": \"end\",\n                \"type\": \"end\",\n                \"label\": \"结束\",\n                \"x\": 300,\n                \"y\": 200\n            }\n        ],\n        \"edges\": [\n            {\n                \"source\": \"start\",\n                \"target\": \"end\"\n            }\n        ]\n    }\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "F11 - 执行规则流",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/flows/1/execute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "flows",
+                "1",
+                "execute"
+              ],
+              "query": []
+            },
+            "description": "执行规则流（传入Fact对象JSON）",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"visitId\": \"V20260510001\",\n    \"patientId\": \"P001\",\n    \"patientType\": \"INPATIENT\",\n    \"insuranceType\": \"BASIC\",\n    \"totalFee\": 10000.0\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. 规则分组管理 API (his-rule-service:9001)",
+      "item": [
+        {
+          "name": "G01 - 查询所有规则分组",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rule-groups",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "rule-groups"
+              ],
+              "query": []
+            },
+            "description": "查询所有已启用的规则分组"
+          },
+          "response": []
+        },
+        {
+          "name": "G02 - 分页查询规则分组",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rule-groups/page?page=1&pageSize=20&groupName=医保&status=active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "rule-groups",
+                "page"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "groupName",
+                  "value": "医保"
+                },
+                {
+                  "key": "status",
+                  "value": "active"
+                }
+              ]
+            },
+            "description": "分页查询规则分组"
+          },
+          "response": []
+        },
+        {
+          "name": "G03 - 规则分组详情",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rule-groups/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "rule-groups",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "获取规则分组详情"
+          },
+          "response": []
+        },
+        {
+          "name": "G04 - 创建规则分组",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rule-groups",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "rule-groups"
+              ],
+              "query": []
+            },
+            "description": "创建新规则分组",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"groupCode\": \"GRP_DRUG_INTERACTION\",\n    \"groupName\": \"药品配伍禁忌规则组\",\n    \"description\": \"药品配伍禁忌检查相关规则\",\n    \"priority\": 10\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "G05 - 更新规则分组",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rule-groups/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "rule-groups",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "更新规则分组",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"groupName\": \"医保报销规则组（更新）\",\n    \"description\": \"更新描述\",\n    \"priority\": 5\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "G06 - 启用/禁用规则分组",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rule-groups/1/enabled?enabled=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "rule-groups",
+                "1",
+                "enabled"
+              ],
+              "query": [
+                {
+                  "key": "enabled",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "启用或禁用规则分组"
+          },
+          "response": []
+        },
+        {
+          "name": "G07 - 删除规则分组",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9001/api/v1/rule-groups/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9001",
+                "api",
+                "v1",
+                "rule-groups",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "删除规则分组"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. 公式管理 API (his-formula-service:9002)",
+      "item": [
+        {
+          "name": "F01 - 分页查询公式",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas?page=1&pageSize=20&category=reimbursement&status=active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9002",
+                "api",
+                "v1",
+                "formulas"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "category",
+                  "value": "reimbursement"
+                },
+                {
+                  "key": "status",
+                  "value": "active"
+                }
+              ]
+            },
+            "description": "分页查询公式列表"
+          },
+          "response": []
+        },
+        {
+          "name": "F02 - 公式详情",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9002",
+                "api",
+                "v1",
+                "formulas",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "根据ID查询公式详情"
+          },
+          "response": []
+        },
+        {
+          "name": "F03 - 根据KEY获取公式",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas/key/formula.reimbursement.deductible",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9002",
+                "api",
+                "v1",
+                "formulas",
+                "key",
+                "formula.reimbursement.deductible"
+              ],
+              "query": []
+            },
+            "description": "根据公式KEY获取公式"
+          },
+          "response": []
+        },
+        {
+          "name": "F04 - 创建公式",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9002",
+                "api",
+                "v1",
+                "formulas"
+              ],
+              "query": []
+            },
+            "description": "创建新公式（草稿状态）",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"formulaKey\": \"formula.reimbursement.deductible\",\n    \"formulaName\": \"起付线计算公式\",\n    \"formulaText\": \"totalFee < deductible ? 0 : (totalFee - deductible) * ratio\",\n    \"category\": \"reimbursement\",\n    \"description\": \"根据总费用和起付线计算可报销基数\",\n    \"params\": [\n        \"totalFee\",\n        \"deductible\",\n        \"ratio\"\n    ]\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "F05 - 更新公式",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9002",
+                "api",
+                "v1",
+                "formulas",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "更新公式内容（仅草稿状态可更新）",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"formulaName\": \"起付线计算公式（更新）\",\n    \"formulaText\": \"totalFee < deductible ? 0 : (totalFee - deductible) * ratio * adjustFactor\",\n    \"description\": \"增加调整因子\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "F06 - 删除公式",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9002",
+                "api",
+                "v1",
+                "formulas",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "删除公式"
+          },
+          "response": []
+        },
+        {
+          "name": "F07 - 校验公式",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas/1/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9002",
+                "api",
+                "v1",
+                "formulas",
+                "1",
+                "validate"
+              ],
+              "query": []
+            },
+            "description": "校验公式语法"
+          },
+          "response": []
+        },
+        {
+          "name": "F08 - 发布公式",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9002/api/v1/formulas/1/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9002",
+                "api",
+                "v1",
+                "formulas",
+                "1",
+                "publish"
+              ],
+              "query": []
+            },
+            "description": "发布公式使其生效"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. 结算管理 API (his-settlement-service:9003)",
+      "item": [
+        {
+          "name": "S01 - 发起结算",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9003/api/v1/settlements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9003",
+                "api",
+                "v1",
+                "settlements"
+              ],
+              "query": []
+            },
+            "description": "发起医保结算",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"visitId\": \"V20260510001\",\n    \"patientId\": \"P001\",\n    \"patientType\": \"INPATIENT\",\n    \"insuranceType\": \"BASIC\",\n    \"hospitalLevel\": \"LEVEL_3\",\n    \"totalFee\": 10000.0\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "成功响应",
+              "status": "OK",
+              "code": 200,
+              "body": "{\"code\":\"0\",\"data\":{\"id\":1,\"settlementNo\":\"ST20260510001\",\"visitId\":\"V20260510001\",\"patientId\":\"P001\",\"patientType\":\"INPATIENT\",\"insuranceType\":\"BASIC\",\"hospitalLevel\":\"LEVEL_3\",\"totalFee\":10000.00,\"deductible\":500.00,\"ratio\":0.75,\"reimburseAmount\":7125.00,\"selfPayAmount\":2875.00,\"resultLevel\":\"PASS\",\"status\":\"COMPLETED\",\"tenantId\":\"tenant_001\",\"createTime\":\"2026-05-10T10:00:00\"},\"message\":\"操作成功\",\"timestamp\":1746835200000}"
+            }
+          ]
+        },
+        {
+          "name": "S02 - 分页查询结算记录",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9003/api/v1/settlements?page=1&pageSize=20&patientId=P001&status=COMPLETED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9003",
+                "api",
+                "v1",
+                "settlements"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "patientId",
+                  "value": "P001"
+                },
+                {
+                  "key": "status",
+                  "value": "COMPLETED"
+                }
+              ]
+            },
+            "description": "分页查询结算记录"
+          },
+          "response": []
+        },
+        {
+          "name": "S03 - 根据结算单号查询",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9003/api/v1/settlements/ST20260510001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9003",
+                "api",
+                "v1",
+                "settlements",
+                "ST20260510001"
+              ],
+              "query": []
+            },
+            "description": "根据结算单号查询结算详情"
+          },
+          "response": []
+        },
+        {
+          "name": "S04 - 更新结算记录",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9003/api/v1/settlements/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9003",
+                "api",
+                "v1",
+                "settlements",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "更新结算记录",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"visitId\": \"V20260510001\",\n    \"patientId\": \"P001\",\n    \"patientType\": \"INPATIENT\",\n    \"insuranceType\": \"BASIC\",\n    \"hospitalLevel\": \"LEVEL_3\",\n    \"totalFee\": 12000.0\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "S05 - 删除结算记录",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9003/api/v1/settlements/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9003",
+                "api",
+                "v1",
+                "settlements",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "删除结算记录"
+          },
+          "response": []
+        },
+        {
+          "name": "S06 - 刷新公式缓存",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9003/api/v1/settlements/cache/refresh?tenantId=tenant_001&formulaKey=formula.reimbursement.deductible",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9003",
+                "api",
+                "v1",
+                "settlements",
+                "cache",
+                "refresh"
+              ],
+              "query": [
+                {
+                  "key": "tenantId",
+                  "value": "tenant_001"
+                },
+                {
+                  "key": "formulaKey",
+                  "value": "formula.reimbursement.deductible"
+                }
+              ]
+            },
+            "description": "刷新指定公式的缓存"
+          },
+          "response": []
+        },
+        {
+          "name": "S07 - 清空公式缓存",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9003/api/v1/settlements/cache/clear",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9003",
+                "api",
+                "v1",
+                "settlements",
+                "cache",
+                "clear"
+              ],
+              "query": []
+            },
+            "description": "清空所有公式缓存"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. 用药审核 API (his-drug-service:9004)",
+      "item": [
+        {
+          "name": "D01 - 分页查询药品目录",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9004/api/v1/drugs?page=1&pageSize=20&drugName=阿莫西林&drugType=ANTIBIOTIC&status=active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9004",
+                "api",
+                "v1",
+                "drugs"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "drugName",
+                  "value": "阿莫西林"
+                },
+                {
+                  "key": "drugType",
+                  "value": "ANTIBIOTIC"
+                },
+                {
+                  "key": "status",
+                  "value": "active"
+                }
+              ]
+            },
+            "description": "分页查询药品目录"
+          },
+          "response": []
+        },
+        {
+          "name": "D02 - 查询药品详情",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9004/api/v1/drugs/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9004",
+                "api",
+                "v1",
+                "drugs",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "查询药品详情"
+          },
+          "response": []
+        },
+        {
+          "name": "D03 - 新增药品",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9004/api/v1/drugs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9004",
+                "api",
+                "v1",
+                "drugs"
+              ],
+              "query": []
+            },
+            "description": "新增药品到目录",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"drugCode\": \"DRG20260510001\",\n    \"drugName\": \"阿莫西林胶囊\",\n    \"drugType\": \"ANTIBIOTIC\",\n    \"specification\": \"0.25g*24粒\",\n    \"unit\": \"盒\",\n    \"maxDose\": 4.0,\n    \"maxDoseUnit\": \"g/day\",\n    \"isEnabled\": \"active\",\n    \"price\": 15.5\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "D04 - 更新药品",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9004/api/v1/drugs/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9004",
+                "api",
+                "v1",
+                "drugs",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "更新药品信息",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"drugName\": \"阿莫西林胶囊（更新）\",\n    \"specification\": \"0.5g*24粒\",\n    \"maxDose\": 6.0,\n    \"price\": 18.0\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "D05 - 删除药品",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9004/api/v1/drugs/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9004",
+                "api",
+                "v1",
+                "drugs",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "删除药品"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. 质控管理 API (his-quality-service:9005)",
+      "item": [
+        {
+          "name": "Q01 - 分页查询质控规则",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9005/api/v1/quality?page=1&pageSize=20&itemName=抗菌药物&category=AMR&level=warning&status=active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9005",
+                "api",
+                "v1",
+                "quality"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "itemName",
+                  "value": "抗菌药物"
+                },
+                {
+                  "key": "category",
+                  "value": "AMR"
+                },
+                {
+                  "key": "level",
+                  "value": "warning"
+                },
+                {
+                  "key": "status",
+                  "value": "active"
+                }
+              ]
+            },
+            "description": "分页查询质控规则"
+          },
+          "response": []
+        },
+        {
+          "name": "Q02 - 查询质控规则详情",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9005/api/v1/quality/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9005",
+                "api",
+                "v1",
+                "quality",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "查询质控规则详情"
+          },
+          "response": []
+        },
+        {
+          "name": "Q03 - 新增质控规则",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9005/api/v1/quality",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9005",
+                "api",
+                "v1",
+                "quality"
+              ],
+              "query": []
+            },
+            "description": "新增质控规则",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"itemKey\": \"QC_AMR_001\",\n    \"itemName\": \"门诊抗菌药物使用率\",\n    \"category\": \"AMR\",\n    \"level\": \"warning\",\n    \"description\": \"门诊抗菌药物使用率不得超过20%\",\n    \"status\": \"active\",\n    \"threshold\": 20.0,\n    \"formula\": \"antibioticPrescriptions / totalPrescriptions * 100\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Q04 - 更新质控规则",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9005/api/v1/quality/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9005",
+                "api",
+                "v1",
+                "quality",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "更新质控规则",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"itemName\": \"门诊抗菌药物使用率（更新）\",\n    \"threshold\": 15.0,\n    \"description\": \"门诊抗菌药物使用率不得超过15%（收紧标准）\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Q05 - 删除质控规则",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9005/api/v1/quality/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9005",
+                "api",
+                "v1",
+                "quality",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "删除质控规则"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. DRG管理 API (his-drg-service:9006)",
+      "item": [
+        {
+          "name": "DR01 - 分页查询DRG定义",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9006/api/v1/drg?page=1&pageSize=20&drgName=肺炎&mdcCode=MDC_E&status=active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9006",
+                "api",
+                "v1",
+                "drg"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "drgName",
+                  "value": "肺炎"
+                },
+                {
+                  "key": "mdcCode",
+                  "value": "MDC_E"
+                },
+                {
+                  "key": "status",
+                  "value": "active"
+                }
+              ]
+            },
+            "description": "分页查询DRG定义"
+          },
+          "response": []
+        },
+        {
+          "name": "DR02 - 查询DRG定义详情",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9006/api/v1/drg/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9006",
+                "api",
+                "v1",
+                "drg",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "查询DRG定义详情"
+          },
+          "response": []
+        },
+        {
+          "name": "DR03 - 新增DRG定义",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9006/api/v1/drg",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9006",
+                "api",
+                "v1",
+                "drg"
+              ],
+              "query": []
+            },
+            "description": "新增DRG定义",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"drgCode\": \"E61\",\n    \"drgName\": \"肺炎与支气管炎\",\n    \"mdcCode\": \"MDC_E\",\n    \"mdcName\": \"呼吸系统疾病及功能障碍\",\n    \"baseWeight\": 1.25,\n    \"description\": \"主要诊断为肺炎或支气管炎\",\n    \"status\": \"active\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DR04 - 更新DRG定义",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9006/api/v1/drg/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9006",
+                "api",
+                "v1",
+                "drg",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "更新DRG定义",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"drgName\": \"肺炎与支气管炎（更新）\",\n    \"baseWeight\": 1.35,\n    \"description\": \"更新权重和描述\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DR05 - 删除DRG定义",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Tenant-Id",
+                "value": "{{tenantId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}:9006/api/v1/drg/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{baseUrl}}:9006",
+                "api",
+                "v1",
+                "drg",
+                "1"
+              ],
+              "query": []
+            },
+            "description": "删除DRG定义"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

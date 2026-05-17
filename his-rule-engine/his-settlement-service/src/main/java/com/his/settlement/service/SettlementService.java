@@ -50,6 +50,16 @@ public class SettlementService {
     public SettlementVO settle(SettlementDTO dto) {
         String tenantId = TenantContext.getTenantId();
 
+        // 费用不能为负数
+        if (dto.getTotalFee() == null || dto.getTotalFee().compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException("HIS-104", "费用不能为负数");
+        }
+
+        // 患者类型不能为空
+        if (!StringUtils.hasText(dto.getPatientType())) {
+            throw new BusinessException("HIS-102", "患者类型不能为空");
+        }
+
         SettlementResult existing = settlementMapper.selectOne(
                 new LambdaQueryWrapper<SettlementResult>()
                         .eq(SettlementResult::getTenantId, tenantId)
@@ -150,9 +160,10 @@ public class SettlementService {
     }
 
     /**
-     * 分页查询结算记录
+     * 分页查询结算记录（支持时间范围和金额范围）
      */
-    public IPage<SettlementVO> pageList(Integer page, Integer pageSize, String settlementNo, String patientId, String status) {
+    public IPage<SettlementVO> pageList(Integer page, Integer pageSize, String settlementNo, String patientId, String status,
+                                        String startDate, String endDate, Double minAmount, Double maxAmount) {
         String tenantId = TenantContext.getTenantId();
 
         Page<SettlementResult> pageParam = new Page<>(page, pageSize);
@@ -161,10 +172,32 @@ public class SettlementService {
                 .like(StringUtils.hasText(settlementNo), SettlementResult::getSettlementNo, settlementNo)
                 .eq(StringUtils.hasText(patientId), SettlementResult::getPatientId, patientId)
                 .eq(StringUtils.hasText(status), SettlementResult::getStatus, status)
+                .ge(startDate != null && !startDate.isBlank(), SettlementResult::getCreateTime, parseDate(startDate))
+                .le(endDate != null && !endDate.isBlank(), SettlementResult::getCreateTime, parseEndDate(endDate))
+                .ge(minAmount != null, SettlementResult::getTotalFee, minAmount)
+                .le(maxAmount != null, SettlementResult::getTotalFee, maxAmount)
                 .orderByDesc(SettlementResult::getCreateTime);
 
         IPage<SettlementResult> pageResult = settlementMapper.selectPage(pageParam, wrapper);
         return pageResult.convert(this::convertToVO);
+    }
+
+    private LocalDateTime parseDate(String dateStr) {
+        try {
+            return LocalDateTime.parse(dateStr + " 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        } catch (Exception e) {
+            log.warn("日期解析失败: {}", dateStr);
+            return null;
+        }
+    }
+
+    private LocalDateTime parseEndDate(String dateStr) {
+        try {
+            return LocalDateTime.parse(dateStr + " 23:59:59", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        } catch (Exception e) {
+            log.warn("日期解析失败: {}", dateStr);
+            return null;
+        }
     }
 
     /**

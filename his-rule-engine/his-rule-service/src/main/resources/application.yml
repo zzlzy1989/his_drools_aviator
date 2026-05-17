@@ -44,3 +44,12 @@ logging:
   level:
     com.his.rule: debug
     org.drools: info
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

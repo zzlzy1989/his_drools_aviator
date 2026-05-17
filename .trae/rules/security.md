@@ -1,3 +1,7 @@
+---
+alwaysApply: false
+description: 
+---
 # 安全检查规则 - HIS 动态规则中台
 
 ## 触发条件
@@ -150,27 +154,150 @@ public class DesensitizeUtil {
 
 ---
 
-## 四、依赖安全扫描
+## 五、网关安全
+
+### 5.1 JWT 鉴权
+
+```yaml
+# 网关统一鉴权配置
+spring:
+  cloud:
+    gateway:
+      default-filters:
+        - name: AuthGlobalFilter
+          args:
+            excludePaths:
+              - /api/v1/health
+              - /api/v1/rules/public/**
+              - /actuator/health
+            tokenHeader: Authorization
+            tokenPrefix: Bearer
+```
 
 | 规则 | 要求 |
 |------|------|
-| 定期扫描 | 使用 OWASP Dependency-Check 或 Snyk |
-| 已知漏洞 | 升级到修复版本，无法升级则排除该依赖功能 |
-| 许可证合规 | 检查依赖的开源协议兼容性 |
-| Maven 命令 | `mvn org.owasp:dependency-check-maven:check` |
+| 统一鉴权 | 网关层统一处理，后端服务不重复校验 |
+| 白名单 | 健康检查、公开规则查询等接口免鉴权 |
+| Token 传递 | 网关解析后传递 userId/tenantId/roles 到下游服务 |
+| 过期处理 | Token 过期返回 401，由前端刷新 |
 
-### 本项目关键依赖安全关注点
-| 依赖 | 关注点 |
-|------|--------|
-| Drools | 规则执行沙箱逃逸风险 → 限制规则来源 + 资源配额 |
-| Aviator | 表达式注入风险 → 白名单函数 + 语法校验 + 长度限制 |
-| Nacos Client | 默认空密码风险 → 生产环境必须配置认证 |
-| Jackson | 反序列化风险 → 配置 `DefaultTyping.NON_FINAL` 禁用 |
-| Caffeine | 无安全风险（纯内存缓存） |
+### 5.2 限流熔断（Sentinel）
+
+```java
+// 网关限流配置
+@Configuration
+public class SentinelGatewayConfig {
+
+    @PostConstruct
+    public void initGatewayRules() {
+        // QPS 限流
+        GatewayFlowRule rule = new GatewayFlowRule("rule-service")
+            .setCount(100)
+            .setIntervalSec(1);
+        
+        // 并发线程数限制
+        GatewayFlowRule concurrentRule = new GatewayFlowRule("settlement-service")
+            .setCount(50)
+            .setIntervalSec(1)
+            .setControlBehavior(RuleConstant.CONTROL_BEHAVIOR_RATE_LIMITER);
+        
+        GatewayRuleManager.loadRules(Set.of(rule, concurrentRule));
+    }
+}
+```
+
+| 场景 | 限流策略 | 降级处理 |
+|------|---------|---------|
+| 规则查询 | 100 QPS | 返回缓存数据 |
+| 结算执行 | 50 QPS | 排队等待 |
+| 公式发布 | 10 QPS | 拒绝并提示稍后重试 |
+| 健康检查 | 不限流 | — |
+
+### 5.3 CORS 配置
+
+```java
+@Configuration
+public class CorsConfig {
+
+    @Bean
+    public CorsWebFilter corsFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("https://his.example.com"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", config);
+        return new CorsWebFilter(source);
+    }
+}
+```
 
 ---
 
-## 五、Shell 危险命令黑名单
+## 六、微服务间安全
+
+### 6.1 Feign 调用鉴权
+
+```java
+@Configuration
+public class FeignConfig implements RequestInterceptor {
+
+    @Override
+    public void apply(RequestTemplate template) {
+        ServletRequestAttributes attributes = 
+            (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes != null) {
+            HttpServletRequest request = attributes.getRequest();
+            String token = request.getHeader("Authorization");
+            if (token != null) {
+                template.header("Authorization", token);
+            }
+        }
+        // 添加服务间调用标识
+        template.header("X-Service-Name", "his-settlement-service");
+    }
+}
+```
+
+### 6.2 内部接口保护
+
+| 规则 | 要求 |
+|------|------|
+| 内部接口标识 | 使用 `@InternalApi` 注解标记仅服务间调用的接口 |
+| 网关不可达 | 内部接口不配置网关路由，仅内网可访问 |
+| 服务间 Token | 使用独立的服务间调用 Token，与用户 Token 分离 |
+| IP 白名单 | 生产环境限制仅允许内网 IP 访问内部接口 |
+
+```java
+// 内部接口示例：仅服务间调用
+@RestController
+@RequestMapping("/internal")
+@InternalApi
+public class InternalRuleController {
+
+    @GetMapping("/batch")
+    public Result<List<RuleVO>> batchGet(@RequestBody List<Long> ids) {
+        // 批量获取规则（供结算服务调用）
+        return Result.success(ruleService.batchGet(ids));
+    }
+}
+```
+
+### 6.3 服务发现安全
+
+| 规则 | 要求 |
+|------|------|
+| Nacos 认证 | 生产环境必须配置 Nacos 用户名密码 |
+| 命名空间隔离 | 不同环境使用不同命名空间（dev/test/prod） |
+| 服务注册鉴权 | 仅允许白名单服务注册 |
+| 配置加密 | 敏感配置使用 Jasypt 加密 |
+
+---
+
+## 七、Shell 危险命令黑名单
 
 详见 `hooks/pre-execute-shell.sh`（通用拦截脚本，可直接复用）。
 
@@ -184,4 +311,4 @@ public class DesensitizeUtil {
 
 ---
 
-最后更新: 2026-04-26 | v1.0 (HIS 规则引擎安全规范，重点: 表达式注入防护)
+最后更新: 2026-05-12 | v1.1 (HIS 规则引擎安全规范 - 微服务架构版)

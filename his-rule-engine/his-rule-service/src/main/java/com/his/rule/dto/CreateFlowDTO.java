@@ -46,6 +46,7 @@ public class CreateFlowDTO {
         private String formulaKey;  // 公式节点引用的公式
         private String subFlowId;   // 子流程节点引用的子流程
         private Integer timeout;   // 超时时间(ms)
+        private String resultField; // 公式/规则结果写入的字段名
         private Double x;          // x坐标
         private Double y;          // y坐标
         private Map<String, Object> params;  // 其他参数

@@ -44,6 +44,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '规则流设计器' },
       },
       {
+        path: 'flow/history/:id',
+        name: 'FlowHistory',
+        component: () => import('@/views/flow/FlowHistory.vue'),
+        meta: { title: '版本历史' },
+      },
+      {
         path: 'settlement',
         name: 'Settlement',
         component: () => import('@/views/settlement/SettlementList.vue'),
@@ -66,6 +72,30 @@ const routes: RouteRecordRaw[] = [
         name: 'Drg',
         component: () => import('@/views/drg/DrgList.vue'),
         meta: { title: 'DRG管理' },
+      },
+      {
+        path: 'monitor',
+        name: 'Monitor',
+        component: () => import('@/views/monitor/Dashboard.vue'),
+        meta: { title: '监控大屏' },
+      },
+      {
+        path: 'sandbox',
+        name: 'Sandbox',
+        component: () => import('@/views/sandbox/SandboxPage.vue'),
+        meta: { title: '测试沙箱' },
+      },
+      {
+        path: 'market',
+        name: 'Market',
+        component: () => import('@/views/market/MarketPage.vue'),
+        meta: { title: '规则市场' },
+      },
+      {
+        path: 'audit',
+        name: 'Audit',
+        component: () => import('@/views/audit/AuditLogList.vue'),
+        meta: { title: '操作日志' },
       },
     ],
   },

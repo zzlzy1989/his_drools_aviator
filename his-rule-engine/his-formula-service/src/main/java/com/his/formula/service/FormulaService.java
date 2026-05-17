@@ -6,11 +6,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.his.common.web.context.TenantContext;
 import com.his.common.web.exception.BusinessException;
 import com.his.common.web.service.AuditLogService;
+import com.his.common.aviator.engine.AviatorEngine;
 import com.his.formula.dto.*;
 import com.his.formula.entity.AviatorFormula;
 import com.his.formula.entity.FormulaParam;
 import com.his.formula.listener.FormulaPublishEvent;
 import com.his.formula.mapper.AviatorFormulaMapper;
+import com.his.formula.entity.FormulaHistory;
+import com.his.formula.mapper.FormulaHistoryMapper;
 import com.his.formula.mapper.FormulaParamMapper;
 import com.his.formula.validator.FormulaValidator;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -33,9 +37,11 @@ public class FormulaService {
 
     private final AviatorFormulaMapper formulaMapper;
     private final FormulaParamMapper paramMapper;
+    private final FormulaHistoryMapper formulaHistoryMapper;
     private final FormulaValidator formulaValidator;
     private final AuditLogService auditLogService;
     private final ApplicationEventPublisher eventPublisher;
+    private final AviatorEngine aviatorEngine;
 
     /**
      * 分页查询公式
@@ -154,9 +160,14 @@ public class FormulaService {
             if (!validation.isValid()) {
                 throw new BusinessException("HIS-402", "公式语法错误: " + validation.getMessage());
             }
+
+            // 保存旧版本到历史
+            saveToHistory(formula, "更新公式");
+
             formula.setFormulaText(dto.getFormulaText());
             formula.setIsValidated(1);
             formula.setValidatedMsg(null);
+            formula.setVersion(formula.getVersion() + 1);
         }
 
         if (dto.getFormulaName() != null) {
@@ -268,6 +279,108 @@ public class FormulaService {
             param.setCreateBy(tenantId);
             paramMapper.insert(param);
         }
+    }
+
+    /**
+     * 保存到历史记录
+     */
+    private void saveToHistory(AviatorFormula formula, String changeReason) {
+        FormulaHistory history = new FormulaHistory();
+        history.setFormulaId(formula.getId());
+        history.setFormulaKey(formula.getFormulaKey());
+        history.setFormulaText(formula.getFormulaText());
+        history.setVersion(formula.getVersion());
+        history.setStatus(formula.getStatus());
+        history.setChangeReason(changeReason);
+        history.setChangeBy(TenantContext.getTenantId());
+        history.setTenantId(formula.getTenantId());
+        formulaHistoryMapper.insert(history);
+        log.info("保存公式历史: formulaKey={}, version={}", formula.getFormulaKey(), formula.getVersion());
+    }
+
+    /**
+     * 保存快照（手动触发）
+     */
+    @Transactional
+    public void saveSnapshot(Long id) {
+        AviatorFormula formula = formulaMapper.selectById(id);
+        if (formula == null || formula.getDeleted() == 1) {
+            throw new BusinessException("HIS-401", "公式不存在");
+        }
+        saveToHistory(formula, "手动保存快照");
+    }
+
+    /**
+     * 回滚到指定版本
+     */
+    @Transactional
+    public FormulaVO rollback(Long id, Integer targetVersion) {
+        AviatorFormula formula = formulaMapper.selectById(id);
+        if (formula == null || formula.getDeleted() == 1) {
+            throw new BusinessException("HIS-401", "公式不存在");
+        }
+
+        FormulaHistory history = formulaHistoryMapper.selectOne(
+                new LambdaQueryWrapper<FormulaHistory>()
+                        .eq(FormulaHistory::getFormulaId, id)
+                        .eq(FormulaHistory::getVersion, targetVersion)
+        );
+
+        if (history == null) {
+            throw new BusinessException("HIS-401", "历史版本不存在: version=" + targetVersion);
+        }
+
+        // 保存当前版本到历史
+        saveToHistory(formula, "回滚到版本 " + targetVersion);
+
+        // 恢复到目标版本
+        formula.setFormulaText(history.getFormulaText());
+        formula.setVersion(targetVersion + 1);
+        formula.setUpdateBy(TenantContext.getTenantId());
+        formulaMapper.updateById(formula);
+
+        log.info("公式回滚: id={}, targetVersion={}, newVersion={}", id, targetVersion, formula.getVersion());
+        return convertToVO(formula);
+    }
+
+    /**
+     * 获取版本历史
+     */
+    public List<FormulaHistoryVO> getVersionHistory(Long formulaId) {
+        List<FormulaHistory> histories = formulaHistoryMapper.selectList(
+                new LambdaQueryWrapper<FormulaHistory>()
+                        .eq(FormulaHistory::getFormulaId, formulaId)
+                        .orderByDesc(FormulaHistory::getVersion)
+        );
+
+        return histories.stream().map(h -> {
+            FormulaHistoryVO vo = new FormulaHistoryVO();
+            vo.setId(h.getId());
+            vo.setFormulaId(h.getFormulaId());
+            vo.setFormulaKey(h.getFormulaKey());
+            vo.setFormulaText(h.getFormulaText());
+            vo.setVersion(h.getVersion());
+            vo.setStatus(h.getStatus());
+            vo.setChangeReason(h.getChangeReason());
+            vo.setChangeBy(h.getChangeBy());
+            vo.setChangeTime(h.getChangeTime());
+            return vo;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * 测试公式执行
+     */
+    public Object test(Long id, Map<String, Object> params) {
+        AviatorFormula formula = formulaMapper.selectById(id);
+        if (formula == null || formula.getDeleted() == 1) {
+            throw new BusinessException("HIS-401", "公式不存在");
+        }
+        long start = System.currentTimeMillis();
+        Object result = aviatorEngine.execute(formula.getFormulaText(), params);
+        long elapsed = System.currentTimeMillis() - start;
+        log.info("公式测试: id={}, formulaKey={}, elapsed={}ms", id, formula.getFormulaKey(), elapsed);
+        return result;
     }
 
     /**
