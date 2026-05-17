@@ -174,8 +174,8 @@ public class SettlementService {
                 .eq(StringUtils.hasText(status), SettlementResult::getStatus, status)
                 .ge(startDate != null && !startDate.isBlank(), SettlementResult::getCreateTime, parseDate(startDate))
                 .le(endDate != null && !endDate.isBlank(), SettlementResult::getCreateTime, parseEndDate(endDate))
-                .ge(minAmount != null, SettlementResult::getTotalFee, BigDecimal.valueOf(minAmount))
-                .le(maxAmount != null, SettlementResult::getTotalFee, BigDecimal.valueOf(maxAmount))
+                .ge(minAmount != null, SettlementResult::getTotalFee, minAmount)
+                .le(maxAmount != null, SettlementResult::getTotalFee, maxAmount)
                 .orderByDesc(SettlementResult::getCreateTime);
 
         IPage<SettlementResult> pageResult = settlementMapper.selectPage(pageParam, wrapper);

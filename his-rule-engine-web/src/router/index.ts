@@ -91,6 +91,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/market/MarketPage.vue'),
         meta: { title: '规则市场' },
       },
+      {
+        path: 'audit',
+        name: 'Audit',
+        component: () => import('@/views/audit/AuditLogList.vue'),
+        meta: { title: '操作日志' },
+      },
     ],
   },
 ]

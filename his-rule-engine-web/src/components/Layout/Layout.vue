@@ -51,6 +51,10 @@
           <el-icon><DataLine /></el-icon>
           <span>监控大屏</span>
         </el-menu-item>
+        <el-menu-item index="/audit">
+          <el-icon><DocumentCopy /></el-icon>
+          <span>操作日志</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>
@@ -89,7 +93,7 @@ import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   HomeFilled, Setting, Document, Coin, Tools,
-  Star, DataAnalysis, User, Connection, DataLine
+  Star, DataAnalysis, User, Connection, DataLine, DocumentCopy
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
