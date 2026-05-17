@@ -10,6 +10,29 @@ spring:
         server-addr: ${NACOS_SERVER_ADDR:192.168.1.105:8848}
         namespace: ${NACOS_NAMESPACE:public}
         group: DEFAULT_GROUP
+      config:
+        server-addr: ${NACOS_SERVER_ADDR:192.168.1.105:8848}
+        namespace: ${NACOS_NAMESPACE:public}
+        group: DEFAULT_GROUP
+        file-extension: yaml
+        shared-configs:
+          - data-id: monitor-service.yaml
+            group: DEFAULT_GROUP
+            refresh: true
+  datasource:
+    url: jdbc:mysql://192.168.1.105:3306/his_rule_engine?characterEncoding=utf8&useUnicode=true&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: testhub123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.his.monitor.entity
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      enable-sql-runner: true
 
 management:
   endpoints:

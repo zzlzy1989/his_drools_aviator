@@ -8,14 +8,17 @@ import com.his.common.web.context.TenantContext;
 import com.his.market.dto.RuleTemplateDTO;
 import com.his.market.entity.RuleTemplate;
 import com.his.market.entity.TemplateInstall;
+import com.his.market.entity.TemplateRating;
 import com.his.market.mapper.RuleTemplateMapper;
 import com.his.market.mapper.TemplateInstallMapper;
+import com.his.market.mapper.TemplateRatingMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +34,7 @@ public class RuleTemplateService {
 
     private final RuleTemplateMapper templateMapper;
     private final TemplateInstallMapper installMapper;
+    private final TemplateRatingMapper ratingMapper;
     private final ObjectMapper objectMapper;
 
     /**
@@ -233,7 +237,79 @@ public class RuleTemplateService {
         templateWrapper.in(RuleTemplate::getId, templateIds);
         templateWrapper.eq(RuleTemplate::getDeleted, 0);
         List<RuleTemplate> templates = templateMapper.selectList(templateWrapper);
-        return templates.stream().map(this::toDTO).collect(Collectors.toList());
+
+        return templates.stream().map(t -> {
+            RuleTemplateDTO dto = toDTO(t);
+            // 找出安装记录，填充版本信息
+            TemplateInstall install = installs.stream()
+                    .filter(i -> i.getTemplateId().equals(t.getId()))
+                    .findFirst().orElse(null);
+            if (install != null) {
+                Map<String, Object> installInfo = new java.util.LinkedHashMap<>();
+                installInfo.put("installedVersion", install.getInstalledVersion());
+                installInfo.put("availableVersion", install.getAvailableVersion());
+                installInfo.put("lastSyncTime", install.getLastSyncTime() != null ? install.getLastSyncTime().toString() : null);
+                installInfo.put("lastCheckTime", install.getLastCheckTime() != null ? install.getLastCheckTime().toString() : null);
+                dto.setInstallInfo(installInfo);
+            }
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * 检查模板更新
+     */
+    @Transactional
+    public Map<String, Object> checkForUpdate(Long templateId, String tenantId) {
+        TemplateInstall install = getInstallRecord(templateId, tenantId);
+        RuleTemplate template = templateMapper.selectById(templateId);
+
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("templateId", templateId);
+        result.put("currentVersion", install != null ? install.getInstalledVersion() : null);
+        result.put("latestVersion", template != null ? template.getVersion() : null);
+        result.put("hasUpdate", install != null && template != null &&
+                !install.getInstalledVersion().equals(template.getVersion()));
+
+        // 更新检查时间
+        if (install != null) {
+            install.setAvailableVersion(template.getVersion());
+            install.setLastCheckTime(LocalDateTime.now());
+            installMapper.updateById(install);
+        }
+
+        return result;
+    }
+
+    /**
+     * 升级模板版本
+     */
+    @Transactional
+    public void upgradeTemplate(Long templateId, String tenantId) {
+        TemplateInstall install = getInstallRecord(templateId, tenantId);
+        RuleTemplate template = templateMapper.selectById(templateId);
+
+        if (install == null || template == null) {
+            throw new RuntimeException("未找到安装记录或模板");
+        }
+
+        // 检查是否有新版本
+        if (!install.getInstalledVersion().equals(template.getVersion())) {
+            install.setInstalledVersion(template.getVersion());
+            install.setLastSyncVersion(template.getVersion());
+            install.setLastSyncTime(LocalDateTime.now());
+            installMapper.updateById(install);
+
+            log.info("升级模板版本: templateId={}, from={}, to={}",
+                    templateId, install.getInstalledVersion(), template.getVersion());
+        }
+    }
+
+    private TemplateInstall getInstallRecord(Long templateId, String tenantId) {
+        return installMapper.selectOne(new LambdaQueryWrapper<TemplateInstall>()
+                .eq(TemplateInstall::getTemplateId, templateId)
+                .eq(TemplateInstall::getTenantId, tenantId)
+                .eq(TemplateInstall::getDeleted, 0));
     }
 
     private RuleTemplateDTO toDTO(RuleTemplate template) {
@@ -265,7 +341,42 @@ public class RuleTemplateService {
             log.error("解析模板内容失败: id={}", template.getId(), e);
         }
 
+        // 填充评分汇总
+        try {
+            dto.setRatingSummary(getRatingSummary(template.getId()));
+        } catch (Exception e) {
+            log.error("获取评分汇总失败: templateId={}", template.getId(), e);
+        }
+
         return dto;
+    }
+
+    /**
+     * 获取评分汇总（供内部使用）
+     */
+    private Map<String, Object> getRatingSummary(Long templateId) {
+        List<TemplateRating> ratings = ratingMapper.selectList(
+            new LambdaQueryWrapper<TemplateRating>()
+                .eq(TemplateRating::getTemplateId, templateId)
+                .eq(TemplateRating::getDeleted, 0)
+        );
+        int count = ratings.size();
+        double avgRating = 0.0;
+        if (count > 0) {
+            int total = ratings.stream().mapToInt(TemplateRating::getRating).sum();
+            avgRating = BigDecimal.valueOf((double) total / count)
+                    .setScale(1, java.math.RoundingMode.HALF_UP).doubleValue();
+        }
+        long[] distribution = new long[5];
+        for (TemplateRating r : ratings) {
+            int star = Math.min(Math.max(r.getRating(), 1), 5);
+            distribution[star - 1]++;
+        }
+        return Map.of(
+            "count", count,
+            "avgRating", avgRating,
+            "distribution", Map.of("5", distribution[4], "4", distribution[3], "3", distribution[2], "2", distribution[1], "1", distribution[0])
+        );
     }
 
     private String toJsonContent(RuleTemplateDTO dto) {

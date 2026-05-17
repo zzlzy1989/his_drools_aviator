@@ -53,5 +53,28 @@ export const monitorApi = {
     return request.post('/api/v1/monitor/alert', null, {
       params: { alertType, message, level }
     })
+  },
+
+  getHistory(query: {
+    metricName: string
+    startTime: string
+    endTime: string
+    tag?: string
+    granularity?: string
+    aggregation?: string
+  }): Promise<any> {
+    return request.get('/api/v1/monitor/history', { params: query })
+  },
+
+  getTrend(metricName: string, hours: number, tag?: string): Promise<any> {
+    return request.get('/api/v1/monitor/trend', {
+      params: { metricName, hours, tag }
+    })
+  },
+
+  getHeatmap(days: number): Promise<any> {
+    return request.get('/api/v1/monitor/heatmap', {
+      params: { days }
+    })
   }
 }

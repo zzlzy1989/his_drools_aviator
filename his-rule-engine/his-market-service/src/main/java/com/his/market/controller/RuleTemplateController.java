@@ -4,12 +4,19 @@ import com.his.common.web.context.TenantContext;
 import com.his.common.web.result.Result;
 import com.his.common.web.result.PageResult;
 import com.his.market.dto.RuleTemplateDTO;
+import com.his.market.dto.TemplateRatingDTO;
 import com.his.market.service.RuleTemplateService;
+import com.his.market.service.TemplateRatingService;
+import com.his.market.service.TemplateFavoriteService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 规则模板控制器
@@ -21,6 +28,8 @@ import java.util.List;
 public class RuleTemplateController {
 
     private final RuleTemplateService templateService;
+    private final TemplateRatingService ratingService;
+    private final TemplateFavoriteService favoriteService;
 
     /**
      * 模板列表（分页+筛选）
@@ -105,5 +114,97 @@ public class RuleTemplateController {
     public Result<List<RuleTemplateDTO>> subscribed() {
         String tenantId = TenantContext.getTenantId("T001");
         return Result.success(templateService.subscribedTemplates(tenantId));
+    }
+
+    /**
+     * 获取模板评分列表
+     */
+    @GetMapping("/{id}/ratings")
+    @Operation(summary = "获取模板评分列表")
+    public Result<List<Map<String, Object>>> getRatings(@PathVariable Long id) {
+        return Result.success(ratingService.getRatings(id));
+    }
+
+    /**
+     * 获取模板平均评分
+     */
+    @GetMapping("/{id}/rating-summary")
+    @Operation(summary = "获取模板评分汇总")
+    public Result<Map<String, Object>> getRatingSummary(@PathVariable Long id) {
+        return Result.success(ratingService.getRatingSummary(id));
+    }
+
+    /**
+     * 评分/评论模板
+     */
+    @PostMapping("/{id}/ratings")
+    @Operation(summary = "评分/评论模板")
+    public Result<Void> rateTemplate(@PathVariable Long id, @RequestBody @Valid TemplateRatingDTO dto) {
+        String tenantId = TenantContext.getTenantId("T001");
+        ratingService.rate(id, tenantId, dto);
+        return Result.success(null);
+    }
+
+    /**
+     * 获取收藏列表
+     */
+    @GetMapping("/favorites")
+    @Operation(summary = "获取收藏的模板列表")
+    public Result<List<Map<String, Object>>> getFavorites() {
+        String userId = TenantContext.getTenantId("T001");
+        return Result.success(favoriteService.getFavorites(userId));
+    }
+
+    /**
+     * 收藏模板
+     */
+    @PostMapping("/{id}/favorite")
+    @Operation(summary = "收藏模板")
+    public Result<Void> favorite(@PathVariable Long id) {
+        String userId = TenantContext.getTenantId("T001");
+        favoriteService.favorite(id, userId);
+        return Result.success(null);
+    }
+
+    /**
+     * 取消收藏
+     */
+    @DeleteMapping("/{id}/favorite")
+    @Operation(summary = "取消收藏")
+    public Result<Void> unfavorite(@PathVariable Long id) {
+        String userId = TenantContext.getTenantId("T001");
+        favoriteService.unfavorite(id, userId);
+        return Result.success(null);
+    }
+
+    /**
+     * 检查是否已收藏
+     */
+    @GetMapping("/{id}/favorite-status")
+    @Operation(summary = "检查是否已收藏")
+    public Result<Map<String, Boolean>> getFavoriteStatus(@PathVariable Long id) {
+        String userId = TenantContext.getTenantId("T001");
+        return Result.success(Map.of("favorited", favoriteService.isFavorited(id, userId)));
+    }
+
+    /**
+     * 检查模板更新
+     */
+    @GetMapping("/{id}/check-update")
+    @Operation(summary = "检查模板更新")
+    public Result<Map<String, Object>> checkUpdate(@PathVariable Long id) {
+        String tenantId = TenantContext.getTenantId("T001");
+        return Result.success(templateService.checkForUpdate(id, tenantId));
+    }
+
+    /**
+     * 升级模板
+     */
+    @PostMapping("/{id}/upgrade")
+    @Operation(summary = "升级模板到最新版本")
+    public Result<Void> upgrade(@PathVariable Long id) {
+        String tenantId = TenantContext.getTenantId("T001");
+        templateService.upgradeTemplate(id, tenantId);
+        return Result.success(null);
     }
 }

@@ -28,6 +28,12 @@ public class TemplateInstall {
 
     private LocalDateTime lastSyncTime;
 
+    /** 可升级到的最新版本 */
+    private String availableVersion;
+
+    /** 最后检查版本更新时间 */
+    private LocalDateTime lastCheckTime;
+
     /** 状态: active/unsubscribed */
     private String status;
 

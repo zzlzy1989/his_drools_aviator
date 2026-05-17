@@ -1,6 +1,8 @@
 package com.his.settlement.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.his.common.SettlementFact;
 import com.his.common.SkillContext;
@@ -10,8 +12,10 @@ import com.his.common.web.context.TenantContext;
 import com.his.settlement.dto.TestDataSetDTO;
 import com.his.settlement.entity.TestCase;
 import com.his.settlement.entity.TestDataSet;
+import com.his.settlement.entity.TestExecutionLog;
 import com.his.settlement.mapper.TestCaseMapper;
 import com.his.settlement.mapper.TestDataSetMapper;
+import com.his.settlement.mapper.TestExecutionLogMapper;
 import com.his.settlement.pipeline.SkillPipelineExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +25,7 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,6 +43,7 @@ public class SandboxService {
 
     private final TestDataSetMapper dataSetMapper;
     private final TestCaseMapper testCaseMapper;
+    private final TestExecutionLogMapper executionLogMapper;
     private final ObjectMapper objectMapper;
     private final SkillPipelineExecutor skillPipelineExecutor;
     private final FormulaLoaderService formulaLoaderService;
@@ -154,10 +160,12 @@ public class SandboxService {
         Map<String, Object> execResult = new LinkedHashMap<>();
         execResult.put("caseId", testCase.getCaseId());
         execResult.put("caseName", testCase.getCaseName());
+        Map<String, Object> factMap = null;
+        long elapsed = 0;
 
         try {
             // 1. 解析输入 Fact
-            Map<String, Object> factMap = objectMapper.readValue(testCase.getFactJson(), Map.class);
+            factMap = objectMapper.readValue(testCase.getFactJson(), Map.class);
             execResult.put("input", factMap);
 
             // 2. 构建 SettlementFact 对象
@@ -198,7 +206,7 @@ public class SandboxService {
             // 7. 对比实际与期望
             List<Map<String, String>> diffs = compareResults(expected, actualOutput);
 
-            long elapsed = System.currentTimeMillis() - startTime;
+            elapsed = System.currentTimeMillis() - startTime;
             execResult.put("actual", actualOutput);
             execResult.put("expected", expected);
             execResult.put("diff", diffs);
@@ -216,6 +224,9 @@ public class SandboxService {
             testCase.setLastExecutionTime(LocalDateTime.now());
             testCaseMapper.updateById(testCase);
 
+            // 记录执行历史
+            saveExecutionLog(testCase, factMap, expected, actualOutput, diffs, execResult.get("status").toString(), (int) elapsed);
+
             log.info("测试用例执行完成: caseId={}, status={}, elapsed={}ms, diffs={}",
                     testCase.getCaseId(), execResult.get("status"), elapsed, diffs.size());
 
@@ -229,8 +240,76 @@ public class SandboxService {
 
             execResult.put("status", "ERROR");
             execResult.put("message", e.getMessage());
+
+            // 记录异常执行历史
+            saveExecutionLog(testCase, factMap, null, null, null, "ERROR", (int) elapsed);
+
             return execResult;
         }
+    }
+
+    /**
+     * 保存执行历史
+     */
+    private void saveExecutionLog(TestCase testCase, Map<String, Object> input,
+                                   Map<String, Object> expected, Map<String, Object> actual,
+                                   List<Map<String, String>> diffs, String status, int elapsedMs) {
+        try {
+            TestExecutionLog log = new TestExecutionLog();
+            log.setTestCaseId(testCase.getId());
+            log.setDataSetId(testCase.getDataSetId());
+            log.setCaseName(testCase.getCaseName());
+            log.setInputJson(objectMapper.writeValueAsString(input));
+            log.setExpectedJson(expected != null ? objectMapper.writeValueAsString(expected) : null);
+            log.setActualJson(actual != null ? objectMapper.writeValueAsString(actual) : null);
+            log.setDiffJson(diffs != null ? objectMapper.writeValueAsString(diffs) : null);
+            log.setStatus(status);
+            log.setElapsedMs(elapsedMs);
+            log.setExecutedBy(testCase.getTenantId());
+            log.setExecuteTime(LocalDateTime.now());
+            log.setTenantId(testCase.getTenantId());
+            executionLogMapper.insert(log);
+        } catch (Exception e) {
+            log.error("保存执行历史失败", e);
+        }
+    }
+
+    /**
+     * 分页查询执行历史
+     */
+    public IPage<TestExecutionLog> listExecutionLogs(Integer page, Integer pageSize,
+                                                      String status, String startDate, String endDate) {
+        String tenantId = TenantContext.getTenantId("T001");
+        Page<TestExecutionLog> pageParam = new Page<>(page, pageSize);
+        LambdaQueryWrapper<TestExecutionLog> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(TestExecutionLog::getTenantId, tenantId);
+        wrapper.eq(TestExecutionLog::getDeleted, 0);
+
+        if (StringUtils.hasText(status)) {
+            wrapper.eq(TestExecutionLog::getStatus, status);
+        }
+
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        if (StringUtils.hasText(startDate)) {
+            wrapper.ge(TestExecutionLog::getExecuteTime, LocalDateTime.parse(startDate + " 00:00:00", df));
+        }
+        if (StringUtils.hasText(endDate)) {
+            wrapper.le(TestExecutionLog::getExecuteTime, LocalDateTime.parse(endDate + " 23:59:59", df));
+        }
+
+        wrapper.orderByDesc(TestExecutionLog::getExecuteTime);
+        return executionLogMapper.selectPage(pageParam, wrapper);
+    }
+
+    /**
+     * 获取执行历史详情
+     */
+    public TestExecutionLog getExecutionLog(Long id) {
+        TestExecutionLog log = executionLogMapper.selectById(id);
+        if (log == null || log.getDeleted() == 1) {
+            throw new RuntimeException("执行记录不存在");
+        }
+        return log;
     }
 
     /**

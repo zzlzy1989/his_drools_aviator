@@ -1,9 +1,8 @@
 package com.his.monitor.service;
 
 import com.his.monitor.dto.MonitorMetricsVO;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 public class MonitorService {
 
-    private final MeterRegistry meterRegistry;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 内存中的指标存储（生产环境建议用 Redis）
     private final AtomicLong executionTotal = new AtomicLong(0);
@@ -33,25 +32,12 @@ public class MonitorService {
     private volatile long p99DurationMs = 0;
     private volatile long p95DurationMs = 0;
 
-    public MonitorService(MeterRegistry meterRegistry) {
-        this.meterRegistry = meterRegistry;
+    public MonitorService(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
     }
 
     @PostConstruct
     public void init() {
-        // 初始化计数器
-        Counter.builder("rule_execution_total")
-                .description("规则执行总次数")
-                .register(meterRegistry);
-
-        Counter.builder("rule_execution_success")
-                .description("规则执行成功次数")
-                .register(meterRegistry);
-
-        Counter.builder("rule_execution_failed")
-                .description("规则执行失败次数")
-                .register(meterRegistry);
-
         log.info("MonitorService initialized");
     }
 
@@ -139,6 +125,23 @@ public class MonitorService {
         return vo;
     }
 
+    /**
+     * 发布指标更新事件（供 WebSocket 推送使用）
+     */
+    public void publishMetricsUpdate() {
+        eventPublisher.publishEvent(new MetricsUpdateEvent(this, getMetrics()));
+    }
+
+    /**
+     * 每5秒通过事件发布推送指标（仅当有活跃连接时）
+     * 注意：实际推送由 MetricsUpdateListener 处理
+     */
+    @Scheduled(fixedRate = 5000)
+    public void checkAndPushMetrics() {
+        // 发布事件，让监听器决定是否推送
+        publishMetricsUpdate();
+    }
+
     private void updateDurationStats(long durationMs) {
         // 简化实现，实际可用 Histogram 的滑动窗口
         if (durationMs > p99DurationMs) {
@@ -148,4 +151,9 @@ public class MonitorService {
             p95DurationMs = durationMs;
         }
     }
+
+    /**
+     * 指标更新事件
+     */
+    public record MetricsUpdateEvent(Object source, MonitorMetricsVO metrics) {}
 }

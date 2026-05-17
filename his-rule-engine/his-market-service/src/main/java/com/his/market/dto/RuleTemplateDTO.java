@@ -49,6 +49,12 @@ public class RuleTemplateDTO {
 
     private List<Map<String, Object>> flows;
 
+    /** 评分汇总信息 */
+    private Map<String, Object> ratingSummary;
+
+    /** 已订阅模板的安装信息 */
+    private Map<String, Object> installInfo;
+
     @Data
     public static class TemplateContentDTO {
         private List<Map<String, Object>> rules;

@@ -86,6 +86,12 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '测试沙箱' },
       },
       {
+        path: 'sandbox/logs',
+        name: 'SandboxLogs',
+        component: () => import('@/views/sandbox/ExecutionLogList.vue'),
+        meta: { title: '执行记录' },
+      },
+      {
         path: 'market',
         name: 'Market',
         component: () => import('@/views/market/MarketPage.vue'),

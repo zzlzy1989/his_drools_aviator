@@ -89,6 +89,63 @@
         </div>
       </div>
     </div>
+
+    <!-- 历史数据查询 -->
+    <div class="history-section">
+      <h3>历史数据查询</h3>
+      <div class="history-filters">
+        <el-select v-model="historyQuery.metricName" placeholder="选择指标" size="default" style="width: 180px">
+          <el-option value="rule_hit" label="规则触发" />
+          <el-option value="execution_time" label="执行耗时" />
+          <el-option value="success_rate" label="成功率" />
+        </el-select>
+        <el-date-picker
+          v-model="historyDateRange"
+          type="datetimerange"
+          range-separator="至"
+          start-placeholder="开始时间"
+          end-placeholder="结束时间"
+          size="default"
+          style="width: 340px"
+        />
+        <el-button @click="loadHistory" :loading="historyLoading">查询</el-button>
+      </div>
+      <div class="history-content">
+        <div class="history-summary">
+          <div class="summary-item">
+            <span class="summary-label">查询条数:</span>
+            <span class="summary-value">{{ historySummary.count }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">平均值:</span>
+            <span class="summary-value">{{ historySummary.avg }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">最大值:</span>
+            <span class="summary-value">{{ historySummary.max }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">最小值:</span>
+            <span class="summary-value">{{ historySummary.min }}</span>
+          </div>
+        </div>
+        <div ref="historyChartRef" class="history-chart"></div>
+      </div>
+    </div>
+
+    <!-- 规则触发热力图 -->
+    <div class="heatmap-section">
+      <h3>规则触发热力图</h3>
+      <div class="heatmap-filters">
+        <el-select v-model="heatmapDays" placeholder="查询天数" size="default" style="width: 120px">
+          <el-option :value="7" label="近7天" />
+          <el-option :value="14" label="近14天" />
+          <el-option :value="30" label="近30天" />
+        </el-select>
+        <el-button @click="loadHeatmap" :loading="heatmapLoading">加载热力图</el-button>
+      </div>
+      <div ref="heatmapChartRef" class="heatmap-chart"></div>
+    </div>
   </div>
 </template>
 
@@ -102,6 +159,25 @@ const refreshInterval = ref(10000)
 const metrics = ref<any>(null)
 const durationChartRef = ref<HTMLElement>()
 const topRulesChartRef = ref<HTMLElement>()
+
+// History state
+const historyLoading = ref(false)
+const historyChartRef = ref<HTMLElement>()
+const historyDateRange = ref<[Date, Date]>([
+  new Date(Date.now() - 24 * 60 * 60 * 1000),
+  new Date()
+])
+const historyQuery = ref({
+  metricName: 'rule_hit'
+})
+const historySummary = ref<any>({ count: 0, avg: '-', max: '-', min: '-' })
+let historyChart: echarts.ECharts | null = null
+
+// Heatmap state
+const heatmapLoading = ref(false)
+const heatmapChartRef = ref<HTMLElement>()
+const heatmapDays = ref(7)
+let heatmapChart: echarts.ECharts | null = null
 
 let durationChart: echarts.ECharts | null = null
 let topRulesChart: echarts.ECharts | null = null
@@ -130,6 +206,105 @@ async function loadMetrics() {
   } finally {
     loading.value = false
   }
+}
+
+async function loadHistory() {
+  try {
+    historyLoading.value = true
+    const [startTime, endTime] = historyDateRange.value
+    const res = await monitorApi.getHistory({
+      metricName: historyQuery.value.metricName,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString()
+    })
+    if (res.code === '0') {
+      const data = res.data
+      historySummary.value = data.summary || { count: 0, avg: '-', max: '-', min: '-' }
+      updateHistoryChart(data.dataPoints || [])
+    }
+  } catch (error) {
+    console.error('加载历史数据失败:', error)
+  } finally {
+    historyLoading.value = false
+  }
+}
+
+function updateHistoryChart(dataPoints: any[]) {
+  if (!historyChartRef.value) return
+  historyChart?.dispose()
+  historyChart = echarts.init(historyChartRef.value)
+
+  const times = dataPoints.map(p => p.time)
+  const values = dataPoints.map(p => p.value)
+
+  historyChart.setOption({
+    tooltip: { trigger: 'axis' },
+    xAxis: { type: 'category', data: times, name: '时间' },
+    yAxis: { type: 'value', name: '指标值' },
+    series: [{
+      name: '指标值',
+      type: 'line',
+      data: values,
+      smooth: true,
+      itemStyle: { color: '#409EFF' },
+      areaStyle: { color: 'rgba(64, 158, 255, 0.2)' }
+    }]
+  })
+}
+
+async function loadHeatmap() {
+  try {
+    heatmapLoading.value = true
+    const res = await monitorApi.getHeatmap(heatmapDays.value)
+    if (res.code === '0') {
+      updateHeatmapChart(res.data)
+    }
+  } catch (error) {
+    console.error('加载热力图失败:', error)
+  } finally {
+    heatmapLoading.value = false
+  }
+}
+
+function updateHeatmapChart(data: any) {
+  if (!heatmapChartRef.value) return
+  heatmapChart?.dispose()
+  heatmapChart = echarts.init(heatmapChartRef.value)
+
+  const hours = data.hours || []
+  const rules = data.rules || []
+
+  const heatmapData: [number, number, number][] = []
+  rules.forEach((rule: any, ruleIdx: number) => {
+    hours.forEach((hour: string, hourIdx: number) => {
+      const value = rule[hour] || 0
+      if (value > 0) {
+        heatmapData.push([hourIdx, ruleIdx, value])
+      }
+    })
+  })
+
+  heatmapChart.setOption({
+    tooltip: { position: 'top' },
+    xAxis: { type: 'category', data: hours, name: '小时' },
+    yAxis: { type: 'category', data: rules.map((r: any) => r.ruleKey), name: '规则' },
+    visualMap: {
+      min: 0,
+      max: Math.max(...heatmapData.map(d => d[2]), 1),
+      calculable: true,
+      orient: 'horizontal',
+      left: 'center',
+      bottom: '0%',
+      inRange: { color: ['#e6f7ff', '#1890ff', '#f5222d'] }
+    },
+    series: [{
+      name: '触发次数',
+      type: 'heatmap',
+      data: heatmapData,
+      label: { show: false },
+      emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+    }]
+  })
 }
 
 function updateCharts() {
@@ -192,6 +367,8 @@ onMounted(() => {
   window.addEventListener('resize', () => {
     durationChart?.resize()
     topRulesChart?.resize()
+    historyChart?.resize()
+    heatmapChart?.resize()
   })
 })
 
@@ -201,6 +378,8 @@ onUnmounted(() => {
   }
   durationChart?.dispose()
   topRulesChart?.dispose()
+  historyChart?.dispose()
+  heatmapChart?.dispose()
 })
 </script>
 
@@ -391,5 +570,66 @@ onUnmounted(() => {
 
 .stat-value.danger {
   color: #F56C6C;
+}
+
+.history-section,
+.heatmap-section {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+.history-section h3,
+.heatmap-section h3 {
+  margin: 0 0 15px 0;
+  color: #303133;
+  font-size: 16px;
+}
+
+.history-filters,
+.heatmap-filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.history-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.history-summary {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 15px;
+  padding: 10px;
+  background: #f5f7fa;
+  border-radius: 6px;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.summary-label {
+  color: #909399;
+  font-size: 12px;
+}
+
+.summary-value {
+  color: #303133;
+  font-weight: bold;
+}
+
+.history-chart {
+  height: 250px;
+}
+
+.heatmap-chart {
+  height: 400px;
 }
 </style>
