@@ -1,8 +1,10 @@
 package com.his.formula.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.his.common.aviator.cache.AviatorExpressionCache;
 import com.his.common.web.result.PageResult;
 import com.his.common.web.result.Result;
+import com.his.common.web.exception.BusinessException;
 import com.his.formula.dto.*;
 import com.his.formula.service.FormulaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +29,9 @@ import java.util.Map;
 public class FormulaController {
 
     private final FormulaService formulaService;
+
+    @Autowired(required = false)
+    private AviatorExpressionCache expressionCache;
 
     @GetMapping
     @Operation(summary = "分页查询公式")
@@ -107,5 +113,38 @@ public class FormulaController {
     @Operation(summary = "获取版本历史")
     public Result<List<FormulaHistoryVO>> getVersionHistory(@PathVariable Long id) {
         return Result.success(formulaService.getVersionHistory(id));
+    }
+
+    @GetMapping("/cache/stats")
+    @Operation(summary = "获取缓存统计信息")
+    public Result<Map<String, Object>> getCacheStats() {
+        if (expressionCache == null) {
+            return Result.success(Map.of(
+                "enabled", false,
+                "message", "缓存未启用"
+            ));
+        }
+        var stats = expressionCache.getStats();
+        return Result.success(Map.of(
+            "enabled", true,
+            "size", expressionCache.getSize(),
+            "stats", stats
+        ));
+    }
+
+    @PostMapping("/cache/refresh")
+    @Operation(summary = "刷新表达式缓存")
+    public Result<Void> refreshCache(@RequestParam(required = false) String expression) {
+        if (expressionCache == null) {
+            throw new BusinessException("缓存未启用");
+        }
+        if (expression != null && !expression.isBlank()) {
+            expressionCache.invalidate(expression);
+            log.info("刷新单个表达式缓存: {}", expression);
+        } else {
+            expressionCache.invalidateAll();
+            log.info("刷新所有表达式缓存");
+        }
+        return Result.success(null);
     }
 }

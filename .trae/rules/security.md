@@ -1,6 +1,6 @@
 ---
-alwaysApply: false
-description: 
+alwaysApply: true
+description: 安全检查规范，所有操作必须遵循
 ---
 # 安全检查规则 - HIS 动态规则中台
 

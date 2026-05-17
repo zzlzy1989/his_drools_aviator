@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+trigger: command:check-memory
+---
 # ((command:check-memory)) 检查记忆状态 - HIS 规则引擎
 
 ## 执行步骤

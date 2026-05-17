@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # quality 模块概览 - HIS 医疗质控服务
 
 > 最后更新: 2026-05-10 | v1.0

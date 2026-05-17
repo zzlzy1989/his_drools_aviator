@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+trigger: command:analyze-task
+---
 # ((command:analyze-task)) 分析任务 - HIS 规则引擎
 
 ## 执行步骤

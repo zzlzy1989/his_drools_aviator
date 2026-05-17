@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # rules 模块概览 - HIS Drools 规则引擎核心
 
 > 最后更新: 2026-05-10 | v1.1

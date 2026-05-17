@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # config 模块概览
 
 ## 职责

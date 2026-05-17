@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+trigger: memory:write
+---
 # 每日会话记忆模板
 
 > 复制此文件并重命名为 `{YYYY-MM-DD}.md` 以记录当日工作

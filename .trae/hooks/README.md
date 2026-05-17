@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # Hooks 配置说明 - HIS Drools+Aviator 规则引擎
 
 ## 概述

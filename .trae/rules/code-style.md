@@ -1,5 +1,5 @@
 ---
-alwaysApply: false
+alwaysApply: true
 description: 生成/修改java文件时，检查编码风格
 ---
 # 编码风格规则 - HIS 动态规则中台

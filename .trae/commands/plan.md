@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+trigger: command:plan
+---
 # ((command:plan)) - 计划管理命令
 
 ## 触发方式

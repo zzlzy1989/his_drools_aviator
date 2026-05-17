@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # edge-cases.md - HIS 动态规则中台
 
 > 记录编码和测试中发现的特殊边界情况，防止遗漏

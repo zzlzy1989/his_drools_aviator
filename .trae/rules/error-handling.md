@@ -1,6 +1,6 @@
 ---
-alwaysApply: false
-description: 
+alwaysApply: true
+description: 错误处理规范，所有异常必须遵循此规范
 ---
 # 错误处理规范 - HIS 动态规则中台
 

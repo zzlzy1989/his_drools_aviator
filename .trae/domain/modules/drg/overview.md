@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # drg 模块概览 - HIS DRG 分组服务
 
 > 最后更新: 2026-05-10 | v1.0

@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # tenants 模块概览
 
 ## 职责

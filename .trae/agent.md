@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # AGENTS.md - HIS Drools+Aviator 规则引擎
 
 > AI 行为规范。每次会话首先读取此文件。

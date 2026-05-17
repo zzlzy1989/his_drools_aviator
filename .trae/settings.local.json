@@ -62,6 +62,24 @@
                 "enabled": true,
                 "daysAfterCompletion": 7
             }
+        },
+        "triggerSettings": {
+            "alwaysApplyFiles": [
+                ".trae/agent.md",
+                ".trae/MEMORY.md",
+                ".trae/rules/*.md",
+                ".trae/commands/*.md",
+                ".trae/domain/*.md",
+                ".trae/domain/modules/**/*.md"
+            ],
+            "triggerOnEveryMessage": true,
+            "loadPriority": [
+                "agent.md",
+                "MEMORY.md",
+                "rules/workflow.md",
+                "rules/code-style.md",
+                "domain/README.md"
+            ]
         }
     }
 }

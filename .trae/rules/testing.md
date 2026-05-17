@@ -1,5 +1,5 @@
 ---
-alwaysApply: false
+alwaysApply: true
 description: 
 ---
 # 测试规范 - HIS 动态规则中台

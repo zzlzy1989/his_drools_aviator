@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # Harness 工程跨项目迁移指南
 
 > 将 HIS Drools+Aviator 规则引擎 的 Harness 工程体系复用到任何 AI 辅助开发项目

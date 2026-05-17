@@ -1,6 +1,6 @@
 ---
-alwaysApply: false
-description: 
+alwaysApply: true
+description: REST API 设计规范
 ---
 # API 设计规则 - HIS 动态规则中台
 

@@ -1,6 +1,6 @@
 ---
-alwaysApply: false
-description: 
+alwaysApply: true
+description: Docker 部署规范
 ---
 # Docker 部署规范 - HIS 动态规则中台
 

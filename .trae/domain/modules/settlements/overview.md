@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # settlements 模块概览 - HIS 医保结算
 
 > 最后更新: 2026-05-10 | v1.1

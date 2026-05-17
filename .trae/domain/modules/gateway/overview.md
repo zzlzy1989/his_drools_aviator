@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # gateway 模块概览 - HIS 微服务网关
 
 > 最后更新: 2026-05-10 | v1.0

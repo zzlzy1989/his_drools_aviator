@@ -1,6 +1,6 @@
 ---
-alwaysApply: false
-description: 
+alwaysApply: true
+description: 性能优化规范，所有代码必须考虑性能
 ---
 # 性能优化规范 - HIS 动态规则中台
 

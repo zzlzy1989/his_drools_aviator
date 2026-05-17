@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+trigger: command:summarize
+---
 # ((command:summarize)) 总结会话 - HIS 规则引擎
 
 ## 执行步骤

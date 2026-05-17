@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # Domain 知识库索引 - HIS Drools+Aviator 规则引擎
 
 > 业务领域知识库，按稳定性分层组织

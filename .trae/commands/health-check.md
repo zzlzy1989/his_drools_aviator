@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+trigger: command:health
+---
 # ((command:health)) 健康检查 - HIS 规则引擎
 
 ## 执行步骤

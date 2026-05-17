@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # CHANGELOG - HIS Drools+Aviator 规则引擎 Harness 配置变更日志
 
 > 记录 `.trae/` 目录所有配置和内容的变更历史

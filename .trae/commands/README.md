@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # Commands - 自定义快捷命令
 
 ## 说明

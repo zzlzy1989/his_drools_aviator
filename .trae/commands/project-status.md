@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+trigger: command:status
+---
 # ((command:status)) 项目状态总览 - HIS 规则引擎
 
 ## 执行步骤

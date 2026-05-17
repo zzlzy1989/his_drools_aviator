@@ -1,5 +1,5 @@
 ---
-alwaysApply: false
+alwaysApply: true
 description: 数据库规范
 ---
 # 数据库规范 - HIS 动态规则中台

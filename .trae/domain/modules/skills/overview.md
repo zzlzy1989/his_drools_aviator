@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # skills 模块概览 - HIS Skill/Agent 插件架构
 
 > 最后更新: 2026-05-10 | v1.1

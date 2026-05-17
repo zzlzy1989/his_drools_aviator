@@ -97,6 +97,12 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/audit/AuditLogList.vue'),
         meta: { title: '操作日志' },
       },
+      {
+        path: 'cache',
+        name: 'Cache',
+        component: () => import('@/views/system/cache/CacheManage.vue'),
+        meta: { title: '缓存管理' },
+      },
     ],
   },
 ]

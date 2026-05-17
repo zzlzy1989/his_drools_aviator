@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+trigger: command:context
+---
 # ((command:context)) 显示任务上下文 - HIS 规则引擎
 
 ## 执行步骤

@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # 状态机 - HIS 动态规则中台
 
 > 核心实体的状态流转定义，使用 Mermaid 图表示

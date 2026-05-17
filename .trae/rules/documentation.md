@@ -1,6 +1,6 @@
 ---
-alwaysApply: false
-description: 
+alwaysApply: true
+description: 文档编写规范，所有代码和规则文件必须包含规范注释
 ---
 # 文档编写规则 - HIS 动态规则中台
 

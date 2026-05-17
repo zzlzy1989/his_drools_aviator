@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+trigger: command:knowledge-writeback
+---
 # 知识回写 (Step 7)
 
 > **用途**: 任务完成后，将隐含知识显式化并持久化到 domain/ 和 MEMORY.md

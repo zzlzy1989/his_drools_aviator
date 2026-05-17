@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # MEMORY.md - HIS 动态规则中台
 
 > 跨会话持久化的事实性知识（不含 AI 行为规则，行为规范见 agent.md）

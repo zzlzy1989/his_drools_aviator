@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # HIS Drools+Aviator 规则引擎 - Harness 工程实施总结
 
 > 基于"从 Vibe Coding 到 Harness 工程"理念，对 `.trae/` 目录进行的系统性工程化改造完整记录

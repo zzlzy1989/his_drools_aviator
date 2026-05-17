@@ -1,3 +1,6 @@
+---
+alwaysApply: true
+---
 # Workflow Plans 使用指南
 
 > HIS Drools+Aviator 规则引擎 - 计划生成与跟踪系统  

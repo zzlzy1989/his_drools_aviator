@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+trigger: command:review
+---
 # 实现审查 (Step 4)
 
 > **用途**: 在代码实现完成后、质量检查前，触发正式的实现审查流程
