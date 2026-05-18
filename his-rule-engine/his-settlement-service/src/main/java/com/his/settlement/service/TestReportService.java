@@ -1,5 +1,6 @@
 package com.his.settlement.service;
 
+import com.lowagie.text.pdf.BaseFont;
 import com.his.settlement.entity.TestCase;
 import com.his.settlement.entity.TestDataSet;
 import com.his.settlement.mapper.TestCaseMapper;
@@ -7,7 +8,9 @@ import com.his.settlement.mapper.TestDataSetMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.xhtmlrenderer.pdf.ITextRenderer;
 
+import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -129,5 +132,29 @@ public class TestReportService {
     private String escapeHtml(String str) {
         if (str == null) return "";
         return str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;");
+    }
+
+    /**
+     * 生成 PDF 报告
+     */
+    public byte[] generatePdfReport(Long dataSetId, List<Map<String, Object>> executionResults) {
+        String html = generateHtmlReport(dataSetId, executionResults);
+
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            ITextRenderer renderer = new ITextRenderer();
+
+            // 配置中文字体 - 由 HTML 中的 CSS @font-face 配置处理
+            // BaseFont bfChinese = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
+
+            renderer.setDocumentFromString(html);
+            renderer.layout();
+            renderer.createPDF(out);
+
+            log.info("PDF报告生成成功: dataSetId={}, size={}", dataSetId, out.size());
+            return out.toByteArray();
+        } catch (Exception e) {
+            log.error("PDF报告生成失败: dataSetId={}", dataSetId, e);
+            throw new RuntimeException("PDF报告生成失败: " + e.getMessage(), e);
+        }
     }
 }

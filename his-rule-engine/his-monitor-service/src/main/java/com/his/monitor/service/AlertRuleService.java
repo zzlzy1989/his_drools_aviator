@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class AlertRuleService {
 
     private final AlertRuleMapper alertRuleMapper;
+    private final NotificationService notificationService;
 
     private static final String DEFAULT_TENANT = "T001";
 
@@ -120,6 +121,12 @@ public class AlertRuleService {
                     triggeredRules.add(rule);
                     lastTriggerTimes.put(rule.getId(), System.currentTimeMillis());
                     triggerCounts.remove(rule.getId());
+
+                    // 发送钉钉通知
+                    if ("DINGTALK".equals(rule.getNotifyChannels())) {
+                        String message = buildAlertMessage(rule, metricName, value);
+                        notificationService.sendDingTalkNotification(rule, message);
+                    }
                 }
             } else {
                 // 重置计数
@@ -155,6 +162,21 @@ public class AlertRuleService {
         }
         long elapsed = System.currentTimeMillis() - lastTime;
         return elapsed < (rule.getCooldownSeconds() * 1000L);
+    }
+
+    /**
+     * 构建告警消息
+     */
+    private String buildAlertMessage(AlertRule rule, String metricName, BigDecimal value) {
+        String template = rule.getMessageTemplate();
+        if (template == null || template.isBlank()) {
+            return String.format("%s 指标超过阈值: 当前值=%s, 阈值=%s",
+                metricName, value, rule.getThreshold());
+        }
+        return template
+            .replace("{metric}", metricName)
+            .replace("{value}", value.toString())
+            .replace("{threshold}", rule.getThreshold().toString());
     }
 
     /**

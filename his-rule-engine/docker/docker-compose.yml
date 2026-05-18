@@ -3,14 +3,14 @@
 
 x-common-env: &common-env
   SPRING_PROFILES_ACTIVE: docker
-  NACOS_ADDR: ${NACOS_ADDR:-192.168.1.105:8848}
+  NACOS_ADDR: nacos:8848
   MYSQL_HOST: ${MYSQL_HOST:-192.168.1.105}
   MYSQL_PORT: ${MYSQL_PORT:-3306}
-  MYSQL_USER: ${MYSQL_USER:-root}
+  MYSQL_USER: root
   MYSQL_PASSWORD: ${MYSQL_PASSWORD:-testhub123}
   MYSQL_DB: ${MYSQL_DB:-his_rule_engine}
-  REDIS_HOST: ${REDIS_HOST:-192.168.1.105}
-  REDIS_PORT: ${REDIS_PORT:-63790}
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
   JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx512m}
 
 x-common-config: &common-config
@@ -47,11 +47,34 @@ services:
       JVM_XMX: 512m
     networks:
       - his-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8848/nacos/v1/console/health/liveness"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     deploy:
       resources:
         limits:
           memory: 1G
           cpus: '2.0'
+
+  # ===== Redis 7 缓存 =====
+  redis:
+    image: redis:7-alpine
+    container_name: his-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - his-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # ===== HIS 网关 (9000) =====
   his-gateway:
@@ -65,14 +88,14 @@ services:
       - "9000:9000"
     environment:
       <<: *common-env
-      NACOS_ADDR: nacos:8848
       SERVER_PORT: 9000
       HIS_JWT_ENABLED: "false"  # 开发阶段关闭JWT认证
     volumes:
       - ./logs/gateway:/app/logs
     <<: *common-config
     depends_on:
-      - nacos
+      nacos:
+        condition: service_healthy
 
   # ===== HIS 规则服务 (9001) =====
   his-rule-service:
@@ -91,7 +114,10 @@ services:
       - ./logs/rule-service:/app/logs
     <<: *common-config
     depends_on:
-      - his-gateway
+      his-gateway:
+        condition: service_started
+      redis:
+        condition: service_healthy
 
   # ===== HIS 公式服务 (9002) =====
   his-formula-service:
@@ -110,7 +136,8 @@ services:
       - ./logs/formula-service:/app/logs
     <<: *common-config
     depends_on:
-      - his-gateway
+      his-gateway:
+        condition: service_started
 
   # ===== HIS 结算服务 (9003) =====
   his-settlement-service:
@@ -129,9 +156,12 @@ services:
       - ./logs/settlement-service:/app/logs
     <<: *common-config
     depends_on:
-      - his-gateway
-      - his-rule-service
-      - his-formula-service
+      his-gateway:
+        condition: service_started
+      his-rule-service:
+        condition: service_started
+      his-formula-service:
+        condition: service_started
 
   # ===== HIS 药品服务 (9004) =====
   his-drug-service:
@@ -150,8 +180,10 @@ services:
       - ./logs/drug-service:/app/logs
     <<: *common-config
     depends_on:
-      - his-gateway
-      - his-rule-service
+      his-gateway:
+        condition: service_started
+      his-rule-service:
+        condition: service_started
 
   # ===== HIS 质控服务 (9005) =====
   his-quality-service:
@@ -170,8 +202,10 @@ services:
       - ./logs/quality-service:/app/logs
     <<: *common-config
     depends_on:
-      - his-gateway
-      - his-rule-service
+      his-gateway:
+        condition: service_started
+      his-rule-service:
+        condition: service_started
 
   # ===== HIS DRG服务 (9006) =====
   his-drg-service:
@@ -190,9 +224,12 @@ services:
       - ./logs/drg-service:/app/logs
     <<: *common-config
     depends_on:
-      - his-gateway
-      - his-rule-service
-      - his-formula-service
+      his-gateway:
+        condition: service_started
+      his-rule-service:
+        condition: service_started
+      his-formula-service:
+        condition: service_started
 
   # ===== HIS 监控服务 (9007) =====
   his-monitor-service:
@@ -211,7 +248,8 @@ services:
       - ./logs/monitor-service:/app/logs
     <<: *common-config
     depends_on:
-      - his-gateway
+      his-gateway:
+        condition: service_started
 
   # ===== HIS 规则市场服务 (9008) =====
   his-market-service:
@@ -230,8 +268,12 @@ services:
       - ./logs/market-service:/app/logs
     <<: *common-config
     depends_on:
-      - his-gateway
+      his-gateway:
+        condition: service_started
 
 networks:
   his-net:
     driver: bridge
+
+volumes:
+  redis-data:

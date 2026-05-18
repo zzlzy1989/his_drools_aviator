@@ -51,6 +51,14 @@
           <el-icon><DataLine /></el-icon>
           <span>监控大屏</span>
         </el-menu-item>
+        <el-menu-item index="/sandbox">
+          <el-icon><Box /></el-icon>
+          <span>测试沙箱</span>
+        </el-menu-item>
+        <el-menu-item index="/market">
+          <el-icon><Shop /></el-icon>
+          <span>规则市场</span>
+        </el-menu-item>
         <el-sub-menu index="/system">
           <template #title>
             <el-icon><Tools /></el-icon>
@@ -74,7 +82,7 @@
             <el-dropdown @command="handleCommand">
               <span class="user-info">
                 <el-icon><User /></el-icon>
-                <span>admin</span>
+                <span>{{ currentUser }}</span>
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
@@ -97,13 +105,14 @@ import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   HomeFilled, Setting, Document, Coin, Tools,
-  Star, DataAnalysis, User, Connection, DataLine
+  Star, DataAnalysis, User, Connection, DataLine, Box, Shop
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
 
 const activeMenu = computed(() => route.path)
+const currentUser = computed(() => localStorage.getItem('userId') || 'admin')
 
 function handleCommand(command: string) {
   if (command === 'logout') {

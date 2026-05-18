@@ -54,8 +54,36 @@ public class MetricHistoryService {
     }
 
     /**
-     * 记录指标
+     * 记录规则命中指标
+     * <p>专门用于记录规则触发的详细信息，包含时间戳</p>
      */
+    public void recordRuleHit(String ruleKey) {
+        record("rule_hit", new BigDecimal(1), ruleKey);
+    }
+
+    /**
+     * 记录规则命中指标（带租户）
+     */
+    public void recordRuleHit(String ruleKey, String tenantId) {
+        MetricRecord record = new MetricRecord();
+        record.setMetricName("rule_hit");
+        record.setMetricValue(BigDecimal.ONE);
+        record.setTag(ruleKey);
+        record.setTenantId(tenantId != null ? tenantId : DEFAULT_TENANT);
+        record.setRecordTime(LocalDateTime.now());
+        buffer.add(record);
+
+        if (buffer.size() >= BUFFER_SIZE) {
+            flushMetrics();
+        }
+    }
+
+    /**
+     * 记录公式执行指标
+     */
+    public void recordFormulaExecution(String formulaKey, boolean success) {
+        record("formula_exec", success ? BigDecimal.ONE : BigDecimal.ZERO, formulaKey);
+    }
     public void record(String metricName, BigDecimal value, String tag) {
         MetricRecord record = new MetricRecord();
         record.setMetricName(metricName);
@@ -231,6 +259,55 @@ public class MetricHistoryService {
         result.put("hours", hours);
         result.put("rules", data);
         result.put("totalRules", data.size());
+        result.put("timeRange", days + "天");
+
+        return result;
+    }
+
+    /**
+     * 获取按小时分布的规则命中统计
+     * <p>用于热力图的时间轴分析</p>
+     */
+    public Map<String, Object> getHourlyRuleHitDistribution(int days) {
+        LocalDateTime endTime = LocalDateTime.now();
+        LocalDateTime startTime = endTime.minusDays(days);
+
+        LambdaQueryWrapper<MetricRecord> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(MetricRecord::getTenantId, DEFAULT_TENANT);
+        wrapper.eq(MetricRecord::getMetricName, "rule_hit");
+        wrapper.ge(MetricRecord::getRecordTime, startTime);
+        wrapper.le(MetricRecord::getRecordTime, endTime);
+
+        List<MetricRecord> records = metricRecordMapper.selectList(wrapper);
+
+        // 按星期几 + 小时聚合
+        DateTimeFormatter dowFmt = DateTimeFormatter.ofPattern("u");  // 1=周一, 7=周日
+        DateTimeFormatter hourFmt = DateTimeFormatter.ofPattern("HH");
+        Map<String, AtomicLong> distribution = new ConcurrentHashMap<>();
+
+        for (MetricRecord record : records) {
+            String dow = record.getRecordTime().format(dowFmt);
+            String hour = record.getRecordTime().format(hourFmt);
+            String key = dow + "-" + hour;
+            distribution.computeIfAbsent(key, k -> new AtomicLong(0)).incrementAndGet();
+        }
+
+        // 构建 7x24 矩阵
+        String[] weekDays = {"周一", "周二", "周三", "周四", "周五", "周六", "周日"};
+        List<Map<String, Object>> matrix = new ArrayList<>();
+        for (int d = 1; d <= 7; d++) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("day", weekDays[d - 1]);
+            row.put("dayOfWeek", d);
+            for (int h = 0; h < 24; h++) {
+                String key = d + "-" + String.format("%02d", h);
+                row.put(String.format("%02d", h), distribution.getOrDefault(key, new AtomicLong(0)).get());
+            }
+            matrix.add(row);
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("matrix", matrix);
         result.put("timeRange", days + "天");
 
         return result;

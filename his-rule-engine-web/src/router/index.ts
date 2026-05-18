@@ -1,7 +1,21 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import Layout from '@/components/Layout/Layout.vue'
 
+// 路由守卫：检查登录状态
+function authGuard(to: { path: string }) {
+  const token = localStorage.getItem('token')
+  if (!token && to.path !== '/login') {
+    return '/login'
+  }
+}
+
 const routes: RouteRecordRaw[] = [
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/views/login/Login.vue'),
+    meta: { title: '登录' },
+  },
   {
     path: '/',
     component: Layout,
@@ -116,6 +130,14 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+// 路由守卫
+router.beforeEach((to) => {
+  const redirect = authGuard(to)
+  if (redirect) {
+    return redirect
+  }
 })
 
 export default router

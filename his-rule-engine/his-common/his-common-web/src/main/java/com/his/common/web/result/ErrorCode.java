@@ -21,6 +21,9 @@ public enum ErrorCode {
     RULE_KEY_DUPLICATED("HIS-R02", "规则Key已存在: %s"),
     RULE_STATUS_INVALID("HIS-R03", "规则状态不允许此操作: %s"),
     RULE_VALIDATION_FAILED("HIS-R04", "规则校验失败: %s"),
+    RULE_GROUP_NOT_FOUND("HIS-R05", "规则分组不存在: %s"),
+    RULE_FLOW_NOT_FOUND("HIS-R06", "规则流不存在: %s"),
+    RULE_FLOW_VERSION_NOT_FOUND("HIS-R07", "规则流版本不存在: %s"),
 
     // ===== 公式管理 (Fxx) =====
     FORMULA_NOT_FOUND("HIS-F01", "公式不存在: %s"),
@@ -28,6 +31,7 @@ public enum ErrorCode {
     FORMULA_SYNTAX_ERROR("HIS-F03", "公式语法错误: %s"),
     FORMULA_EXECUTION_ERROR("HIS-F04", "公式执行错误: %s"),
     FORMULA_PARAM_MISSING("HIS-F05", "公式参数缺失: %s"),
+    FORMULA_VERSION_NOT_FOUND("HIS-F06", "公式版本不存在: %s"),
 
     // ===== 结算模块 (Sxx) =====
     SETTLEMENT_NOT_FOUND("HIS-S01", "结算记录不存在: %s"),
@@ -45,10 +49,12 @@ public enum ErrorCode {
     // ===== 质控 (Qxx) =====
     QUALITY_VIOLATION("HIS-Q01", "质控违规: %s"),
     INFECTION_RISK("HIS-Q02", "院感风险: %s"),
+    QUALITY_RULE_NOT_FOUND("HIS-Q03", "质控规则不存在: %s"),
 
     // ===== DRG (Gxx) =====
     DRG_NOT_FOUND("HIS-G01", "DRG分组不存在: %s"),
     DRG_GROUPING_FAILED("HIS-G02", "DRG分组失败: %s"),
+    DRG_RECORD_NOT_FOUND("HIS-G03", "DRG记录不存在: %s"),
 
     // ===== 权限/认证 (Axx) =====
     UNAUTHORIZED("HIS-A01", "未授权访问"),
@@ -59,6 +65,13 @@ public enum ErrorCode {
     // ===== 参数校验 (Pxx) =====
     PARAM_MISSING("HIS-P01", "必填参数缺失: %s"),
     PARAM_INVALID("HIS-P02", "参数无效: %s"),
+
+    // ===== 沙箱测试 (Bxx) =====
+    SANDBOX_DATASET_NOT_FOUND("HIS-B01", "数据集不存在: %s"),
+    SANDBOX_SUITE_NOT_FOUND("HIS-B02", "测试套件不存在: %s"),
+
+    // ===== 规则模板 (Mxx) =====
+    TEMPLATE_NOT_FOUND("HIS-M01", "规则模板不存在: %s"),
 
     // ===== 第三方服务 (Exx) =====
     NACOS_CONNECT_FAILED("HIS-E01", "Nacos连接失败: %s"),

@@ -61,6 +61,17 @@ public class RuleFlowController {
     }
 
     /**
+     * 规则流下拉列表（轻量级，不含flowDefinition）
+     */
+    @GetMapping("/options")
+    @Operation(summary = "规则流下拉列表")
+    public Result<List<RuleFlowVO>> listOptions(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String status) {
+        return Result.success(ruleFlowService.listOptions(category, status));
+    }
+
+    /**
      * 创建规则流
      */
     @PostMapping
@@ -117,6 +128,18 @@ public class RuleFlowController {
     @Operation(summary = "获取版本历史")
     public Result<List<FlowVersionVO>> getVersions(@PathVariable Long id) {
         return Result.success(ruleFlowService.getVersionHistory(id));
+    }
+
+    /**
+     * 对比两个版本的规则流差异
+     */
+    @GetMapping("/{id}/compare")
+    @Operation(summary = "对比两个版本的规则流差异")
+    public Result<FlowCompareVO> compareVersions(
+            @PathVariable Long id,
+            @RequestParam Integer from,
+            @RequestParam Integer to) {
+        return Result.success(ruleFlowService.compareVersions(id, from, to));
     }
 
     /**

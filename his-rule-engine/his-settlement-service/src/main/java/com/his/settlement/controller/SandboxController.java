@@ -14,6 +14,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 import java.util.Map;
@@ -97,6 +103,16 @@ public class SandboxController {
         List<Map<String, Object>> results = sandboxService.batchExecute(dataSetId);
         String html = testReportService.generateHtmlReport(dataSetId, results);
         return Result.success(html);
+    }
+
+    /**
+     * 生成 PDF 测试报告
+     */
+    @GetMapping(value = "/report/{dataSetId}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    public Result<byte[]> generatePdfReport(@PathVariable Long dataSetId) {
+        List<Map<String, Object>> results = sandboxService.batchExecute(dataSetId);
+        byte[] pdf = testReportService.generatePdfReport(dataSetId, results);
+        return Result.success(pdf);
     }
 
     /**

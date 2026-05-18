@@ -7,6 +7,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.his.common.aviator.helper.AviatorHelper;
 import com.his.common.web.context.TenantContext;
+import com.his.common.web.context.UserContext;
+import com.his.common.web.exception.BusinessException;
+import com.his.common.web.result.ErrorCode;
 import com.his.rule.dto.*;
 import com.his.rule.entity.RuleFlow;
 import com.his.rule.entity.RuleFlowHistory;
@@ -58,9 +61,12 @@ public class RuleFlowService {
         wrapper.eq(RuleFlow::getDeleted, 0);
         wrapper.orderByDesc(RuleFlow::getUpdateTime);
 
+        // 只查询必要字段，避免加载flowDefinition
+        wrapper.select(RuleFlow.class, v -> !v.getProperty().equals("flowDefinition"));
+
         IPage<RuleFlow> resultPage = ruleFlowMapper.selectPage(p, wrapper);
 
-        return resultPage.convert(this::toVO);
+        return resultPage.convert(flow -> toVO(flow, false));
     }
 
     /**
@@ -71,7 +77,24 @@ public class RuleFlowService {
         if (flow == null) {
             return null;
         }
-        return toVO(flow);
+        return toVO(flow, true);
+    }
+
+    /**
+     * 规则流下拉列表（轻量级，不含flowDefinition）
+     */
+    public List<RuleFlowVO> listOptions(String category, String status) {
+        String tenantId = TenantContext.getTenantId("T001");
+        LambdaQueryWrapper<RuleFlow> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(RuleFlow::getTenantId, tenantId);
+        wrapper.eq(RuleFlow::getDeleted, 0);
+        wrapper.eq(StringUtils.hasText(category), RuleFlow::getCategory, category);
+        wrapper.eq(StringUtils.hasText(status), RuleFlow::getStatus, status);
+        wrapper.orderByDesc(RuleFlow::getUpdateTime);
+        wrapper.select(RuleFlow.class, v -> !v.getProperty().equals("flowDefinition"));
+
+        List<RuleFlow> flows = ruleFlowMapper.selectList(wrapper);
+        return flows.stream().map(f -> toVO(f, false)).collect(Collectors.toList());
     }
 
     /**
@@ -91,7 +114,7 @@ public class RuleFlowService {
         flow.setVersion(1);
         flow.setTenantId(dto.getTenantId());
         flow.setFlowDefinition(toFlowDefinitionJson(dto));
-        flow.setCreateBy("admin"); // TODO: 从上下文获取
+        flow.setCreateBy(UserContext.getUserId("admin"));
         flow.setCreateTime(LocalDateTime.now());
 
         ruleFlowMapper.insert(flow);
@@ -106,7 +129,7 @@ public class RuleFlowService {
     public RuleFlow updateFlow(Long id, UpdateFlowDTO dto) {
         RuleFlow flow = ruleFlowMapper.selectById(id);
         if (flow == null) {
-            throw new RuntimeException("规则流不存在: id=" + id);
+            throw new BusinessException(ErrorCode.RULE_FLOW_NOT_FOUND, id);
         }
 
         // 保存历史版本
@@ -117,7 +140,7 @@ public class RuleFlowService {
         flow.setCategory(dto.getCategory());
         flow.setDescription(dto.getDescription());
         flow.setFlowDefinition(toFlowDefinitionJson(dto));
-        flow.setUpdateBy("admin");
+        flow.setUpdateBy(UserContext.getUserId("admin"));
         flow.setUpdateTime(LocalDateTime.now());
 
         ruleFlowMapper.updateById(flow);
@@ -132,7 +155,7 @@ public class RuleFlowService {
     public void deleteFlow(Long id) {
         RuleFlow flow = ruleFlowMapper.selectById(id);
         if (flow == null) {
-            throw new RuntimeException("规则流不存在: id=" + id);
+            throw new BusinessException(ErrorCode.RULE_FLOW_NOT_FOUND, id);
         }
 
         // 逻辑删除
@@ -150,7 +173,7 @@ public class RuleFlowService {
     public RuleFlow publishFlow(Long id) {
         RuleFlow flow = ruleFlowMapper.selectById(id);
         if (flow == null) {
-            throw new RuntimeException("规则流不存在: id=" + id);
+            throw new BusinessException(ErrorCode.RULE_FLOW_NOT_FOUND, id);
         }
 
         // 校验规则流定义
@@ -181,12 +204,12 @@ public class RuleFlowService {
         );
 
         if (history == null) {
-            throw new RuntimeException("历史版本不存在: flowId=" + id + ", version=" + targetVersion);
+            throw new BusinessException(ErrorCode.RULE_FLOW_VERSION_NOT_FOUND, id);
         }
 
         RuleFlow flow = ruleFlowMapper.selectById(id);
         if (flow == null) {
-            throw new RuntimeException("规则流不存在: id=" + id);
+            throw new BusinessException(ErrorCode.RULE_FLOW_NOT_FOUND, id);
         }
 
         // 保存当前版本到历史
@@ -227,12 +250,170 @@ public class RuleFlowService {
     }
 
     /**
+     * 对比两个版本的规则流差异
+     */
+    public FlowCompareVO compareVersions(Long flowId, Integer fromVersion, Integer toVersion) {
+        RuleFlowHistory fromHistory = ruleFlowHistoryMapper.selectOne(
+            new LambdaQueryWrapper<RuleFlowHistory>()
+                .eq(RuleFlowHistory::getFlowId, flowId)
+                .eq(RuleFlowHistory::getVersion, fromVersion)
+        );
+
+        RuleFlowHistory toHistory = ruleFlowHistoryMapper.selectOne(
+            new LambdaQueryWrapper<RuleFlowHistory>()
+                .eq(RuleFlowHistory::getFlowId, flowId)
+                .eq(RuleFlowHistory::getVersion, toVersion)
+        );
+
+        if (fromHistory == null) {
+            throw new BusinessException(ErrorCode.RULE_FLOW_VERSION_NOT_FOUND, flowId);
+        }
+        if (toHistory == null) {
+            throw new BusinessException(ErrorCode.RULE_FLOW_VERSION_NOT_FOUND, flowId);
+        }
+
+        FlowCompareVO result = new FlowCompareVO();
+        result.setFlowId(flowId);
+        result.setFromVersion(fromVersion);
+        result.setToVersion(toVersion);
+
+        try {
+            RuleFlowVO.FlowDefinitionDTO fromDef =
+                objectMapper.readValue(fromHistory.getFlowDefinition(), RuleFlowVO.FlowDefinitionDTO.class);
+            RuleFlowVO.FlowDefinitionDTO toDef =
+                objectMapper.readValue(toHistory.getFlowDefinition(), RuleFlowVO.FlowDefinitionDTO.class);
+
+            // 对比节点
+            List<FlowCompareVO.NodeDiff> nodeDiffs = compareNodes(fromDef, toDef);
+            List<FlowCompareVO.EdgeDiff> edgeDiffs = compareEdges(fromDef, toDef);
+
+            result.setNodeDiffs(nodeDiffs);
+            result.setEdgeDiffs(edgeDiffs);
+            result.setHasDiff(!nodeDiffs.isEmpty() || !edgeDiffs.isEmpty());
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("规则流定义解析失败: " + e.getMessage());
+        }
+
+        return result;
+    }
+
+    private List<FlowCompareVO.NodeDiff> compareNodes(RuleFlowVO.FlowDefinitionDTO from, RuleFlowVO.FlowDefinitionDTO to) {
+        List<FlowCompareVO.NodeDiff> diffs = new java.util.ArrayList<>();
+
+        // 构建节点映射
+        Map<String, RuleFlowVO.NodeDTO> fromNodeMap = from.getNodes().stream()
+            .collect(java.util.stream.Collectors.toMap(RuleFlowVO.NodeDTO::getNodeId, n -> n));
+        Map<String, RuleFlowVO.NodeDTO> toNodeMap = to.getNodes().stream()
+            .collect(java.util.stream.Collectors.toMap(RuleFlowVO.NodeDTO::getNodeId, n -> n));
+
+        // 检查删除和修改的节点
+        for (Map.Entry<String, RuleFlowVO.NodeDTO> entry : fromNodeMap.entrySet()) {
+            RuleFlowVO.NodeDTO fromNode = entry.getValue();
+            RuleFlowVO.NodeDTO toNode = toNodeMap.get(entry.getKey());
+
+            if (toNode == null) {
+                FlowCompareVO.NodeDiff diff = new FlowCompareVO.NodeDiff();
+                diff.setNodeId(fromNode.getNodeId());
+                diff.setNodeLabel(fromNode.getLabel());
+                diff.setChangeType("REMOVED");
+                diff.setFromContent(toJson(fromNode));
+                diffs.add(diff);
+            } else if (!toJson(fromNode).equals(toJson(toNode))) {
+                FlowCompareVO.NodeDiff diff = new FlowCompareVO.NodeDiff();
+                diff.setNodeId(fromNode.getNodeId());
+                diff.setNodeLabel(fromNode.getLabel());
+                diff.setChangeType("MODIFIED");
+                diff.setFromContent(toJson(fromNode));
+                diff.setToContent(toJson(toNode));
+                diffs.add(diff);
+            }
+        }
+
+        // 检查新增的节点
+        for (Map.Entry<String, RuleFlowVO.NodeDTO> entry : toNodeMap.entrySet()) {
+            if (!fromNodeMap.containsKey(entry.getKey())) {
+                FlowCompareVO.NodeDiff diff = new FlowCompareVO.NodeDiff();
+                diff.setNodeId(entry.getValue().getNodeId());
+                diff.setNodeLabel(entry.getValue().getLabel());
+                diff.setChangeType("ADDED");
+                diff.setToContent(toJson(entry.getValue()));
+                diffs.add(diff);
+            }
+        }
+
+        return diffs;
+    }
+
+    private List<FlowCompareVO.EdgeDiff> compareEdges(RuleFlowVO.FlowDefinitionDTO from, RuleFlowVO.FlowDefinitionDTO to) {
+        List<FlowCompareVO.EdgeDiff> diffs = new java.util.ArrayList<>();
+
+        // 构建边映射 (source_target 唯一标识)
+        Map<String, RuleFlowVO.EdgeDTO> fromEdgeMap = from.getEdges().stream()
+            .collect(java.util.stream.Collectors.toMap(
+                e -> e.getSource() + "_" + e.getTarget(), e -> e));
+        Map<String, RuleFlowVO.EdgeDTO> toEdgeMap = to.getEdges().stream()
+            .collect(java.util.stream.Collectors.toMap(
+                e -> e.getSource() + "_" + e.getTarget(), e -> e));
+
+        // 检查删除和修改的边
+        for (Map.Entry<String, RuleFlowVO.EdgeDTO> entry : fromEdgeMap.entrySet()) {
+            RuleFlowVO.EdgeDTO fromEdge = entry.getValue();
+            RuleFlowVO.EdgeDTO toEdge = toEdgeMap.get(entry.getKey());
+
+            if (toEdge == null) {
+                FlowCompareVO.EdgeDiff diff = new FlowCompareVO.EdgeDiff();
+                diff.setEdgeId(entry.getKey());
+                diff.setChangeType("REMOVED");
+                diff.setFromContent(toJson(fromEdge));
+                diffs.add(diff);
+            } else if (!equals(fromEdge, toEdge)) {
+                FlowCompareVO.EdgeDiff diff = new FlowCompareVO.EdgeDiff();
+                diff.setEdgeId(entry.getKey());
+                diff.setChangeType("MODIFIED");
+                diff.setFromContent(toJson(fromEdge));
+                diff.setToContent(toJson(toEdge));
+                diffs.add(diff);
+            }
+        }
+
+        // 检查新增的边
+        for (Map.Entry<String, RuleFlowVO.EdgeDTO> entry : toEdgeMap.entrySet()) {
+            if (!fromEdgeMap.containsKey(entry.getKey())) {
+                FlowCompareVO.EdgeDiff diff = new FlowCompareVO.EdgeDiff();
+                diff.setEdgeId(entry.getKey());
+                diff.setChangeType("ADDED");
+                diff.setToContent(toJson(entry.getValue()));
+                diffs.add(diff);
+            }
+        }
+
+        return diffs;
+    }
+
+    private boolean equals(RuleFlowVO.EdgeDTO a, RuleFlowVO.EdgeDTO b) {
+        if (a == null || b == null) return false;
+        boolean sourceEq = a.getSource() == null ? b.getSource() == null : a.getSource().equals(b.getSource());
+        boolean targetEq = a.getTarget() == null ? b.getTarget() == null : a.getTarget().equals(b.getTarget());
+        boolean labelEq = a.getLabel() == null ? b.getLabel() == null : a.getLabel().equals(b.getLabel());
+        return sourceEq && targetEq && labelEq;
+    }
+
+    private String toJson(Object obj) {
+        try {
+            return objectMapper.writeValueAsString(obj);
+        } catch (JsonProcessingException e) {
+            return obj.toString();
+        }
+    }
+
+    /**
      * 导出规则流JSON
      */
     public String exportFlowJson(Long id) {
         RuleFlow flow = ruleFlowMapper.selectById(id);
         if (flow == null) {
-            throw new RuntimeException("规则流不存在: id=" + id);
+            throw new BusinessException(ErrorCode.RULE_FLOW_NOT_FOUND, id);
         }
         return flow.getFlowDefinition();
     }
@@ -333,7 +514,7 @@ public class RuleFlowService {
         history.setVersion(flow.getVersion());
         history.setFlowDefinition(flow.getFlowDefinition());
         history.setChangeDesc(changeDesc);
-        history.setChangeBy("admin"); // TODO: 从上下文获取
+        history.setChangeBy(UserContext.getUserId("admin"));
         history.setChangeTime(LocalDateTime.now());
         ruleFlowHistoryMapper.insert(history);
     }
@@ -376,6 +557,15 @@ public class RuleFlowService {
     }
 
     private RuleFlowVO toVO(RuleFlow flow) {
+        return toVO(flow, true);
+    }
+
+    /**
+     * 转换为VO
+     * @param flow 规则流实体
+     * @param parseDefinition 是否解析flowDefinition（列表查询时可设为false提升性能）
+     */
+    private RuleFlowVO toVO(RuleFlow flow, boolean parseDefinition) {
         RuleFlowVO vo = new RuleFlowVO();
         vo.setId(flow.getId());
         vo.setFlowKey(flow.getFlowKey());
@@ -390,8 +580,8 @@ public class RuleFlowService {
         vo.setUpdateBy(flow.getUpdateBy());
         vo.setUpdateTime(flow.getUpdateTime());
 
-        // 解析flowDefinition
-        if (flow.getFlowDefinition() != null) {
+        // 仅在详情查询时解析flowDefinition
+        if (parseDefinition && flow.getFlowDefinition() != null) {
             try {
                 vo.setFlowDefinition(
                     objectMapper.readValue(flow.getFlowDefinition(), RuleFlowVO.FlowDefinitionDTO.class)

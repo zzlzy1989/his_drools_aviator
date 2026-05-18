@@ -9,6 +9,8 @@ import com.his.common.SkillContext;
 import com.his.common.SkillResult;
 import com.his.common.ResultLevel;
 import com.his.common.web.context.TenantContext;
+import com.his.common.web.exception.BusinessException;
+import com.his.common.web.result.ErrorCode;
 import com.his.settlement.dto.TestDataSetDTO;
 import com.his.settlement.entity.TestCase;
 import com.his.settlement.entity.TestDataSet;
@@ -109,7 +111,7 @@ public class SandboxService {
     public TestDataSetDTO update(Long id, TestDataSetDTO dto) {
         TestDataSet dataSet = dataSetMapper.selectById(id);
         if (dataSet == null || dataSet.getDeleted() == 1) {
-            throw new RuntimeException("数据集不存在");
+            throw new BusinessException(ErrorCode.SANDBOX_DATASET_NOT_FOUND, id);
         }
 
         dataSet.setDataSetName(dto.getDataSetName());
@@ -138,7 +140,7 @@ public class SandboxService {
     public void delete(Long id) {
         TestDataSet dataSet = dataSetMapper.selectById(id);
         if (dataSet == null) {
-            throw new RuntimeException("数据集不存在");
+            throw new BusinessException(ErrorCode.SANDBOX_DATASET_NOT_FOUND, id);
         }
         dataSet.setDeleted(1);
         dataSet.setUpdateTime(LocalDateTime.now());

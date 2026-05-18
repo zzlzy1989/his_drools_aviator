@@ -1,0 +1,56 @@
+# ============================================================
+# HIS 动态规则中台 - Nacos 共享配置
+# 版本: shared-common.yml
+# 说明: 所有微服务共享的基础配置
+# ============================================================
+
+spring:
+  # 通用数据源配置（会被各服务覆盖）
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # Redis 配置（可选）
+  redis:
+    timeout: 3000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1ms
+
+# JWT 通用配置
+his:
+  jwt:
+    enabled: true
+    secret: his-rule-engine-secret-key-must-be-at-least-256-bits-long
+    expiration: 86400000  # 24小时
+
+  # CORS 配置
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://localhost:8080
+      - http://localhost:8999
+      - http://127.0.0.1:3000
+      - http://127.0.0.1:8080
+      - http://127.0.0.1:8999
+      - http://192.168.1.105:8999
+    allowed-methods: GET,POST,PUT,DELETE,OPTIONS,PATCH
+    allowed-headers: Origin,Content-Type,Accept,X-Tenant-Id,Authorization
+    allow-credentials: true
+    max-age: 3600
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.his: INFO
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n'

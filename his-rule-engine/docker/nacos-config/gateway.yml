@@ -1,0 +1,30 @@
+# ============================================================
+# HIS 动态规则中台 - 网关服务 Nacos 配置
+# 版本: gateway.yml
+# 说明: 网关服务专用配置
+# ============================================================
+
+server:
+  port: 9000
+
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+# Sentinel 限流配置
+ sentinel:
+   eager: true
+
+# 监控端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always

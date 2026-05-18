@@ -47,6 +47,22 @@ public class GatewayRoutesConfig {
                         .filters(f -> f.stripPrefix(0))
                         .uri("lb://his-drg-service"))
 
+                // ===== V2 服务路由 =====
+                .route("monitor-service", r -> r
+                        .path("/api/v1/monitor/**")
+                        .filters(f -> f.stripPrefix(0))
+                        .uri("lb://his-monitor-service"))
+
+                .route("market-service", r -> r
+                        .path("/api/v1/market/**")
+                        .filters(f -> f.stripPrefix(0))
+                        .uri("lb://his-market-service"))
+
+                .route("settlement-sandbox", r -> r
+                        .path("/api/v1/sandbox/**")
+                        .filters(f -> f.stripPrefix(0))
+                        .uri("lb://his-settlement-service"))
+
                 .build();
     }
 }

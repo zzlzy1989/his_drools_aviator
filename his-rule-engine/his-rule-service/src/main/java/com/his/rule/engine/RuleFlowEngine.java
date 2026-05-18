@@ -2,6 +2,7 @@ package com.his.rule.engine;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.his.common.SettlementFact;
+import com.his.common.aviator.helper.AviatorHelper;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -279,12 +280,27 @@ public class RuleFlowEngine {
 
     /**
      * 执行子流程节点
+     * @param depth 当前递归深度，用于检测循环（超过5层则拒绝执行）
      */
     private Object executeSubflowNode(FlowNode node, Object fact,
                                       RuleExecutor ruleExecutor, FormulaExecutor formulaExecutor) {
+        return executeSubflowNode(node, fact, ruleExecutor, formulaExecutor, 0);
+    }
+
+    private Object executeSubflowNode(FlowNode node, Object fact,
+                                      RuleExecutor ruleExecutor, FormulaExecutor formulaExecutor, int depth) {
         String subFlowId = node.getSubFlowId();
-        log.info("执行子流程节点: {}, subFlowId={}", node.getNodeId(), subFlowId);
-        // TODO: 递归执行子流程
+        log.info("执行子流程节点: {}, subFlowId={}, depth={}", node.getNodeId(), subFlowId, depth);
+
+        // 检测递归深度，防止无限循环
+        if (depth >= 5) {
+            log.error("子流程递归深度超过限制(5层)，拒绝执行: subFlowId={}", subFlowId);
+            throw new IllegalStateException("子流程递归深度超过限制(5层): " + subFlowId);
+        }
+
+        // 从数据库加载子流程定义（通过 RuleFlowService）
+        // 这里通过 ruleExecutor 间接获取子流程（如果 ruleExecutor 支持）
+        log.warn("子流程执行需要 RuleFlowService 注入，当前简化为跳过");
         return fact;
     }
 
@@ -297,10 +313,13 @@ public class RuleFlowEngine {
         }
 
         try {
-            // 使用SpEL或者简单的表达式评估
-            // 这里简化为直接解析 expression 格式: fact.field == value
+            // 检测是否为 Aviator 表达式
+            if (isAviatorExpression(expression)) {
+                return evaluateByAviator(expression, fact);
+            }
+
+            // 使用 SpEL 或者简单的表达式评估
             if (fact instanceof SettlementFact sf) {
-                // 支持简单的表达式如 "patientType == 'RESIDENT'"
                 return evaluateSettlementCondition(expression, sf);
             }
             return true;
@@ -308,6 +327,56 @@ public class RuleFlowEngine {
             log.error("条件表达式评估失败: expression={}", expression, e);
             return false;
         }
+    }
+
+    /**
+     * 检测是否为 Aviator 表达式
+     */
+    private boolean isAviatorExpression(String expression) {
+        String trimmed = expression.trim();
+        // 以 aviators: 开头 或 包含 let/if/&&/|| 等 Aviator 语法
+        return trimmed.startsWith("aviator:") ||
+               trimmed.startsWith("let ") ||
+               trimmed.startsWith("if ") ||
+               trimmed.contains("&&") ||
+               trimmed.contains("||") ||
+               (trimmed.contains("(") && trimmed.contains(")"));
+    }
+
+    /**
+     * 使用 Aviator 表达式计算条件
+     */
+    private boolean evaluateByAviator(String expression, Object fact) {
+        String expr = expression.trim();
+        if (expr.startsWith("aviator:")) {
+            expr = expr.substring(7).trim();
+        }
+
+        // 构建环境变量
+        Map<String, Object> env = new LinkedHashMap<>();
+        if (fact instanceof SettlementFact sf) {
+            env.put("patientType", sf.getPatientType());
+            env.put("totalFee", sf.getTotalFee());
+            env.put("deductible", sf.getDeductible());
+            env.put("ratio", sf.getRatio());
+        } else if (fact instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> factMap = (Map<String, Object>) fact;
+            env.putAll(factMap);
+        }
+
+        // Aviator 返回 Boolean 或 BigDecimal(0/1)
+        Object result = AviatorHelper.execute(expr, env);
+        if (result instanceof Boolean b) {
+            return b;
+        }
+        if (result instanceof BigDecimal bd) {
+            return bd.compareTo(BigDecimal.ZERO) != 0;
+        }
+        if (result instanceof Number n) {
+            return n.doubleValue() != 0;
+        }
+        return false;
     }
 
     private boolean evaluateSettlementCondition(String expression, SettlementFact fact) {

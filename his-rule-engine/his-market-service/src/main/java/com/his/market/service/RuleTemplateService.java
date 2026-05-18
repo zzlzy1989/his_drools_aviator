@@ -12,11 +12,14 @@ import com.his.market.entity.TemplateRating;
 import com.his.market.mapper.RuleTemplateMapper;
 import com.his.market.mapper.TemplateInstallMapper;
 import com.his.market.mapper.TemplateRatingMapper;
+import com.his.market.security.TemplateSecurityScanner;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,6 +38,7 @@ public class RuleTemplateService {
     private final RuleTemplateMapper templateMapper;
     private final TemplateInstallMapper installMapper;
     private final TemplateRatingMapper ratingMapper;
+    private final TemplateSecurityScanner securityScanner;
     private final ObjectMapper objectMapper;
 
     /**
@@ -77,6 +81,14 @@ public class RuleTemplateService {
     @Transactional
     public RuleTemplateDTO publish(RuleTemplateDTO dto) {
         String tenantId = TenantContext.getTenantId("T001");
+
+        // 安全扫描
+        String drlContent = extractDrlContent(dto);
+        String aviatorContent = extractAviatorContent(dto);
+        TemplateSecurityScanner.SecurityScanResult scanResult = securityScanner.scan(drlContent, aviatorContent);
+        if (!scanResult.isPass()) {
+            throw new SecurityException("模板内容安全扫描未通过: " + String.join(", ", scanResult.getMessages()));
+        }
 
         RuleTemplate template = new RuleTemplate();
         template.setTemplateKey(dto.getTemplateKey() != null ? dto.getTemplateKey() : "tpl." + System.currentTimeMillis());
@@ -390,6 +402,51 @@ public class RuleTemplateService {
         } catch (Exception e) {
             log.error("序列化模板内容失败", e);
             return "{}";
+        }
+    }
+
+    /**
+     * 提取 DRL 内容用于安全扫描
+     */
+    private String extractDrlContent(RuleTemplateDTO dto) {
+        StringBuilder sb = new StringBuilder();
+        if (dto.getRules() != null) {
+            for (Object rule : dto.getRules()) {
+                if (rule instanceof Map r) {
+                    Object content = r.get("ruleContent");
+                    if (content != null) {
+                        sb.append(content).append("\n");
+                    }
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 提取 Aviator 公式内容用于安全扫描
+     */
+    private String extractAviatorContent(RuleTemplateDTO dto) {
+        StringBuilder sb = new StringBuilder();
+        if (dto.getFormulas() != null) {
+            for (Object formula : dto.getFormulas()) {
+                if (formula instanceof Map f) {
+                    Object content = f.get("formulaText");
+                    if (content != null) {
+                        sb.append(content).append("\n");
+                    }
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 安全异常（用于模板内容扫描未通过）
+     */
+    public static class SecurityException extends RuntimeException {
+        public SecurityException(String message) {
+            super(message);
         }
     }
 }

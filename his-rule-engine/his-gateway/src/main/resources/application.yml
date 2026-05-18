@@ -86,7 +86,8 @@ logging:
 
 his:
   jwt:
-    enabled: false  # 开发阶段关闭JWT认证，前端无登录页面
+    enabled: true  # JWT认证已开启，请通过 /api/v1/auth/login 获取Token
+    secret: his-rule-engine-secret-key-must-be-at-least-256-bits-long
   cors:
     allowed-origins:
       - http://localhost:3000

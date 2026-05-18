@@ -1,5 +1,7 @@
 package com.his.quality.controller;
 
+import com.his.common.web.exception.BusinessException;
+import com.his.common.web.result.ErrorCode;
 import com.his.common.web.result.PageResult;
 import com.his.common.web.result.Result;
 import com.his.common.web.context.TenantContext;
@@ -82,6 +84,10 @@ public class QualityController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除质控规则")
     public Result<Void> delete(@PathVariable Long id) {
+        QualityDefinition existing = qualityDefinitionMapper.selectById(id);
+        if (existing == null) {
+            throw new BusinessException(ErrorCode.QUALITY_RULE_NOT_FOUND, id);
+        }
         qualityDefinitionMapper.deleteById(id);
         return Result.success();
     }
