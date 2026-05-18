@@ -1,6 +1,7 @@
 package com.his.settlement.service;
 
 import com.googlecode.aviator.Expression;
+import com.his.common.aviator.cache.AviatorExpressionCache;
 import com.his.common.aviator.helper.AviatorHelper;
 import com.his.settlement.entity.FormulaEntity;
 import com.his.settlement.mapper.FormulaEntityMapper;
@@ -10,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 公式加载器服务
@@ -22,21 +22,16 @@ import java.util.concurrent.ConcurrentHashMap;
 public class FormulaLoaderService {
 
     private final FormulaEntityMapper formulaMapper;
+    private final AviatorExpressionCache aviatorCache;
 
     /**
-     * 公式缓存：key = tenantId + formulaKey
-     */
-    private final ConcurrentHashMap<String, FormulaCache> formulaCache = new ConcurrentHashMap<>();
-
-    /**
-     * 加载并执行报销公式
+     * 加载并执行报销公式（使用编译缓存优化性能）
      */
     public BigDecimal executeReimburseFormula(String tenantId, String patientType, BigDecimal totalFee,
                                               BigDecimal deductible, BigDecimal ratio) {
         String formulaKey = "formula.reimburse." + patientType.toLowerCase();
-        String cacheKey = tenantId + ":" + formulaKey;
 
-        String formulaText = getFormulaText(cacheKey, formulaKey, tenantId);
+        String formulaText = getFormulaText(formulaKey, tenantId);
 
         if (formulaText == null) {
             log.warn("公式未找到，使用硬编码计算: key={}", formulaKey);
@@ -56,7 +51,9 @@ public class FormulaLoaderService {
                 "ratio", ratio
             );
 
-            Object result = AviatorHelper.execute(formulaText, env);
+            // 使用缓存的编译表达式，避免重复编译
+            Expression compiled = aviatorCache.getCompiledExpression(formulaText);
+            Object result = compiled.execute(env);
 
             if (result instanceof BigDecimal bd) {
                 return bd.setScale(2, java.math.RoundingMode.HALF_UP);
@@ -69,9 +66,12 @@ public class FormulaLoaderService {
     }
 
     /**
-     * 获取公式文本（带缓存）
+     * 获取公式文本（使用内存缓存，5分钟过期）
      */
-    private String getFormulaText(String cacheKey, String formulaKey, String tenantId) {
+    private final Map<String, FormulaCache> formulaCache = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private String getFormulaText(String formulaKey, String tenantId) {
+        String cacheKey = tenantId + ":" + formulaKey;
         FormulaCache cache = formulaCache.get(cacheKey);
 
         if (cache != null && !cache.isExpired()) {
