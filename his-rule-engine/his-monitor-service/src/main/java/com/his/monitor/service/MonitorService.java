@@ -172,7 +172,8 @@ public class MonitorService {
                 vo.setFormulaHitRate(BigDecimal.ZERO);
             }
         } else {
-            vo.setFormulaHitRate(BigDecimal.valueOf(99.2).setScale(2, RoundingMode.HALF_UP)); // 默认值
+            // 无数据时返回 null，前端显示"暂无数据"而非硬编码假数据
+            vo.setFormulaHitRate(null);
         }
         vo.setLastUpdateTime(LocalDateTime.now());
 

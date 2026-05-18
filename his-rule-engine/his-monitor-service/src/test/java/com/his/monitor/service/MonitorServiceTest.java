@@ -1,5 +1,7 @@
 package com.his.monitor.service;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,9 +28,12 @@ class MonitorServiceTest {
     @Mock
     private AlertRuleService alertRuleService;
 
+    private MeterRegistry meterRegistry;
+
     @BeforeEach
     void setUp() {
-        monitorService = new MonitorService(eventPublisher, alertRuleService);
+        meterRegistry = new SimpleMeterRegistry();
+        monitorService = new MonitorService(eventPublisher, alertRuleService, meterRegistry);
     }
 
     @Test

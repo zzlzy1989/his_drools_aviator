@@ -271,4 +271,4 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 ---
 
-最后更新: 2026-04-26 | 版本: v1.0 (HIS Drools+Aviator 规则引擎)
+最后更新: 2026-05-19 | 版本: v1.0 (HIS Drools+Aviator 规则引擎)

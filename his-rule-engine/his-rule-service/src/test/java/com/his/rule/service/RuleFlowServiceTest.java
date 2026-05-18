@@ -35,7 +35,8 @@ class RuleFlowServiceTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        ruleFlowEngine = new RuleFlowEngine(objectMapper);
+        // RuleFlowEngine now requires RuleFlowService (via @Lazy), use null for testing
+        ruleFlowEngine = new RuleFlowEngine(objectMapper, null);
     }
 
     @Test

@@ -3,9 +3,10 @@ package com.his.rule.engine;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.his.common.SettlementFact;
 import com.his.common.aviator.helper.AviatorHelper;
+import com.his.rule.service.RuleFlowService;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -17,11 +18,16 @@ import java.util.stream.Collectors;
  * 支持拓扑排序执行、条件分支、规则/公式调用
  */
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class RuleFlowEngine {
 
     private final ObjectMapper objectMapper;
+    private final RuleFlowService ruleFlowService;
+
+    public RuleFlowEngine(ObjectMapper objectMapper, @Lazy RuleFlowService ruleFlowService) {
+        this.objectMapper = objectMapper;
+        this.ruleFlowService = ruleFlowService;
+    }
 
     /**
      * 执行规则流
@@ -298,10 +304,104 @@ public class RuleFlowEngine {
             throw new IllegalStateException("子流程递归深度超过限制(5层): " + subFlowId);
         }
 
-        // 从数据库加载子流程定义（通过 RuleFlowService）
-        // 这里通过 ruleExecutor 间接获取子流程（如果 ruleExecutor 支持）
-        log.warn("子流程执行需要 RuleFlowService 注入，当前简化为跳过");
-        return fact;
+        if (subFlowId == null || subFlowId.isBlank()) {
+            log.warn("子流程ID为空，跳过子流程执行");
+            return fact;
+        }
+
+        try {
+            // 通过 RuleFlowService 加载子流程定义
+            com.his.rule.dto.RuleFlowVO subFlowVO = ruleFlowService.getById(Long.parseLong(subFlowId));
+            if (subFlowVO == null) {
+                log.error("子流程不存在或已删除: subFlowId={}", subFlowId);
+                throw new IllegalStateException("子流程不存在: " + subFlowId);
+            }
+
+            if (!"active".equals(subFlowVO.getStatus())) {
+                log.warn("子流程未发布，状态={}, 跳过执行: subFlowId={}", subFlowVO.getStatus(), subFlowId);
+                return fact;
+            }
+
+            // 解析子流程定义
+            if (subFlowVO.getFlowDefinition() == null) {
+                log.error("子流程定义为空: subFlowId={}", subFlowId);
+                return fact;
+            }
+
+            String subFlowJson = objectMapper.writeValueAsString(subFlowVO.getFlowDefinition());
+
+            // 构建子流程节点映射
+            List<FlowNode> subNodes = subFlowVO.getFlowDefinition().getNodes();
+            Map<String, FlowNode> subNodeMap = subNodes.stream()
+                .collect(Collectors.toMap(FlowNode::getNodeId, n -> n));
+
+            // 查找子流程开始节点
+            FlowNode subStartNode = subNodes.stream()
+                .filter(n -> "start".equals(n.getType()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("子流程缺少开始节点: " + subFlowId));
+
+            log.info("开始执行子流程: subFlowId={}, startNode={}, depth={}", subFlowId, subStartNode.getNodeId(), depth);
+
+            // 递归执行子流程（depth + 1）
+            Object subResult = executeSubflowRecursive(
+                subStartNode.getNodeId(), subNodeMap,
+                subFlowVO.getFlowDefinition().getEdges(),
+                fact, ruleExecutor, formulaExecutor, depth + 1
+            );
+
+            log.info("子流程执行完成: subFlowId={}, depth={}", subFlowId, depth);
+            return subResult;
+
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("子流程执行异常: subFlowId={}, error={}", subFlowId, e.getMessage(), e);
+            throw new IllegalStateException("子流程执行失败: " + subFlowId + ", " + e.getMessage());
+        }
+    }
+
+    /**
+     * 递归执行子流程（内部使用，与主execute方法解耦）
+     */
+    private Object executeSubflowRecursive(String nodeId, Map<String, FlowNode> nodeMap,
+                                           List<FlowEdge> edges, Object fact,
+                                           RuleExecutor ruleExecutor, FormulaExecutor formulaExecutor, int depth) {
+        FlowNode node = nodeMap.get(nodeId);
+        if (node == null) {
+            throw new IllegalArgumentException("子流程节点不存在: " + nodeId);
+        }
+
+        log.info("执行子流程节点: {}, type={}, depth={}", nodeId, node.getType(), depth);
+
+        Object nodeOutput = switch (node.getType()) {
+            case "start" -> fact;
+            case "end" -> fact;
+            case "condition" -> executeConditionNode(node, nodeMap, edges, fact, ruleExecutor, formulaExecutor, null);
+            case "action" -> executeActionNode(node, fact, ruleExecutor);
+            case "formula" -> {
+                FormulaResult fr = executeFormulaNode(node, fact, formulaExecutor);
+                yield fr.updatedFact();
+            }
+            case "subflow" -> {
+                // 嵌套子流程，递归调用（depth已增加）
+                yield executeSubflowNode(node, fact, ruleExecutor, formulaExecutor, depth);
+            }
+            default -> {
+                log.warn("不支持的节点类型: {}", node.getType());
+                yield fact;
+            }
+        };
+
+        // 查找下一个节点
+        if (!"end".equals(node.getType())) {
+            String nextNodeId = findNextNode(nodeId, edges);
+            if (nextNodeId != null) {
+                return executeSubflowRecursive(nextNodeId, nodeMap, edges, nodeOutput, ruleExecutor, formulaExecutor, depth);
+            }
+        }
+
+        return nodeOutput;
     }
 
     /**
