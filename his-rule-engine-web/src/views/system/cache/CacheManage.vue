@@ -15,48 +15,71 @@
       </div>
 
       <div v-else-if="cacheStats" class="stats-container">
-        <el-row :gutter="20">
-          <el-col :span="6">
-            <div class="stat-card">
-              <div class="stat-label">缓存状态</div>
-              <div class="stat-value">
-                <el-tag :type="cacheStats.enabled ? 'success' : 'danger'">
-                  {{ cacheStats.enabled ? '启用' : '禁用' }}
-                </el-tag>
+        <!-- Aviator 缓存 -->
+        <div class="cache-section">
+          <h4>Aviator 表达式缓存</h4>
+          <el-row :gutter="20" v-if="cacheStats.aviatorCache">
+            <el-col :span="6">
+              <div class="stat-card">
+                <div class="stat-label">缓存条目数</div>
+                <div class="stat-value">{{ cacheStats.aviatorCache.size || 0 }}</div>
               </div>
-            </div>
-          </el-col>
-          <el-col :span="6">
-            <div class="stat-card">
-              <div class="stat-label">缓存条目数</div>
-              <div class="stat-value">{{ cacheStats.size || 0 }}</div>
-            </div>
-          </el-col>
-          <el-col :span="6">
-            <div class="stat-card">
-              <div class="stat-label">命中率</div>
-              <div class="stat-value">
-                <span :class="hitRateClass">{{ hitRate }}%</span>
+            </el-col>
+            <el-col :span="9">
+              <div class="stat-card">
+                <div class="stat-label">命中率</div>
+                <div class="stat-value">
+                  <span :class="getHitRateClass('aviator')">{{ getHitRate('aviator') }}%</span>
+                </div>
               </div>
-            </div>
-          </el-col>
-          <el-col :span="6">
-            <div class="stat-card">
-              <div class="stat-label">淘汰次数</div>
-              <div class="stat-value">{{ evictionCount || 0 }}</div>
-            </div>
-          </el-col>
-        </el-row>
+            </el-col>
+            <el-col :span="6">
+              <div class="stat-card">
+                <div class="stat-label">淘汰次数</div>
+                <div class="stat-value">{{ getEvictionCount('aviator') || 0 }}</div>
+              </div>
+            </el-col>
+          </el-row>
+          <el-descriptions v-if="cacheStats.aviatorCache" :column="2" border class="mt-16">
+            <el-descriptions-item label="命中次数">{{ getHitCount('aviator') }}</el-descriptions-item>
+            <el-descriptions-item label="未命中次数">{{ getMissCount('aviator') }}</el-descriptions-item>
+            <el-descriptions-item label="命中率">{{ getHitRate('aviator') }}%</el-descriptions-item>
+            <el-descriptions-item label="淘汰条数">{{ getEvictionCount('aviator') }}</el-descriptions-item>
+          </el-descriptions>
+        </div>
 
         <el-divider />
 
-        <div class="stats-detail">
-          <h4>详细统计</h4>
-          <el-descriptions :column="2" border>
-            <el-descriptions-item label="命中次数">{{ hitCount }}</el-descriptions-item>
-            <el-descriptions-item label="未命中次数">{{ missCount }}</el-descriptions-item>
-            <el-descriptions-item label="缓存命中率">{{ hitRate }}%</el-descriptions-item>
-            <el-descriptions-item label="淘汰条数">{{ evictionCount }}</el-descriptions-item>
+        <!-- 规则定义缓存 -->
+        <div class="cache-section" v-if="cacheStats.ruleDefinitionCache">
+          <h4>规则定义缓存</h4>
+          <el-row :gutter="20">
+            <el-col :span="6">
+              <div class="stat-card">
+                <div class="stat-label">缓存条目数</div>
+                <div class="stat-value">{{ cacheStats.ruleDefinitionCache.size || 0 }}</div>
+              </div>
+            </el-col>
+            <el-col :span="9">
+              <div class="stat-card">
+                <div class="stat-label">命中率</div>
+                <div class="stat-value">
+                  <span :class="getHitRateClass('rule')">{{ getHitRate('rule') }}%</span>
+                </div>
+              </div>
+            </el-col>
+            <el-col :span="6">
+              <div class="stat-card">
+                <div class="stat-label">淘汰次数</div>
+                <div class="stat-value">{{ getEvictionCount('rule') || 0 }}</div>
+              </div>
+            </el-col>
+          </el-row>
+          <el-descriptions :column="2" border class="mt-16">
+            <el-descriptions-item label="命中次数">{{ getHitCount('rule') }}</el-descriptions-item>
+            <el-descriptions-item label="未命中次数">{{ getMissCount('rule') }}</el-descriptions-item>
+            <el-descriptions-item label="命中率">{{ getHitRate('rule') }}%</el-descriptions-item>
+            <el-descriptions-item label="淘汰条数">{{ getEvictionCount('rule') }}</el-descriptions-item>
           </el-descriptions>
         </div>
 
@@ -66,8 +89,8 @@
             <el-button type="primary" @click="refreshAll" :loading="refreshing">
               刷新所有缓存
             </el-button>
-            <el-button type="warning" @click="loadStats">
-              刷新统计
+            <el-button type="warning" @click="invalidateAviator" :loading="refreshingAviator">
+              刷新 Aviator 缓存
             </el-button>
           </el-space>
         </div>
@@ -79,13 +102,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
-import { getCacheStats, refreshCache } from '@/api/cache'
+import { getCacheStats, refreshCache, invalidateCache } from '@/api/cache'
 
 const loading = ref(false)
 const refreshing = ref(false)
+const refreshingAviator = ref(false)
 const cacheStats = ref<any>(null)
 
 interface CacheStatDetail {
@@ -95,10 +119,14 @@ interface CacheStatDetail {
   evictionCount: number
 }
 
-const parsedStats = computed<CacheStatDetail | null>(() => {
-  if (!cacheStats.value?.stats) return null
-  const parts = cacheStats.value.stats.split(', ')
-  const result: any = {}
+function parseStats(statsStr: string): CacheStatDetail {
+  const parts = statsStr.split(', ')
+  const result: CacheStatDetail = {
+    hitCount: 0,
+    missCount: 0,
+    hitRate: 0,
+    evictionCount: 0
+  }
   parts.forEach((p: string) => {
     const [k, v] = p.split('=')
     if (k === 'hitRate') {
@@ -107,20 +135,45 @@ const parsedStats = computed<CacheStatDetail | null>(() => {
       result[k] = parseInt(v, 10)
     }
   })
-  return result as CacheStatDetail
-})
+  return result
+}
 
-const hitCount = computed(() => parsedStats.value?.hitCount ?? 0)
-const missCount = computed(() => parsedStats.value?.missCount ?? 0)
-const hitRate = computed(() => parsedStats.value?.hitRate?.toFixed(2) ?? '0.00')
-const evictionCount = computed(() => parsedStats.value?.evictionCount ?? 0)
+function getAviatorStats(): CacheStatDetail | null {
+  if (!cacheStats.value?.aviatorCache?.stats) return null
+  return parseStats(cacheStats.value.aviatorCache.stats)
+}
 
-const hitRateClass = computed(() => {
-  const rate = parsedStats.value?.hitRate ?? 0
+function getRuleStats(): CacheStatDetail | null {
+  if (!cacheStats.value?.ruleDefinitionCache?.stats) return null
+  return parseStats(cacheStats.value.ruleDefinitionCache.stats)
+}
+
+function getHitCount(type: 'aviator' | 'rule'): number {
+  const stats = type === 'aviator' ? getAviatorStats() : getRuleStats()
+  return stats?.hitCount ?? 0
+}
+
+function getMissCount(type: 'aviator' | 'rule'): number {
+  const stats = type === 'aviator' ? getAviatorStats() : getRuleStats()
+  return stats?.missCount ?? 0
+}
+
+function getHitRate(type: 'aviator' | 'rule'): string {
+  const stats = type === 'aviator' ? getAviatorStats() : getRuleStats()
+  return (stats?.hitRate ?? 0).toFixed(2)
+}
+
+function getEvictionCount(type: 'aviator' | 'rule'): number {
+  const stats = type === 'aviator' ? getAviatorStats() : getRuleStats()
+  return stats?.evictionCount ?? 0
+}
+
+function getHitRateClass(type: 'aviator' | 'rule'): string {
+  const rate = parseFloat(getHitRate(type))
   if (rate >= 90) return 'rate-high'
   if (rate >= 70) return 'rate-medium'
   return 'rate-low'
-})
+}
 
 async function loadStats() {
   loading.value = true
@@ -155,6 +208,23 @@ async function refreshAll() {
   }
 }
 
+async function invalidateAviator() {
+  refreshingAviator.value = true
+  try {
+    const res = await invalidateCache('aviator')
+    if (res.code === '0') {
+      ElMessage.success('Aviator缓存已刷新')
+      await loadStats()
+    } else {
+      ElMessage.error(res.message || '刷新缓存失败')
+    }
+  } catch (e: any) {
+    ElMessage.error('刷新缓存失败: ' + (e.message || ''))
+  } finally {
+    refreshingAviator.value = false
+  }
+}
+
 onMounted(() => {
   loadStats()
 })
@@ -175,6 +245,17 @@ onMounted(() => {
   }
 
   .stats-container {
+    .cache-section {
+      h4 {
+        margin-bottom: 12px;
+        color: #333;
+      }
+
+      .mt-16 {
+        margin-top: 16px;
+      }
+    }
+
     .stat-card {
       background: #f5f7fa;
       border-radius: 8px;
@@ -203,15 +284,6 @@ onMounted(() => {
         .rate-low {
           color: #f56c6c;
         }
-      }
-    }
-
-    .stats-detail {
-      margin-top: 20px;
-
-      h4 {
-        margin-bottom: 12px;
-        color: #333;
       }
     }
 

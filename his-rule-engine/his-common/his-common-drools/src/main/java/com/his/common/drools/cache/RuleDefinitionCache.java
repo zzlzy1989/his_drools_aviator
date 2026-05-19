@@ -73,7 +73,16 @@ public class RuleDefinitionCache {
      */
     public String getStats() {
         var stats = cache.stats();
-        return String.format("hitCount=%d, missCount=%d, hitRate=%.2f%%",
-                stats.hitCount(), stats.missCount(), stats.hitRate() * 100);
+        return String.format("hitCount=%d, missCount=%d, hitRate=%.2f%%, evictionCount=%d",
+                stats.hitCount(), stats.missCount(), stats.hitRate() * 100, stats.evictionCount());
+    }
+
+    /**
+     * 获取当前缓存大小
+     *
+     * @return 缓存条目数
+     */
+    public long getSize() {
+        return cache.estimatedSize();
     }
 }

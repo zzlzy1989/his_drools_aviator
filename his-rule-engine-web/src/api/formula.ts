@@ -114,3 +114,22 @@ export const validateFormula = (id: number): AxiosPromise<{ valid: boolean; erro
     method: 'GET',
   })
 }
+
+// ===== 缓存管理 =====
+export const cacheApi = {
+  getStats(): AxiosPromise<any> {
+    return request.get('/api/v1/cache/stats')
+  },
+
+  getKeys(cacheName: string): AxiosPromise<any> {
+    return request.get('/api/v1/cache/keys', { params: { cacheName } })
+  },
+
+  invalidate(cacheName: string, key?: string): AxiosPromise<any> {
+    return request.post('/api/v1/cache/invalidate', null, { params: { cacheName, key } })
+  },
+
+  refreshAll(): AxiosPromise<any> {
+    return request.post('/api/v1/cache/refresh')
+  }
+}

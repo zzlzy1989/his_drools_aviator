@@ -1,0 +1,1288 @@
+{
+  "apipost": {
+    "info": {
+      "name": "HIS Drools+Aviator 规则引擎 - API接口测试 (ApiPost版)",
+      "description": "HIS动态规则中台完整接口测试集合 - 适配ApiPost平台\n\n测试覆盖:\n- 认证模块 (Auth)\n- 规则组管理 (Rule Groups)\n- 规则定义管理 (Rule Definitions)\n- 规则流管理 (Rule Flows)\n- 公式管理 (Formulas)\n- 结算管理 (Settlements)\n- 沙箱测试 (Sandbox)\n- 合理用药 (Drugs)\n- 质控指标 (Quality)\n- DRG分组 (DRG)\n- 系统监控 (Monitor)\n- 规则模板市场 (Market)\n- 审计日志 (Audit Logs)",
+      "version": "1.0.0"
+    },
+    "environments": {
+      "HIS测试环境": {
+        "gateway_url": "http://localhost:9000",
+        "rule_service_url": "http://localhost:9001",
+        "settlement_service_url": "http://localhost:9002",
+        "drug_service_url": "http://localhost:9003",
+        "quality_service_url": "http://localhost:9004",
+        "drg_service_url": "http://localhost:9005",
+        "auth_token": "",
+        "tenant_id": "tenant_demo_001",
+        "user_id": "admin",
+        "created_rule_id": "",
+        "created_rule_group_id": "",
+        "created_formula_id": "",
+        "created_settlement_no": "",
+        "created_flow_id": ""
+      }
+    }
+  },
+  "folders": [
+    {
+      "name": "01. 认证模块 (Auth)",
+      "description": "用户登录、Token管理、用户信息获取",
+      "items": [
+        {
+          "name": "TC-AUTH-001: 用户登录",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/auth/login",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"username": "admin", "password": "admin123", "tenantId": "{{tenant_id}}"}
+          },
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "code字段存在", "assert": "response.json.code !== undefined"},
+            {"name": "登录成功返回token", "assert": "response.json.code === '0' && response.json.data.token !== undefined"}
+          ]
+        },
+        {
+          "name": "TC-AUTH-002: 错误密码登录",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/auth/login",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"username": "admin", "password": "wrong_password", "tenantId": "{{tenant_id}}"}
+          },
+          "tests": [
+            {"name": "登录失败", "assert": "response.json.code !== '0'"}
+          ]
+        },
+        {
+          "name": "TC-AUTH-003: 获取当前用户信息",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/auth/me",
+          "headers": {
+            "Authorization": "Bearer {{auth_token}}",
+            "X-User-Id": "{{user_id}}",
+            "X-Tenant-Id": "{{tenant_id}}"
+          },
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "获取用户信息成功", "assert": "response.json.code === '0'"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02. 规则组管理 (Rule Groups)",
+      "description": "规则组CRUD、启用/禁用",
+      "items": [
+        {
+          "name": "TC-RG-001: 获取规则组分页列表",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/rule-groups/page?page=1&pageSize=10",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "返回分页数据", "assert": "response.json.code === '0' && response.json.data.list !== undefined"}
+          ]
+        },
+        {
+          "name": "TC-RG-002: 获取所有启用规则组",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/rule-groups",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "返回数组", "assert": "response.json.code === '0' && Array.isArray(response.json.data)"}
+          ]
+        },
+        {
+          "name": "TC-RG-003: 创建规则组",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/rule-groups",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "groupCode": "TEST_GROUP_{{$timestamp}}",
+              "groupName": "测试规则组_{{$timestamp}}",
+              "description": "接口自动化测试创建",
+              "priority": 10
+            }
+          },
+          "tests": [
+            {"name": "创建成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-RG-004: 创建规则组-缺少必填字段",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/rule-groups",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"description": "缺少groupCode和groupName"}
+          },
+          "tests": [
+            {"name": "参数校验失败", "assert": "response.json.code !== '0'"}
+          ]
+        },
+        {
+          "name": "TC-RG-005: 获取规则组详情",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/rule-groups/1",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-RG-006: 获取不存在的规则组",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/rule-groups/999999",
+          "tests": [
+            {"name": "返回错误", "assert": "response.json.code !== '0'"}
+          ]
+        },
+        {
+          "name": "TC-RG-007: 更新规则组",
+          "method": "PUT",
+          "url": "{{gateway_url}}/api/v1/rule-groups/1",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"groupName": "更新后的规则组名称", "description": "更新描述", "priority": 20}
+          },
+          "tests": [
+            {"name": "更新成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-RG-008: 启用/禁用规则组",
+          "method": "PUT",
+          "url": "{{gateway_url}}/api/v1/rule-groups/1/enabled",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"isEnabled": false}
+          },
+          "tests": [
+            {"name": "状态变更成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-RG-009: 删除规则组",
+          "method": "DELETE",
+          "url": "{{gateway_url}}/api/v1/rule-groups/1",
+          "tests": [
+            {"name": "删除成功", "assert": "response.json.code === '0'"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03. 规则定义管理 (Rule Definitions)",
+      "description": "规则CRUD、校验、发布",
+      "items": [
+        {
+          "name": "TC-RD-001: 获取规则分页列表",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/rules?page=1&pageSize=10",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "返回分页数据", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-RD-002: 按条件筛选规则",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/rules?page=1&pageSize=10&category=REIMBURSEMENT&status=1",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-RD-003: 创建规则",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/rules",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "ruleKey": "rule.test.insurance_limit_{{$timestamp}}",
+              "ruleName": "医保限额检查规则",
+              "ruleText": "package com.his.rules.test;\nimport com.his.fact.SettlementFact;\nrule \"1. 限额检查\"\n    salience 50\n    when\n        $f: SettlementFact(totalFee > 10000)\n    then\n        log.warn(\"超过限额: \" + $f.getTotalFee());\nend",
+              "category": "REIMBURSEMENT",
+              "ruleGroupId": 1,
+              "description": "接口测试创建的规则",
+              "salience": 50
+            }
+          },
+          "tests": [
+            {"name": "创建成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-RD-004: 创建规则-ruleKey格式错误",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/rules",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "ruleKey": "invalid_rule_key",
+              "ruleName": "格式错误的规则",
+              "ruleText": "package com.his.rules.test;",
+              "category": "REIMBURSEMENT"
+            }
+          },
+          "tests": [
+            {"name": "格式校验失败", "assert": "response.json.code !== '0'"}
+          ]
+        },
+        {
+          "name": "TC-RD-005: 创建规则-DRL内容为空",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/rules",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "ruleKey": "rule.test.empty_{{$timestamp}}",
+              "ruleName": "空DRL内容规则",
+              "ruleText": "",
+              "category": "REIMBURSEMENT"
+            }
+          },
+          "tests": [
+            {"name": "必填校验失败", "assert": "response.json.code !== '0'"}
+          ]
+        },
+        {
+          "name": "TC-RD-006: 获取规则详情",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/rules/1",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-RD-007: 更新规则",
+          "method": "PUT",
+          "url": "{{gateway_url}}/api/v1/rules/1",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"ruleName": "更新后的规则名称", "description": "更新后的描述", "salience": 60}
+          },
+          "tests": [
+            {"name": "更新成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-RD-008: 校验规则",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/rules/1/validate",
+          "tests": [
+            {"name": "校验成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-RD-009: 发布规则",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/rules/1/publish",
+          "tests": [
+            {"name": "发布成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-RD-010: 删除规则",
+          "method": "DELETE",
+          "url": "{{gateway_url}}/api/v1/rules/1",
+          "tests": [
+            {"name": "删除成功", "assert": "response.json.code === '0'"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04. 规则流管理 (Rule Flows)",
+      "description": "流程定义、版本管理、导入导出、执行",
+      "items": [
+        {
+          "name": "TC-RF-001: 获取规则流分页列表",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/flows?page=1&pageSize=10",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "返回分页数据", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-RF-002: 获取规则流下拉选项",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/flows/options",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "返回数组", "assert": "Array.isArray(response.json.data)"}
+          ]
+        },
+        {
+          "name": "TC-RF-003: 创建规则流",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/flows",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "flowName": "医保结算流程",
+              "category": "SETTLEMENT",
+              "description": "完整的医保结算流程",
+              "flowDefinition": {
+                "nodes": [
+                  {"nodeId": "node_1", "type": "START", "label": "开始", "x": 100, "y": 100},
+                  {"nodeId": "node_2", "type": "RULE", "label": "身份校验", "ruleKey": "rule.validation.identity", "x": 300, "y": 100},
+                  {"nodeId": "node_3", "type": "END", "label": "结束", "x": 500, "y": 100}
+                ],
+                "edges": [
+                  {"source": "node_1", "target": "node_2", "label": ""},
+                  {"source": "node_2", "target": "node_3", "label": ""}
+                ]
+              }
+            }
+          },
+          "tests": [
+            {"name": "创建成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-RF-004: 获取规则流详情",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/flows/1",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-RF-005: 更新规则流",
+          "method": "PUT",
+          "url": "{{gateway_url}}/api/v1/flows/1",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"flowName": "更新后的医保结算流程", "description": "更新描述"}
+          },
+          "tests": [
+            {"name": "更新成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-RF-006: 发布规则流",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/flows/1/publish",
+          "tests": [
+            {"name": "发布成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-RF-007: 获取规则流版本历史",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/flows/1/versions",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "返回数组", "assert": "Array.isArray(response.json.data)"}
+          ]
+        },
+        {
+          "name": "TC-RF-008: 回滚规则流",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/flows/1/rollback",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"targetVersion": 1, "changeDesc": "回滚到版本1"}
+          },
+          "tests": [
+            {"name": "回滚成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-RF-009: 比较规则流版本",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/flows/1/compare?fromVersion=1&toVersion=2",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-RF-010: 导出规则流",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/flows/1/export",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-RF-011: 导入规则流",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/flows/import",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "flowName": "导入的流程",
+              "category": "SETTLEMENT",
+              "flowDefinition": {
+                "nodes": [{"nodeId": "node_1", "type": "START", "label": "开始", "x": 100, "y": 100}],
+                "edges": []
+              }
+            }
+          },
+          "tests": [
+            {"name": "导入成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-RF-012: 执行规则流",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/flows/1/execute",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "fact": {
+                "visitId": "V20260517001",
+                "patientId": "P001",
+                "patientType": "employee",
+                "totalFee": 5000.00
+              }
+            }
+          },
+          "tests": [
+            {"name": "执行成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-RF-013: 删除规则流",
+          "method": "DELETE",
+          "url": "{{gateway_url}}/api/v1/flows/1",
+          "tests": [
+            {"name": "删除成功", "assert": "response.json.code === '0'"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05. 公式管理 (Formulas)",
+      "description": "公式CRUD、校验、测试、版本管理、缓存管理",
+      "items": [
+        {
+          "name": "TC-FM-001: 获取公式分页列表",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/formulas?page=1&pageSize=10",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "返回分页数据", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-FM-002: 获取公式详情",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/formulas/1",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-FM-003: 创建公式",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/formulas",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "formulaKey": "formula.reimburse.resident_{{$timestamp}}",
+              "formulaName": "居民医保报销计算",
+              "formulaText": "round((totalFee - deductible) * ratio, 2)",
+              "category": "REIMBURSE",
+              "description": "居民医保报销金额计算公式",
+              "params": [
+                {"paramName": "totalFee", "paramType": "BigDecimal", "description": "总费用", "paramOrder": 1},
+                {"paramName": "deductible", "paramType": "BigDecimal", "description": "起付线", "paramOrder": 2},
+                {"paramName": "ratio", "paramType": "BigDecimal", "description": "报销比例", "paramOrder": 3}
+              ]
+            }
+          },
+          "tests": [
+            {"name": "创建成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-FM-004: 创建公式-formulaKey格式错误",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/formulas",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"formulaKey": "invalid_key", "formulaName": "格式错误的公式", "formulaText": "1+1", "category": "GENERAL"}
+          },
+          "tests": [
+            {"name": "格式校验失败", "assert": "response.json.code !== '0'"}
+          ]
+        },
+        {
+          "name": "TC-FM-005: 更新公式",
+          "method": "PUT",
+          "url": "{{gateway_url}}/api/v1/formulas/1",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"formulaName": "更新后的公式名称", "description": "更新描述"}
+          },
+          "tests": [
+            {"name": "更新成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-FM-006: 校验公式",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/formulas/1/validate",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"formulaText": "round((totalFee - deductible) * ratio, 2)"}
+          },
+          "tests": [
+            {"name": "校验成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-FM-007: 校验语法错误公式",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/formulas/1/validate",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"formulaText": "round((totalFee - deductible * ratio, 2)"}
+          },
+          "tests": [
+            {"name": "语法校验失败", "assert": "response.json.code !== '0'"}
+          ]
+        },
+        {
+          "name": "TC-FM-008: 测试公式",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/formulas/1/test",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"params": {"totalFee": 10000, "deductible": 500, "ratio": 0.75}}
+          },
+          "tests": [
+            {"name": "测试成功", "assert": "response.json.code === '0' && response.json.data.result !== undefined"}
+          ]
+        },
+        {
+          "name": "TC-FM-009: 获取公式版本历史",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/formulas/1/versions",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "返回数组", "assert": "Array.isArray(response.json.data)"}
+          ]
+        },
+        {
+          "name": "TC-FM-010: 发布公式",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/formulas/1/publish",
+          "tests": [
+            {"name": "发布成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-FM-011: 删除公式",
+          "method": "DELETE",
+          "url": "{{gateway_url}}/api/v1/formulas/1",
+          "tests": [
+            {"name": "删除成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-FM-012: 获取缓存统计",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/formulas/cache/stats",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-FM-013: 刷新缓存",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/formulas/cache/refresh",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"formulaKey": "formula.reimburse.resident"}
+          },
+          "tests": [
+            {"name": "刷新成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-FM-014: 回滚公式",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/formulas/1/rollback",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"targetVersion": 1, "changeDesc": "回滚到版本1"}
+          },
+          "tests": [
+            {"name": "回滚成功", "assert": "response.json.code === '0'"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06. 结算管理 (Settlements)",
+      "description": "结算管理、缓存管理",
+      "items": [
+        {
+          "name": "TC-ST-001: 执行结算",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/settlements",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "visitId": "V20260517001",
+              "patientId": "P001",
+              "patientType": "employee",
+              "insuranceType": "basic",
+              "hospitalLevel": "三级",
+              "totalFee": 10000.00
+            }
+          },
+          "tests": [
+            {"name": "结算成功", "assert": "response.json.code === '0' && response.json.data.settlementNo !== undefined"}
+          ]
+        },
+        {
+          "name": "TC-ST-002: 执行结算-缺少必填字段",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/settlements",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"totalFee": 1000}
+          },
+          "tests": [
+            {"name": "参数校验失败", "assert": "response.json.code !== '0'"}
+          ]
+        },
+        {
+          "name": "TC-ST-003: 执行结算-金额为零",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/settlements",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "visitId": "V20260517002",
+              "patientId": "P002",
+              "patientType": "employee",
+              "totalFee": 0
+            }
+          },
+          "tests": [
+            {"name": "零金额正常处理", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-ST-004: 执行结算-金额极大值",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/settlements",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "visitId": "V20260517003",
+              "patientId": "P003",
+              "patientType": "employee",
+              "totalFee": 999999999.99
+            }
+          },
+          "tests": [
+            {"name": "大金额正常处理", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-ST-005: 获取结算分页列表",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/settlements?page=1&pageSize=10",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "返回分页数据", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-ST-006: 获取结算详情",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/settlements/ST202605170001",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-ST-007: 更新结算",
+          "method": "PUT",
+          "url": "{{gateway_url}}/api/v1/settlements/1",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"patientType": "resident"}
+          },
+          "tests": [
+            {"name": "更新成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-ST-008: 删除结算",
+          "method": "DELETE",
+          "url": "{{gateway_url}}/api/v1/settlements/1",
+          "tests": [
+            {"name": "删除成功", "assert": "response.json.code === '0'"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07. 沙箱测试 (Sandbox)",
+      "description": "测试数据集管理、测试执行、报告生成",
+      "items": [
+        {
+          "name": "TC-SB-001: 获取数据集列表",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/sandbox/datasets",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "返回列表", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-SB-002: 创建数据集",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/sandbox/datasets",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "dataSetName": "测试数据集_{{$timestamp}}",
+              "description": "自动化测试创建",
+              "category": "TEST"
+            }
+          },
+          "tests": [
+            {"name": "创建成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-SB-003: 获取数据集详情",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/sandbox/datasets/1",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-SB-004: 更新数据集",
+          "method": "PUT",
+          "url": "{{gateway_url}}/api/v1/sandbox/datasets/1",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"dataSetName": "更新后的数据集名称", "description": "更新描述"}
+          },
+          "tests": [
+            {"name": "更新成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-SB-005: 删除数据集",
+          "method": "DELETE",
+          "url": "{{gateway_url}}/api/v1/sandbox/datasets/1",
+          "tests": [
+            {"name": "删除成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-SB-006: 执行单用例",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/sandbox/execute/1",
+          "tests": [
+            {"name": "执行成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-SB-007: 批量执行",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/sandbox/batch-execute/1",
+          "tests": [
+            {"name": "批量执行成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-SB-008: 获取测试套件列表",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/sandbox/suites",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-SB-009: 创建测试套件",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/sandbox/suites",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "suiteName": "测试套件_{{$timestamp}}",
+              "description": "自动化测试创建",
+              "category": "TEST",
+              "dataSetIds": "1,2"
+            }
+          },
+          "tests": [
+            {"name": "创建成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-SB-010: 执行测试套件",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/sandbox/suites/1/execute",
+          "tests": [
+            {"name": "执行成功", "assert": "response.json.code === '0'"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08. 合理用药 (Drugs)",
+      "description": "药品目录管理、处方审核",
+      "items": [
+        {
+          "name": "TC-DR-001: 获取药品目录分页",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/drugs?page=1&pageSize=10",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "返回列表", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-DR-002: 获取药品详情",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/drugs/1",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-DR-003: 新增药品",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/drugs",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "drugCode": "DRUG_TEST_{{$timestamp}}",
+              "drugName": "测试药品A",
+              "specification": "10mg*12片",
+              "dosageUnit": "片",
+              "drugType": "西药",
+              "category": "抗生素",
+              "isEnabled": true
+            }
+          },
+          "tests": [
+            {"name": "创建成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-DR-004: 更新药品",
+          "method": "PUT",
+          "url": "{{gateway_url}}/api/v1/drugs/1",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"drugName": "更新后的药品名称", "specification": "20mg*24片"}
+          },
+          "tests": [
+            {"name": "更新成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-DR-005: 删除药品",
+          "method": "DELETE",
+          "url": "{{gateway_url}}/api/v1/drugs/1",
+          "tests": [
+            {"name": "删除成功", "assert": "response.json.code === '0'"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "09. 质控指标 (Quality)",
+      "description": "质控规则管理、感染控制",
+      "items": [
+        {
+          "name": "TC-QC-001: 获取质控规则分页",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/quality?page=1&pageSize=10",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "返回列表", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-QC-002: 获取质控规则详情",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/quality/1",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-QC-003: 新增质控规则",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/quality",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "itemKey": "QC_INFECTION_CONTROL",
+              "itemName": "感染控制检查",
+              "category": "INFECTION",
+              "level": "WARN",
+              "description": "感染控制相关质控检查"
+            }
+          },
+          "tests": [
+            {"name": "创建成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-QC-004: 更新质控规则",
+          "method": "PUT",
+          "url": "{{gateway_url}}/api/v1/quality/1",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"itemName": "更新后的质控规则", "description": "更新描述"}
+          },
+          "tests": [
+            {"name": "更新成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-QC-005: 删除质控规则",
+          "method": "DELETE",
+          "url": "{{gateway_url}}/api/v1/quality/1",
+          "tests": [
+            {"name": "删除成功", "assert": "response.json.code === '0'"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10. DRG分组 (DRG)",
+      "description": "DRG分组定义、权重计算",
+      "items": [
+        {
+          "name": "TC-DRG-001: 获取DRG定义分页",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/drg?page=1&pageSize=10",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "返回列表", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-DRG-002: 获取DRG定义详情",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/drg/1",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-DRG-003: 新增DRG定义",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/drg",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "drgCode": "DRG_TEST_001",
+              "drgName": "测试DRG组",
+              "mdcCode": "MDC_A",
+              "mdcName": "MDC测试组",
+              "baseWeight": 1.0000,
+              "baseFee": 10000.00,
+              "standardScore": 100,
+              "description": "测试用DRG定义"
+            }
+          },
+          "tests": [
+            {"name": "创建成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-DRG-004: 更新DRG定义",
+          "method": "PUT",
+          "url": "{{gateway_url}}/api/v1/drg/1",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"drgName": "更新后的DRG名称", "baseWeight": 1.2000}
+          },
+          "tests": [
+            {"name": "更新成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-DRG-005: 删除DRG定义",
+          "method": "DELETE",
+          "url": "{{gateway_url}}/api/v1/drg/1",
+          "tests": [
+            {"name": "删除成功", "assert": "response.json.code === '0'"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "11. 系统监控 (Monitor)",
+      "description": "系统监控、指标采集、告警管理",
+      "items": [
+        {
+          "name": "TC-MN-001: 获取监控指标",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/monitor/metrics",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "返回指标数据", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-MN-002: 获取告警列表",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/monitor/alerts",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-MN-003: 获取热门规则",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/monitor/top-rules",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-MN-004: 记录执行指标",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/monitor/record",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "ruleKey": "rule.test.sample",
+              "duration": 150,
+              "success": true
+            }
+          },
+          "tests": [
+            {"name": "记录成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-MN-005: 创建告警规则",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/monitor/alert-rules",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "ruleName": "测试告警规则",
+              "metricName": "execution_duration",
+              "conditionType": "GT",
+              "threshold": 5000,
+              "level": "WARN",
+              "enabled": true
+            }
+          },
+          "tests": [
+            {"name": "创建成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-MN-006: 获取告警规则列表",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/monitor/alert-rules",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-MN-007: 更新告警规则",
+          "method": "PUT",
+          "url": "{{gateway_url}}/api/v1/monitor/alert-rules/1",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"ruleName": "更新后的告警规则", "threshold": 8000}
+          },
+          "tests": [
+            {"name": "更新成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-MN-008: 删除告警规则",
+          "method": "DELETE",
+          "url": "{{gateway_url}}/api/v1/monitor/alert-rules/1",
+          "tests": [
+            {"name": "删除成功", "assert": "response.json.code === '0'"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "12. 规则模板市场 (Market)",
+      "description": "规则模板发布、安装、评分、收藏",
+      "items": [
+        {
+          "name": "TC-MK-001: 获取模板分页",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/market/templates?page=1&pageSize=10",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "返回列表", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-MK-002: 获取模板详情",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/market/templates/1",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-MK-003: 发布模板",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/market/templates",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {
+              "templateName": "医保报销模板",
+              "category": "REIMBURSEMENT",
+              "description": "标准医保报销计算模板",
+              "templateContent": {"rules": [], "formulas": []},
+              "price": 0,
+              "isPublic": true
+            }
+          },
+          "tests": [
+            {"name": "发布成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-MK-004: 安装模板",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/market/templates/1/install",
+          "tests": [
+            {"name": "安装成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-MK-005: 获取我的模板",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/market/templates/my",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-MK-006: 收藏模板",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/market/templates/1/favorite",
+          "tests": [
+            {"name": "收藏成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-MK-007: 获取收藏列表",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/market/templates/favorites",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        },
+        {
+          "name": "TC-MK-008: 取消收藏",
+          "method": "DELETE",
+          "url": "{{gateway_url}}/api/v1/market/templates/1/favorite",
+          "tests": [
+            {"name": "取消成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-MK-009: 提交评分",
+          "method": "POST",
+          "url": "{{gateway_url}}/api/v1/market/templates/1/ratings",
+          "headers": {"Content-Type": "application/json"},
+          "body": {
+            "mode": "raw",
+            "raw": {"score": 5, "comment": "很好用的模板"}
+          },
+          "tests": [
+            {"name": "评分成功", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-MK-010: 获取评分汇总",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/market/templates/1/rating-summary",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"}
+          ]
+        }
+      ]
+    },
+    {
+      "name": "13. 审计日志 (Audit Logs)",
+      "description": "操作审计日志查询",
+      "items": [
+        {
+          "name": "TC-AL-001: 获取审计日志分页",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/audit-logs?page=1&pageSize=10",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "返回列表", "assert": "response.json.code === '0'"}
+          ]
+        },
+        {
+          "name": "TC-AL-002: 按条件筛选审计日志",
+          "method": "GET",
+          "url": "{{gateway_url}}/api/v1/audit-logs?page=1&pageSize=10&action=CREATE&targetType=RULE",
+          "tests": [
+            {"name": "状态码200", "assert": "response.status === 200"},
+            {"name": "筛选结果正确", "assert": "response.json.code === '0'"}
+          ]
+        }
+      ]
+    }
+  ]
+}
