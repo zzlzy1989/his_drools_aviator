@@ -53,8 +53,13 @@ declare module 'vue' {
     ElTag: typeof import('element-plus/es')['ElTag']
     FlowEditor: typeof import('./components/FlowEditor/FlowEditor.vue')['default']
     Layout: typeof import('./components/Layout/Layout.vue')['default']
+    MonitorStat: typeof import('./components/HIS/MonitorStat.vue')['default']
+    PageContainer: typeof import('./components/HIS/PageContainer.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SettlementAmount: typeof import('./components/HIS/SettlementAmount.vue')['default']
+    StatCard: typeof import('./components/HIS/StatCard.vue')['default']
+    StatusTag: typeof import('./components/HIS/StatusTag.vue')['default']
   }
   export interface ComponentCustomProperties {
     vLoading: typeof import('element-plus/es')['ElLoadingDirective']

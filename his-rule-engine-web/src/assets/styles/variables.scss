@@ -1,0 +1,147 @@
+// ============================================================
+// HIS Design System - Design Tokens
+// Based on DESIGN.md (IBM Carbon + HIS Medical Extensions)
+// ============================================================
+
+// ---- Color System ----
+
+// Brand & Accent (Carbon)
+$color-primary: #0f62fe;
+$color-primary-hover: #0050e6;
+$color-primary-press: #0043ce;
+$color-primary-deep: #002d9c;
+$color-on-primary: #ffffff;
+
+// Text (Carbon)
+$color-ink: #161616;
+$color-ink-secondary: #525252;
+$color-ink-muted: #8c8c8c;
+
+// Surface (Carbon)
+$color-canvas: #ffffff;
+$color-surface-1: #f4f4f4;
+$color-surface-2: #e0e0e0;
+
+// Inverse (Sidebar / Dark)
+$color-inverse-canvas: #161616;
+$color-inverse-surface-1: #262626;
+$color-inverse-ink: #ffffff;
+$color-inverse-ink-muted: #c6c6c6;
+
+// Border
+$color-hairline: #e0e0e0;
+$color-hairline-strong: #161616;
+
+// ---- HIS Business Semantic Colors ----
+
+// Audit Result Levels (PASS/WARN/BLOCK)
+$color-semantic-pass: #24a148;
+$color-semantic-pass-bg: #defbe6;
+$color-semantic-warn: #b28600;
+$color-semantic-warn-bg: #fff8e1;
+$color-semantic-block: #da1e28;
+$color-semantic-block-bg: #fff1f1;
+$color-semantic-fail: #da1e28;
+$color-semantic-info: #0f62fe;
+$color-semantic-info-bg: #edf5ff;
+
+// Rule Status
+$color-status-draft: #8c8c8c;
+$color-status-draft-bg: #e0e0e0;
+$color-status-published: #24a148;
+$color-status-published-bg: #defbe6;
+$color-status-disabled: #525252;
+$color-status-disabled-bg: #f4f4f4;
+$color-status-validating: #0f62fe;
+$color-status-validating-bg: #edf5ff;
+
+// Medical Brand
+$color-medical-blue: #0f62fe;
+$color-medical-blue-deep: #0043ce;
+
+// ---- Monitor Theme (Sentry) ----
+$color-monitor-canvas-dark: #1f1633;
+$color-monitor-night: #150f23;
+$color-monitor-ink-deep: #1f1633;
+$color-monitor-accent-lime: #c2ef4e;
+$color-monitor-accent-pink: #fa7faa;
+$color-monitor-accent-violet: #6a5fc1;
+$color-monitor-accent-violet-deep: #422082;
+$color-monitor-on-dark-muted: #bdb8c0;
+$color-monitor-hairline-violet: #362d59;
+
+// ---- Settlement Theme (Stripe) ----
+$color-settlement-primary: #533afd;
+$color-settlement-primary-deep: #4434d4;
+$color-settlement-primary-soft: #665efd;
+$color-settlement-ink: #0d253d;
+$color-settlement-ink-secondary: #273951;
+$color-settlement-canvas-soft: #f6f9fc;
+$color-settlement-hairline: #e3e8ee;
+
+// ---- Typography ----
+$font-family: "IBM Plex Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+$font-family-mono: "IBM Plex Mono", Monaco, Menlo, "Courier New", monospace;
+
+$font-size-display-xl: 42px;
+$font-size-display-lg: 32px;
+$font-size-headline: 24px;
+$font-size-subhead: 20px;
+$font-size-subheading: $font-size-subhead;
+$font-size-body-lg: 16px;
+$font-size-body: 14px;
+$font-size-small: 13px;
+$font-size-caption: 12px;
+
+$font-weight-light: 300;
+$font-weight-regular: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+$line-height-tight: 1.20;
+$line-height-normal: 1.50;
+$line-height-relaxed: 1.50;
+
+$letter-spacing-headline: 0px;
+$letter-spacing-body: 0.16px;
+$letter-spacing-caption: 0.32px;
+
+// ---- Border Radius (Carbon: square) ----
+$radius-none: 0px;
+$radius-xs: 2px;
+$radius-sm: 4px;
+$radius-md: 6px;
+$radius-lg: 8px;
+$radius-pill: 9999px;
+
+// ---- Spacing (4px grid) ----
+$spacing-xxs: 4px;
+$spacing-xs: 8px;
+$spacing-sm: 12px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-xxl: 48px;
+$spacing-section: 96px;
+
+// ---- Layout ----
+$sidebar-width: 200px;
+$header-height: 48px;
+
+// ---- Shadows (Carbon: none for marketing, minimal for app) ----
+$shadow-none: none;
+$shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow-elevated: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
+
+// ---- Z-Index ----
+$z-sidebar: 100;
+$z-header: 200;
+$z-dropdown: 300;
+$z-modal: 400;
+$z-tooltip: 500;
+
+// ---- Breakpoints ----
+$breakpoint-mobile: 768px;
+$breakpoint-tablet: 1200px;
+$breakpoint-desktop: 1584px;

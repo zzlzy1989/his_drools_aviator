@@ -1,0 +1,236 @@
+// ============================================================
+// HIS Design System - Element Plus Theme Override
+// Based on DESIGN.md (IBM Carbon)
+// ============================================================
+
+@use 'variables' as *;
+@use 'mixins' as *;
+
+:root {
+  // ---- Element Plus CSS Variable Overrides ----
+
+  // Color
+  --el-color-primary: #{$color-primary};
+  --el-color-primary-light-3: #{mix(#ffffff, $color-primary, 30%)};
+  --el-color-primary-light-5: #{mix(#ffffff, $color-primary, 50%)};
+  --el-color-primary-light-7: #{mix(#ffffff, $color-primary, 70%)};
+  --el-color-primary-light-8: #{mix(#ffffff, $color-primary, 80%)};
+  --el-color-primary-light-9: #{mix(#ffffff, $color-primary, 90%)};
+  --el-color-primary-dark-2: #{mix(#000000, $color-primary, 20%)};
+
+  --el-color-success: #{$color-semantic-pass};
+  --el-color-success-light-3: #{mix(#ffffff, $color-semantic-pass, 30%)};
+  --el-color-success-light-5: #{mix(#ffffff, $color-semantic-pass, 50%)};
+  --el-color-success-light-7: #{mix(#ffffff, $color-semantic-pass, 70%)};
+  --el-color-success-light-8: #{mix(#ffffff, $color-semantic-pass, 80%)};
+  --el-color-success-light-9: #{$color-semantic-pass-bg};
+
+  --el-color-warning: #{$color-semantic-warn};
+  --el-color-warning-light-3: #{mix(#ffffff, $color-semantic-warn, 30%)};
+  --el-color-warning-light-5: #{mix(#ffffff, $color-semantic-warn, 50%)};
+  --el-color-warning-light-7: #{mix(#ffffff, $color-semantic-warn, 70%)};
+  --el-color-warning-light-8: #{mix(#ffffff, $color-semantic-warn, 80%)};
+  --el-color-warning-light-9: #{$color-semantic-warn-bg};
+
+  --el-color-danger: #{$color-semantic-block};
+  --el-color-danger-light-3: #{mix(#ffffff, $color-semantic-block, 30%)};
+  --el-color-danger-light-5: #{mix(#ffffff, $color-semantic-block, 50%)};
+  --el-color-danger-light-7: #{mix(#ffffff, $color-semantic-block, 70%)};
+  --el-color-danger-light-8: #{mix(#ffffff, $color-semantic-block, 80%)};
+  --el-color-danger-light-9: #{$color-semantic-block-bg};
+
+  --el-color-info: #{$color-ink-secondary};
+
+  // Text
+  --el-text-color-primary: #{$color-ink};
+  --el-text-color-regular: #{$color-ink-secondary};
+  --el-text-color-secondary: #{$color-ink-secondary};
+  --el-text-color-placeholder: #{$color-ink-muted};
+  --el-text-color-disabled: #{$color-ink-muted};
+
+  // Border
+  --el-border-color: #{$color-hairline};
+  --el-border-color-light: #{$color-surface-2};
+  --el-border-color-lighter: #{$color-surface-1};
+  --el-border-color-extra-light: #{$color-surface-1};
+  --el-border-color-dark: #{$color-ink-secondary};
+
+  // Fill
+  --el-fill-color: #{$color-surface-1};
+  --el-fill-color-light: #{$color-surface-1};
+  --el-fill-color-lighter: #{$color-canvas};
+  --el-fill-color-extra-light: #{$color-canvas};
+  --el-fill-color-dark: #{$color-surface-2};
+  --el-fill-color-darker: #{$color-surface-2};
+  --el-fill-color-blank: #{$color-canvas};
+
+  // Background
+  --el-bg-color: #{$color-canvas};
+  --el-bg-color-page: #{$color-surface-1};
+  --el-bg-color-overlay: #{$color-canvas};
+
+  // Border Radius (Carbon: 0px)
+  --el-border-radius-base: #{$radius-none};
+  --el-border-radius-small: #{$radius-none};
+  --el-border-radius-round: #{$radius-pill};
+  --el-border-radius-circle: 100%;
+
+  // Font
+  --el-font-family: #{$font-family};
+  --el-font-size-base: #{$font-size-body};
+  --el-font-size-small: 13px;
+  --el-font-size-extra-small: #{$font-size-caption};
+
+  // Shadow (Carbon: minimal)
+  --el-box-shadow: #{$shadow-card};
+  --el-box-shadow-light: #{$shadow-none};
+  --el-box-shadow-lighter: #{$shadow-none};
+  --el-box-shadow-dark: #{$shadow-elevated};
+}
+
+// ---- Element Plus Component Overrides ----
+
+// Button: Carbon square style
+.el-button {
+  border-radius: $radius-none;
+  font-family: $font-family;
+  font-weight: $font-weight-regular;
+  letter-spacing: $letter-spacing-body;
+}
+
+.el-button--primary {
+  --el-button-bg-color: #{$color-primary};
+  --el-button-border-color: #{$color-primary};
+  --el-button-hover-bg-color: #{$color-primary-hover};
+  --el-button-hover-border-color: #{$color-primary-hover};
+  --el-button-active-bg-color: #{$color-primary-press};
+  --el-button-active-border-color: #{$color-primary-press};
+}
+
+// Card: Carbon hairline style
+.el-card {
+  border-radius: $radius-none;
+  border: 1px solid $color-hairline;
+  box-shadow: $shadow-none;
+
+  .el-card__header {
+    border-bottom: 1px solid $color-hairline;
+    padding: $spacing-md $spacing-lg;
+  }
+
+  .el-card__body {
+    padding: $spacing-lg;
+  }
+}
+
+// Input: Carbon surface-1 style
+.el-input {
+  .el-input__wrapper {
+    border-radius: $radius-none;
+    background-color: $color-surface-1;
+    box-shadow: 0 0 0 1px $color-hairline inset;
+    transition: box-shadow 0.15s ease;
+
+    &:hover {
+      box-shadow: 0 0 0 1px $color-ink-muted inset;
+    }
+
+    &.is-focus {
+      box-shadow: 0 0 0 2px $color-primary inset;
+    }
+  }
+}
+
+// Select
+.el-select {
+  .el-select__wrapper {
+    border-radius: $radius-none;
+  }
+}
+
+// Table: Carbon hairline style
+.el-table {
+  --el-table-border-color: #{$color-hairline};
+  --el-table-header-bg-color: #{$color-surface-1};
+  --el-table-row-hover-bg-color: #{$color-surface-1};
+  --el-table-bg-color: #{$color-canvas};
+
+  border-radius: $radius-none;
+
+  th.el-table__cell {
+    font-weight: $font-weight-semibold;
+    color: $color-ink;
+    background-color: $color-surface-1;
+  }
+
+  td.el-table__cell {
+    color: $color-ink-secondary;
+  }
+}
+
+// Tag
+.el-tag {
+  border-radius: $radius-xs;
+}
+
+// Dialog
+.el-dialog {
+  border-radius: $radius-none;
+
+  .el-dialog__header {
+    border-bottom: 1px solid $color-hairline;
+    padding: $spacing-md $spacing-lg;
+  }
+
+  .el-dialog__footer {
+    border-top: 1px solid $color-hairline;
+    padding: $spacing-md $spacing-lg;
+  }
+}
+
+// Menu (Sidebar)
+.el-menu {
+  border-right: none;
+  font-family: $font-family;
+
+  .el-menu-item {
+    border-radius: $radius-none;
+
+    &.is-active {
+      background-color: $color-primary;
+      color: $color-on-primary;
+    }
+  }
+}
+
+// Pagination
+.el-pagination {
+  font-family: $font-family;
+
+  .el-pager li {
+    border-radius: $radius-none;
+  }
+}
+
+// Breadcrumb
+.el-breadcrumb {
+  font-family: $font-family;
+  font-size: $font-size-body;
+}
+
+// Form
+.el-form-item__label {
+  font-family: $font-family;
+  font-weight: $font-weight-regular;
+  color: $color-ink;
+}
+
+// Message
+.el-message {
+  border-radius: $radius-none;
+}
+
+// Notification
+.el-notification {
+  border-radius: $radius-none;
+}

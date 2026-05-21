@@ -23,6 +23,13 @@ export default defineConfig({
       '@': resolve(__dirname, 'src'),
     },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: `@use "@/assets/styles/variables" as *;\n`,
+      },
+    },
+  },
   server: {
     port: 8999,
     proxy: {

@@ -1,8 +1,8 @@
 <template>
-  <div class="monitor-dashboard">
-    <div class="dashboard-header">
-      <h2>HIS 规则引擎监控大屏</h2>
-      <div class="header-actions">
+  <div class="his-monitor">
+    <div class="his-monitor__header">
+      <h2 class="his-monitor__title">HIS 规则引擎监控大屏</h2>
+      <div class="his-monitor__actions">
         <el-select v-model="refreshInterval" size="default" style="width: 120px">
           <el-option :value="0" label="关闭自动刷新" />
           <el-option :value="5000" label="5秒" />
@@ -14,86 +14,69 @@
       </div>
     </div>
 
-    <!-- 指标卡片 -->
-    <div class="metrics-cards">
-      <div class="metric-card">
-        <div class="metric-label">规则执行总次数</div>
-        <div class="metric-value">{{ formatNumber(metrics?.executionTotal || 0) }}</div>
-        <div class="metric-change positive">今日 +12.3%</div>
+    <div class="his-monitor__metrics">
+      <StatCard label="规则执行总次数" :value="metrics?.executionTotal || 0" variant="primary" description="今日 +12.3%" />
+      <StatCard label="成功率" :value="`${metrics?.successRate || 0}%`" variant="success" description="目标 ≥99%" />
+      <StatCard label="P99 执行耗时" :value="`${metrics?.p99DurationMs || 0} ms`" :variant="(metrics?.p99DurationMs || 0) > 100 ? 'danger' : 'success'" description="目标 <100ms" />
+      <StatCard label="活跃规则数" :value="metrics?.activeRuleCount || 0" variant="warning" description="已注册规则" />
+    </div>
+
+    <div class="his-monitor__charts">
+      <div class="his-monitor__panel">
+        <h3 class="his-monitor__panel-title">执行耗时分布</h3>
+        <div ref="durationChartRef" class="his-monitor__chart" />
       </div>
-      <div class="metric-card">
-        <div class="metric-label">成功率</div>
-        <div class="metric-value">{{ metrics?.successRate || 0 }}%</div>
-        <div class="metric-change positive">目标 ≥99%</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">P99 执行耗时</div>
-        <div class="metric-value">{{ metrics?.p99DurationMs || 0 }} ms</div>
-        <div class="metric-change" :class="(metrics?.p99DurationMs || 0) > 100 ? 'negative' : 'positive'">
-          目标 &lt;100ms
-        </div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">活跃规则数</div>
-        <div class="metric-value">{{ metrics?.activeRuleCount || 0 }}</div>
-        <div class="metric-change positive">已注册规则</div>
+      <div class="his-monitor__panel">
+        <h3 class="his-monitor__panel-title">TOP 10 高频规则</h3>
+        <div ref="topRulesChartRef" class="his-monitor__chart" />
       </div>
     </div>
 
-    <!-- 图表区域 -->
-    <div class="charts-row">
-      <div class="chart-panel">
-        <h3>执行耗时分布</h3>
-        <div ref="durationChartRef" class="chart-container"></div>
-      </div>
-      <div class="chart-panel">
-        <h3>TOP 10 高频规则</h3>
-        <div ref="topRulesChartRef" class="chart-container"></div>
-      </div>
-    </div>
-
-    <!-- 下方区域 -->
-    <div class="bottom-row">
-      <div class="alert-panel">
-        <h3>最近告警</h3>
-        <div class="alert-list">
-          <div v-if="!metrics?.recentAlerts?.length" class="empty-state">
+    <div class="his-monitor__bottom">
+      <div class="his-monitor__panel his-monitor__panel--wide">
+        <h3 class="his-monitor__panel-title">最近告警</h3>
+        <div class="his-monitor__alert-list">
+          <div v-if="!metrics?.recentAlerts?.length" class="his-monitor__empty">
             暂无告警
           </div>
-          <div v-for="alert in metrics?.recentAlerts" :key="alert.alertId" class="alert-item">
-            <span class="alert-icon" :class="'level-' + alert.level">{{ alert.level }}</span>
-            <span class="alert-message">{{ alert.message }}</span>
-            <span class="alert-time">{{ formatTime(alert.alertTime) }}</span>
+          <div v-for="alert in metrics?.recentAlerts" :key="alert.alertId" class="his-monitor__alert-item">
+            <StatusTag
+              :type="alert.level === 'ERROR' ? 'error' : 'warning'"
+              :label="alert.level"
+              show-dot
+              size="small"
+            />
+            <span class="his-monitor__alert-msg">{{ alert.message }}</span>
+            <span class="his-monitor__alert-time">{{ formatTime(alert.alertTime) }}</span>
           </div>
         </div>
       </div>
-      <div class="stats-panel">
-        <h3>执行统计</h3>
-        <div class="stats-content">
-          <div class="stat-item">
-            <span class="stat-label">成功</span>
-            <span class="stat-value success">{{ formatNumber(metrics?.executionSuccess || 0) }}</span>
+      <div class="his-monitor__panel">
+        <h3 class="his-monitor__panel-title">执行统计</h3>
+        <div class="his-monitor__stats">
+          <div class="his-monitor__stat-item">
+            <span class="his-monitor__stat-label">成功</span>
+            <span class="his-monitor__stat-value his-monitor__stat-value--success">{{ formatNumber(metrics?.executionSuccess || 0) }}</span>
           </div>
-          <div class="stat-item">
-            <span class="stat-label">失败</span>
-            <span class="stat-value danger">{{ formatNumber(metrics?.executionFailed || 0) }}</span>
+          <div class="his-monitor__stat-item">
+            <span class="his-monitor__stat-label">失败</span>
+            <span class="his-monitor__stat-value his-monitor__stat-value--danger">{{ formatNumber(metrics?.executionFailed || 0) }}</span>
           </div>
-          <div class="stat-item">
-            <span class="stat-label">公式命中率</span>
-            <span class="stat-value">{{ metrics?.formulaHitRate || 0 }}%</span>
+          <div class="his-monitor__stat-item">
+            <span class="his-monitor__stat-label">公式命中率</span>
+            <span class="his-monitor__stat-value">{{ metrics?.formulaHitRate || 0 }}%</span>
           </div>
-          <div class="stat-item">
-            <span class="stat-label">P95 耗时</span>
-            <span class="stat-value">{{ metrics?.p95DurationMs || 0 }} ms</span>
+          <div class="his-monitor__stat-item">
+            <span class="his-monitor__stat-label">P95 耗时</span>
+            <span class="his-monitor__stat-value">{{ metrics?.p95DurationMs || 0 }} ms</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 历史数据查询 -->
-    <div class="history-section">
-      <h3>历史数据查询</h3>
-      <div class="history-filters">
+    <div class="his-monitor__panel his-monitor__panel--full">
+      <h3 class="his-monitor__panel-title">历史数据查询</h3>
+      <div class="his-monitor__filters">
         <el-select v-model="historyQuery.metricName" placeholder="选择指标" size="default" style="width: 180px">
           <el-option value="rule_hit" label="规则触发" />
           <el-option value="execution_time" label="执行耗时" />
@@ -110,33 +93,30 @@
         />
         <el-button @click="loadHistory" :loading="historyLoading">查询</el-button>
       </div>
-      <div class="history-content">
-        <div class="history-summary">
-          <div class="summary-item">
-            <span class="summary-label">查询条数:</span>
-            <span class="summary-value">{{ historySummary.count }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">平均值:</span>
-            <span class="summary-value">{{ historySummary.avg }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">最大值:</span>
-            <span class="summary-value">{{ historySummary.max }}</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">最小值:</span>
-            <span class="summary-value">{{ historySummary.min }}</span>
-          </div>
+      <div class="his-monitor__history-summary">
+        <div class="his-monitor__summary-item">
+          <span class="his-monitor__summary-label">查询条数:</span>
+          <span class="his-monitor__summary-value">{{ historySummary.count }}</span>
         </div>
-        <div ref="historyChartRef" class="history-chart"></div>
+        <div class="his-monitor__summary-item">
+          <span class="his-monitor__summary-label">平均值:</span>
+          <span class="his-monitor__summary-value">{{ historySummary.avg }}</span>
+        </div>
+        <div class="his-monitor__summary-item">
+          <span class="his-monitor__summary-label">最大值:</span>
+          <span class="his-monitor__summary-value">{{ historySummary.max }}</span>
+        </div>
+        <div class="his-monitor__summary-item">
+          <span class="his-monitor__summary-label">最小值:</span>
+          <span class="his-monitor__summary-value">{{ historySummary.min }}</span>
+        </div>
       </div>
+      <div ref="historyChartRef" class="his-monitor__chart" />
     </div>
 
-    <!-- 规则触发热力图 -->
-    <div class="heatmap-section">
-      <h3>规则触发热力图</h3>
-      <div class="heatmap-filters">
+    <div class="his-monitor__panel his-monitor__panel--full">
+      <h3 class="his-monitor__panel-title">规则触发热力图</h3>
+      <div class="his-monitor__filters">
         <el-select v-model="heatmapDays" placeholder="查询天数" size="default" style="width: 120px">
           <el-option :value="7" label="近7天" />
           <el-option :value="14" label="近14天" />
@@ -144,7 +124,7 @@
         </el-select>
         <el-button @click="loadHeatmap" :loading="heatmapLoading">加载热力图</el-button>
       </div>
-      <div ref="heatmapChartRef" class="heatmap-chart"></div>
+      <div ref="heatmapChartRef" class="his-monitor__chart his-monitor__chart--tall" />
     </div>
   </div>
 </template>
@@ -153,6 +133,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import * as echarts from 'echarts'
 import { monitorApi } from '@/api/monitor'
+import { StatCard, StatusTag } from '@/components/HIS'
 
 const loading = ref(false)
 const refreshInterval = ref(10000)
@@ -160,20 +141,16 @@ const metrics = ref<any>(null)
 const durationChartRef = ref<HTMLElement>()
 const topRulesChartRef = ref<HTMLElement>()
 
-// History state
 const historyLoading = ref(false)
 const historyChartRef = ref<HTMLElement>()
 const historyDateRange = ref<[Date, Date]>([
   new Date(Date.now() - 24 * 60 * 60 * 1000),
   new Date()
 ])
-const historyQuery = ref({
-  metricName: 'rule_hit'
-})
+const historyQuery = ref({ metricName: 'rule_hit' })
 const historySummary = ref<any>({ count: 0, avg: '-', max: '-', min: '-' })
 let historyChart: echarts.ECharts | null = null
 
-// Heatmap state
 const heatmapLoading = ref(false)
 const heatmapChartRef = ref<HTMLElement>()
 const heatmapDays = ref(7)
@@ -189,8 +166,7 @@ function formatNumber(num: number): string {
 
 function formatTime(time: string): string {
   if (!time) return ''
-  const date = new Date(time)
-  return date.toLocaleTimeString()
+  return new Date(time).toLocaleTimeString()
 }
 
 async function loadMetrics() {
@@ -233,10 +209,8 @@ function updateHistoryChart(dataPoints: any[]) {
   if (!historyChartRef.value) return
   historyChart?.dispose()
   historyChart = echarts.init(historyChartRef.value)
-
   const times = dataPoints.map(p => p.time)
   const values = dataPoints.map(p => p.value)
-
   historyChart.setOption({
     tooltip: { trigger: 'axis' },
     xAxis: { type: 'category', data: times, name: '时间' },
@@ -246,8 +220,8 @@ function updateHistoryChart(dataPoints: any[]) {
       type: 'line',
       data: values,
       smooth: true,
-      itemStyle: { color: '#409EFF' },
-      areaStyle: { color: 'rgba(64, 158, 255, 0.2)' }
+      itemStyle: { color: '#0f62fe' },
+      areaStyle: { color: 'rgba(15, 98, 254, 0.15)' }
     }]
   })
 }
@@ -270,20 +244,15 @@ function updateHeatmapChart(data: any) {
   if (!heatmapChartRef.value) return
   heatmapChart?.dispose()
   heatmapChart = echarts.init(heatmapChartRef.value)
-
   const hours = data.hours || []
   const rules = data.rules || []
-
   const heatmapData: [number, number, number][] = []
   rules.forEach((rule: any, ruleIdx: number) => {
     hours.forEach((hour: string, hourIdx: number) => {
       const value = rule[hour] || 0
-      if (value > 0) {
-        heatmapData.push([hourIdx, ruleIdx, value])
-      }
+      if (value > 0) heatmapData.push([hourIdx, ruleIdx, value])
     })
   })
-
   heatmapChart.setOption({
     tooltip: { position: 'top' },
     xAxis: { type: 'category', data: hours, name: '小时' },
@@ -295,7 +264,7 @@ function updateHeatmapChart(data: any) {
       orient: 'horizontal',
       left: 'center',
       bottom: '0%',
-      inRange: { color: ['#e6f7ff', '#1890ff', '#f5222d'] }
+      inRange: { color: ['#e6f7ff', '#0f62fe', '#da1e28'] }
     },
     series: [{
       name: '触发次数',
@@ -322,11 +291,10 @@ function updateCharts() {
         name: '执行次数',
         type: 'bar',
         data: [120, 340, 560, 780, 450, 230, 120, 40],
-        itemStyle: { color: '#409EFF' }
+        itemStyle: { color: '#0f62fe' }
       }]
     })
   }
-
   if (topRulesChartRef.value && metrics.value?.topRules) {
     topRulesChart?.dispose()
     topRulesChart = echarts.init(topRulesChartRef.value)
@@ -342,24 +310,20 @@ function updateCharts() {
         name: '命中次数',
         type: 'bar',
         data: topRules.map((r: any) => r.hitCount).reverse(),
-        itemStyle: { color: '#67C23A' }
+        itemStyle: { color: '#198038' }
       }]
     })
   }
 }
 
 function startRefreshTimer() {
-  if (refreshTimer) {
-    clearInterval(refreshTimer)
-  }
+  if (refreshTimer) clearInterval(refreshTimer)
   if (refreshInterval.value > 0) {
     refreshTimer = setInterval(loadMetrics, refreshInterval.value)
   }
 }
 
-watch(refreshInterval, () => {
-  startRefreshTimer()
-})
+watch(refreshInterval, () => { startRefreshTimer() })
 
 onMounted(() => {
   loadMetrics()
@@ -373,9 +337,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (refreshTimer) {
-    clearInterval(refreshTimer)
-  }
+  if (refreshTimer) clearInterval(refreshTimer)
   durationChart?.dispose()
   topRulesChart?.dispose()
   historyChart?.dispose()
@@ -383,253 +345,178 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
-.monitor-dashboard {
-  padding: 20px;
-  background: #f5f7fa;
+<style lang="scss" scoped>
+
+.his-monitor {
+  padding: $spacing-lg;
+  background-color: $color-surface-1;
   min-height: 100%;
-}
 
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $spacing-lg;
+  }
 
-.dashboard-header h2 {
-  margin: 0;
-  color: #303133;
-}
+  &__title {
+    margin: 0;
+    font-size: $font-size-headline;
+    font-weight: $font-weight-bold;
+    color: $color-ink;
+    letter-spacing: $letter-spacing-headline;
+  }
 
-.header-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
+  &__actions {
+    display: flex;
+    gap: $spacing-sm;
+    align-items: center;
+  }
 
-.metrics-cards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 20px;
-}
+  &__metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $spacing-md;
+    margin-bottom: $spacing-lg;
+  }
 
-.metric-card {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
+  &__charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-md;
+    margin-bottom: $spacing-lg;
+  }
 
-.metric-label {
-  font-size: 14px;
-  color: #909399;
-  margin-bottom: 10px;
-}
+  &__panel {
+    background-color: $color-canvas;
+    border: 1px solid $color-hairline;
+    padding: $spacing-lg;
 
-.metric-value {
-  font-size: 32px;
-  font-weight: bold;
-  color: #303133;
-  margin-bottom: 5px;
-}
+    &--wide {
+      grid-column: span 2;
+    }
 
-.metric-change {
-  font-size: 12px;
-  color: #909399;
-}
+    &--full {
+      margin-top: $spacing-lg;
+    }
+  }
 
-.metric-change.positive {
-  color: #67C23A;
-}
+  &__panel-title {
+    margin: 0 0 $spacing-md 0;
+    font-size: $font-size-subheading;
+    font-weight: $font-weight-semibold;
+    color: $color-ink;
+  }
 
-.metric-change.negative {
-  color: #F56C6C;
-}
+  &__chart {
+    height: 250px;
 
-.charts-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 20px;
-}
+    &--tall {
+      height: 400px;
+    }
+  }
 
-.chart-panel {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
+  &__bottom {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: $spacing-md;
+  }
 
-.chart-panel h3 {
-  margin: 0 0 15px 0;
-  color: #303133;
-  font-size: 16px;
-}
+  &__alert-list {
+    max-height: 300px;
+    overflow-y: auto;
+  }
 
-.chart-container {
-  height: 250px;
-}
+  &__empty {
+    color: $color-ink-muted;
+    text-align: center;
+    padding: $spacing-xxl 0;
+  }
 
-.bottom-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
-}
+  &__alert-item {
+    display: flex;
+    align-items: center;
+    padding: $spacing-sm 0;
+    border-bottom: 1px solid $color-hairline;
+  }
 
-.alert-panel,
-.stats-panel {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
+  &__alert-msg {
+    flex: 1;
+    color: $color-ink-secondary;
+    font-size: $font-size-body;
+    margin-left: $spacing-sm;
+  }
 
-.alert-panel h3,
-.stats-panel h3 {
-  margin: 0 0 15px 0;
-  color: #303133;
-  font-size: 16px;
-}
+  &__alert-time {
+    color: $color-ink-muted;
+    font-size: $font-size-small;
+  }
 
-.alert-list {
-  max-height: 300px;
-  overflow-y: auto;
-}
+  &__stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-md;
+  }
 
-.empty-state {
-  color: #909399;
-  text-align: center;
-  padding: 40px 0;
-}
+  &__stat-item {
+    display: flex;
+    flex-direction: column;
+    padding: $spacing-md;
+    background-color: $color-surface-1;
+    border-radius: $radius-sm;
+  }
 
-.alert-item {
-  display: flex;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #ebeef5;
-}
+  &__stat-label {
+    font-size: $font-size-small;
+    color: $color-ink-muted;
+    margin-bottom: $spacing-xs;
+  }
 
-.alert-icon {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  margin-right: 10px;
-}
+  &__stat-value {
+    font-size: $font-size-subheading;
+    font-weight: $font-weight-bold;
+    color: $color-ink;
+    font-family: $font-family-mono;
 
-.level-WARN {
-  background: #E6A23C;
-  color: white;
-}
+    &--success {
+      color: $color-semantic-pass;
+    }
 
-.level-ERROR {
-  background: #F56C6C;
-  color: white;
-}
+    &--danger {
+      color: $color-semantic-fail;
+    }
+  }
 
-.alert-message {
-  flex: 1;
-  color: #606266;
-}
+  &__filters {
+    display: flex;
+    gap: $spacing-sm;
+    margin-bottom: $spacing-md;
+  }
 
-.alert-time {
-  color: #909399;
-  font-size: 12px;
-}
+  &__history-summary {
+    display: flex;
+    gap: $spacing-lg;
+    margin-bottom: $spacing-md;
+    padding: $spacing-sm $spacing-md;
+    background-color: $color-surface-1;
+    border-radius: $radius-sm;
+  }
 
-.stats-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-}
+  &__summary-item {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+  }
 
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  padding: 15px;
-  background: #f5f7fa;
-  border-radius: 6px;
-}
+  &__summary-label {
+    color: $color-ink-muted;
+    font-size: $font-size-small;
+  }
 
-.stat-label {
-  font-size: 12px;
-  color: #909399;
-  margin-bottom: 5px;
-}
-
-.stat-value {
-  font-size: 20px;
-  font-weight: bold;
-  color: #303133;
-}
-
-.stat-value.success {
-  color: #67C23A;
-}
-
-.stat-value.danger {
-  color: #F56C6C;
-}
-
-.history-section,
-.heatmap-section {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  margin-top: 20px;
-}
-
-.history-section h3,
-.heatmap-section h3 {
-  margin: 0 0 15px 0;
-  color: #303133;
-  font-size: 16px;
-}
-
-.history-filters,
-.heatmap-filters {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.history-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.history-summary {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 15px;
-  padding: 10px;
-  background: #f5f7fa;
-  border-radius: 6px;
-}
-
-.summary-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.summary-label {
-  color: #909399;
-  font-size: 12px;
-}
-
-.summary-value {
-  color: #303133;
-  font-weight: bold;
-}
-
-.history-chart {
-  height: 250px;
-}
-
-.heatmap-chart {
-  height: 400px;
+  &__summary-value {
+    color: $color-ink;
+    font-weight: $font-weight-semibold;
+    font-family: $font-family-mono;
+  }
 }
 </style>

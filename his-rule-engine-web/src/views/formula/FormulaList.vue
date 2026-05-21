@@ -1,45 +1,53 @@
 <template>
-  <div class="page-container">
-    <div class="page-card">
-      <el-form :inline="true" :model="queryForm" class="search-form">
-        <el-form-item label="公式名称">
-          <el-input v-model="queryForm.formulaName" placeholder="请输入" clearable />
-        </el-form-item>
-        <el-form-item label="分类">
-          <el-select v-model="queryForm.category" placeholder="请选择" clearable>
-            <el-option label="计算" value="calc" />
-            <el-option label="校验" value="validate" />
-            <el-option label="转换" value="transform" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="queryForm.status" placeholder="请选择" clearable>
-            <el-option label="草稿" value="draft" />
-            <el-option label="启用" value="active" />
-            <el-option label="停用" value="inactive" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="loadData">查询</el-button>
-          <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
-        </el-form-item>
-      </el-form>
+  <div class="his-formula-list">
+    <div class="his-formula-list__card">
+      <div class="his-formula-list__search">
+        <el-form :inline="true" :model="queryForm" class="his-formula-list__search-form">
+          <el-form-item label="公式名称">
+            <el-input v-model="queryForm.formulaName" placeholder="请输入" clearable />
+          </el-form-item>
+          <el-form-item label="分类">
+            <el-select v-model="queryForm.category" placeholder="请选择" clearable>
+              <el-option label="计算" value="calc" />
+              <el-option label="校验" value="validate" />
+              <el-option label="转换" value="transform" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select v-model="queryForm.status" placeholder="请选择" clearable>
+              <el-option label="草稿" value="draft" />
+              <el-option label="启用" value="active" />
+              <el-option label="停用" value="inactive" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :icon="Search" @click="loadData">查询</el-button>
+            <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
 
-      <div class="toolbar">
+      <div class="his-formula-list__toolbar">
         <el-button type="primary" :icon="Plus" @click="handleAdd">新增公式</el-button>
       </div>
 
-      <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" border style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="formulaKey" label="公式Key" width="200" />
         <el-table-column prop="formulaName" label="公式名称" />
-        <el-table-column prop="expression" label="表达式" show-overflow-tooltip />
-        <el-table-column prop="returnType" label="返回类型" width="100" />
+        <el-table-column prop="expression" label="表达式" show-overflow-tooltip>
+          <template #default="{ row }">
+            <code class="his-formula-list__expression">{{ row.expression }}</code>
+          </template>
+        </el-table-column>
+        <el-table-column prop="returnType" label="返回类型" width="100">
+          <template #default="{ row }">
+            <span class="his-formula-list__return-type">{{ row.returnType }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.status === 'active'" type="success" size="small">启用</el-tag>
-            <el-tag v-else-if="row.status === 'inactive'" type="info" size="small">停用</el-tag>
-            <el-tag v-else type="warning" size="small">草稿</el-tag>
+            <StatusTag :type="row.status === 'active' ? 'published' : row.status === 'inactive' ? 'disabled' : 'draft'" show-dot size="small" />
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="180" />
@@ -52,7 +60,7 @@
         </el-table-column>
       </el-table>
 
-      <div class="pagination">
+      <div class="his-formula-list__pagination">
         <el-pagination
           v-model:current-page="page"
           v-model:page-size="pageSize"
@@ -126,6 +134,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance } from 'element-plus'
 import { Search, Refresh, Plus } from '@element-plus/icons-vue'
+import { StatusTag } from '@/components/HIS'
 import {
   getFormulaPage,
   createFormula,
@@ -286,10 +295,53 @@ function resetForm() {
 onMounted(() => { loadData() })
 </script>
 
-<style scoped>
-.page-container { padding: 16px; }
-.page-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-.search-form { margin-bottom: 16px; }
-.toolbar { margin-bottom: 16px; }
-.pagination { margin-top: 16px; display: flex; justify-content: flex-end; }
+<style lang="scss" scoped>
+
+.his-formula-list {
+  &__card {
+    background-color: $color-canvas;
+    border: 1px solid $color-hairline;
+    padding: $spacing-lg;
+  }
+
+  &__search {
+    margin-bottom: $spacing-md;
+  }
+
+  &__search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+
+  &__toolbar {
+    margin-bottom: $spacing-md;
+  }
+
+  &__pagination {
+    margin-top: $spacing-md;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  &__expression {
+    font-family: $font-family-mono;
+    font-size: 13px;
+    color: $color-primary-deep;
+    background-color: $color-surface-1;
+    padding: 1px 4px;
+    border-radius: $radius-xs;
+  }
+
+  &__return-type {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: $radius-xs;
+    font-size: $font-size-body;
+    font-weight: $font-weight-semibold;
+    color: $color-ink-secondary;
+    background-color: $color-surface-1;
+  }
+}
 </style>

@@ -1,16 +1,30 @@
 import request from './request'
 
-export function login(data: { username: string; password: string }) {
+export interface LoginParams {
+  username: string
+  password: string
+}
+
+export interface LoginResult {
+  token: string
+  userId: string
+  username: string
+  realName: string
+  tenantId: string
+  role: string
+}
+
+export function loginApi(data: LoginParams): Promise<LoginResult> {
   return request({
     url: '/api/v1/auth/login',
-    method: 'post',
+    method: 'POST',
     data,
   })
 }
 
-export function getCurrentUser() {
+export function getCurrentUser(): Promise<{ userId: string; tenantId: string }> {
   return request({
     url: '/api/v1/auth/me',
-    method: 'get',
+    method: 'GET',
   })
 }

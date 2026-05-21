@@ -1,0 +1,155 @@
+// ============================================================
+// HIS Design System - SCSS Mixins
+// Based on DESIGN.md
+// ============================================================
+
+@use 'variables' as *;
+
+// ---- Responsive Breakpoints ----
+@mixin mobile {
+  @media (max-width: #{$breakpoint-mobile - 1px}) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: $breakpoint-mobile) and (max-width: #{$breakpoint-tablet - 1px}) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: $breakpoint-tablet) {
+    @content;
+  }
+}
+
+@mixin desktop-xl {
+  @media (min-width: $breakpoint-desktop) {
+    @content;
+  }
+}
+
+// ---- Carbon Card ----
+@mixin carbon-card {
+  background-color: $color-canvas;
+  border: 1px solid $color-hairline;
+  border-radius: $radius-none;
+  padding: $spacing-lg;
+}
+
+// ---- Monitor Card (Sentry) ----
+@mixin monitor-card {
+  background-color: $color-monitor-ink-deep;
+  border: 1px solid $color-monitor-hairline-violet;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  color: $color-inverse-ink;
+}
+
+// ---- Settlement Card (Stripe) ----
+@mixin settlement-card {
+  background-color: $color-canvas;
+  border: 1px solid $color-settlement-hairline;
+  border-radius: $radius-lg;
+  padding: $spacing-xl;
+  color: $color-settlement-ink;
+}
+
+// ---- Status Tag ----
+@mixin status-tag($color, $bg-color) {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: $radius-xs;
+  font-size: $font-size-body;
+  font-weight: $font-weight-semibold;
+  line-height: 1.29;
+  letter-spacing: $letter-spacing-body;
+  color: $color;
+  background-color: $bg-color;
+}
+
+// ---- Carbon Button ----
+@mixin carbon-button($bg, $text) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  border-radius: $radius-none;
+  border: none;
+  font-family: $font-family;
+  font-size: $font-size-body;
+  font-weight: $font-weight-regular;
+  line-height: 1.29;
+  letter-spacing: $letter-spacing-body;
+  color: $text;
+  background-color: $bg;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: darken($bg, 5%);
+  }
+
+  &:active {
+    background-color: darken($bg, 10%);
+  }
+}
+
+// ---- Carbon Input ----
+@mixin carbon-input {
+  background-color: $color-surface-1;
+  border: 1px solid $color-hairline;
+  border-radius: $radius-none;
+  padding: 11px 16px;
+  font-family: $font-family;
+  font-size: $font-size-body;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-normal;
+  letter-spacing: $letter-spacing-body;
+  color: $color-ink;
+  outline: none;
+  transition: border-color 0.15s ease;
+
+  &:focus {
+    border: 2px solid $color-primary;
+    padding: 10px 15px;
+  }
+
+  &.is-error {
+    border: 2px solid $color-semantic-block;
+    padding: 10px 15px;
+  }
+
+  &::placeholder {
+    color: $color-ink-muted;
+  }
+}
+
+// ---- Text Truncation ----
+@mixin text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ---- Flex Helpers ----
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// ---- Monitor Theme Scope ----
+@mixin monitor-theme {
+  .monitor-theme & {
+    @content;
+  }
+}

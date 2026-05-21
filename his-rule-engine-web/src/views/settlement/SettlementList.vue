@@ -1,59 +1,66 @@
 <template>
-  <div class="page-container">
-    <div class="page-card">
-      <el-form :inline="true" :model="queryForm" class="search-form">
-        <el-form-item label="结算单号">
-          <el-input v-model="queryForm.settlementNo" placeholder="请输入" clearable />
-        </el-form-item>
-        <el-form-item label="患者ID">
-          <el-input v-model="queryForm.patientId" placeholder="请输入" clearable />
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="queryForm.status" placeholder="请选择" clearable>
-            <el-option label="待结算" value="pending" />
-            <el-option label="结算中" value="processing" />
-            <el-option label="已完成" value="completed" />
-            <el-option label="已拒绝" value="rejected" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="开始日期">
-          <el-date-picker v-model="queryForm.startDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 140px" />
-        </el-form-item>
-        <el-form-item label="结束日期">
-          <el-date-picker v-model="queryForm.endDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 140px" />
-        </el-form-item>
-        <el-form-item label="金额范围">
-          <el-input v-model="queryForm.minAmount" placeholder="最小" style="width: 100px" />
-          <span style="padding: 0 4px">-</span>
-          <el-input v-model="queryForm.maxAmount" placeholder="最大" style="width: 100px" />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="loadData">查询</el-button>
-          <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
-        </el-form-item>
-      </el-form>
+  <div class="his-settlement">
+    <div class="his-settlement__card">
+      <div class="his-settlement__search">
+        <el-form :inline="true" :model="queryForm" class="his-settlement__search-form">
+          <el-form-item label="结算单号">
+            <el-input v-model="queryForm.settlementNo" placeholder="请输入" clearable />
+          </el-form-item>
+          <el-form-item label="患者ID">
+            <el-input v-model="queryForm.patientId" placeholder="请输入" clearable />
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select v-model="queryForm.status" placeholder="请选择" clearable>
+              <el-option label="待结算" value="pending" />
+              <el-option label="结算中" value="processing" />
+              <el-option label="已完成" value="completed" />
+              <el-option label="已拒绝" value="rejected" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="开始日期">
+            <el-date-picker v-model="queryForm.startDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 140px" />
+          </el-form-item>
+          <el-form-item label="结束日期">
+            <el-date-picker v-model="queryForm.endDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 140px" />
+          </el-form-item>
+          <el-form-item label="金额范围">
+            <el-input v-model="queryForm.minAmount" placeholder="最小" style="width: 100px" />
+            <span style="padding: 0 4px">-</span>
+            <el-input v-model="queryForm.maxAmount" placeholder="最大" style="width: 100px" />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :icon="Search" @click="loadData">查询</el-button>
+            <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
 
-      <div class="toolbar">
+      <div class="his-settlement__toolbar">
         <el-button type="primary" :icon="Plus" @click="handleAdd">新建结算</el-button>
       </div>
 
-      <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" border style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="settlementNo" label="结算单号" width="200" />
         <el-table-column prop="patientId" label="患者ID" width="150" />
         <el-table-column prop="patientName" label="患者姓名" width="120" />
         <el-table-column prop="totalFee" label="总费用" width="120" align="right">
-          <template #default="{ row }">¥{{ row.totalFee?.toFixed(2) }}</template>
+          <template #default="{ row }">
+            <span class="his-settlement__amount">¥{{ row.totalFee?.toFixed(2) }}</span>
+          </template>
         </el-table-column>
         <el-table-column prop="reimburseAmount" label="报销金额" width="120" align="right">
-          <template #default="{ row }">¥{{ row.reimburseAmount?.toFixed(2) }}</template>
+          <template #default="{ row }">
+            <span class="his-settlement__amount his-settlement__amount--reimburse">¥{{ row.reimburseAmount?.toFixed(2) }}</span>
+          </template>
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.status === 'completed'" type="success" size="small">已完成</el-tag>
-            <el-tag v-else-if="row.status === 'processing'" type="warning" size="small">结算中</el-tag>
-            <el-tag v-else-if="row.status === 'rejected'" type="danger" size="small">已拒绝</el-tag>
-            <el-tag v-else type="info" size="small">待结算</el-tag>
+            <StatusTag
+              :type="row.status === 'completed' ? 'published' : row.status === 'processing' ? 'running' : row.status === 'rejected' ? 'error' : 'draft'"
+              show-dot
+              size="small"
+            />
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="180" />
@@ -67,7 +74,7 @@
         </el-table-column>
       </el-table>
 
-      <div class="pagination">
+      <div class="his-settlement__pagination">
         <el-pagination
           v-model:current-page="page"
           v-model:page-size="pageSize"
@@ -144,6 +151,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance } from 'element-plus'
 import { Search, Refresh, Plus } from '@element-plus/icons-vue'
+import { StatusTag } from '@/components/HIS'
 import {
   getSettlementPage,
   createSettlement,
@@ -297,10 +305,44 @@ function resetForm() {
 onMounted(() => { loadData() })
 </script>
 
-<style scoped>
-.page-container { padding: 16px; }
-.page-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-.search-form { margin-bottom: 16px; }
-.toolbar { margin-bottom: 16px; }
-.pagination { margin-top: 16px; display: flex; justify-content: flex-end; }
+<style lang="scss" scoped>
+
+.his-settlement {
+  &__card {
+    background-color: $color-canvas;
+    border: 1px solid $color-hairline;
+    padding: $spacing-lg;
+  }
+
+  &__search {
+    margin-bottom: $spacing-md;
+  }
+
+  &__search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+
+  &__toolbar {
+    margin-bottom: $spacing-md;
+  }
+
+  &__pagination {
+    margin-top: $spacing-md;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  &__amount {
+    font-family: $font-family-mono;
+    font-weight: $font-weight-semibold;
+    font-size: 13px;
+    color: $color-ink;
+
+    &--reimburse {
+      color: $color-semantic-pass;
+    }
+  }
+}
 </style>

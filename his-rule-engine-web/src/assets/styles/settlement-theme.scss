@@ -1,0 +1,101 @@
+// ============================================================
+// HIS Design System - Settlement Theme (Stripe)
+// Based on DESIGN.md Settlement Section
+// ============================================================
+
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.settlement-theme {
+  --settlement-primary: #{$color-settlement-primary};
+  --settlement-primary-deep: #{$color-settlement-primary-deep};
+  --settlement-ink: #{$color-settlement-ink};
+  --settlement-canvas-soft: #{$color-settlement-canvas-soft};
+  --settlement-border: #{$color-settlement-hairline};
+
+  background-color: $color-settlement-canvas-soft;
+
+  .settlement-header {
+    background: linear-gradient(135deg, $color-settlement-primary, $color-settlement-primary-deep);
+    color: $color-on-primary;
+    border-radius: $radius-lg;
+    padding: $spacing-xl;
+    margin-bottom: $spacing-lg;
+  }
+
+  .settlement-card {
+    background-color: $color-canvas;
+    border: 1px solid $color-settlement-hairline;
+    border-radius: $radius-lg;
+    padding: $spacing-xl;
+    color: $color-settlement-ink;
+  }
+
+  .settlement-amount {
+    font-family: $font-family-mono;
+    font-size: 28px;
+    font-weight: $font-weight-regular;
+    letter-spacing: -0.42px;
+    font-feature-settings: "tnum";
+    color: $color-settlement-ink;
+  }
+
+  .settlement-amount-label {
+    font-size: $font-size-caption;
+    color: $color-settlement-ink-secondary;
+    letter-spacing: $letter-spacing-caption;
+    text-transform: uppercase;
+    margin-bottom: $spacing-xxs;
+  }
+
+  .settlement-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: $spacing-sm 0;
+    border-bottom: 1px solid $color-settlement-hairline;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .settlement-detail-label {
+    font-size: $font-size-body;
+    color: $color-settlement-ink-secondary;
+  }
+
+  .settlement-detail-value {
+    font-family: $font-family-mono;
+    font-size: $font-size-body;
+    font-weight: $font-weight-medium;
+    color: $color-settlement-ink;
+    font-feature-settings: "tnum";
+  }
+
+  .settlement-result-pass {
+    @include status-tag($color-semantic-pass, $color-semantic-pass-bg);
+  }
+
+  .settlement-result-warn {
+    @include status-tag($color-semantic-warn, $color-semantic-warn-bg);
+  }
+
+  .settlement-result-block {
+    @include status-tag($color-semantic-block, $color-semantic-block-bg);
+  }
+
+  // Override Element Plus for settlement
+  .el-card {
+    border-radius: $radius-lg;
+    border-color: $color-settlement-hairline;
+  }
+
+  .el-button--primary {
+    --el-button-bg-color: #{$color-settlement-primary};
+    --el-button-border-color: #{$color-settlement-primary};
+    --el-button-hover-bg-color: #{$color-settlement-primary-soft};
+    --el-button-hover-border-color: #{$color-settlement-primary-soft};
+    border-radius: $radius-lg;
+  }
+}

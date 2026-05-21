@@ -61,6 +61,9 @@ public enum ErrorCode {
     FORBIDDEN("HIS-A02", "无权限操作"),
     TOKEN_EXPIRED("HIS-A03", "Token已过期"),
     TENANT_MISMATCH("HIS-A04", "租户不匹配"),
+    LOGIN_FAILED("HIS-A05", "用户名或密码错误"),
+    ACCOUNT_LOCKED("HIS-A06", "账户已被锁定，请稍后重试"),
+    ACCOUNT_DISABLED("HIS-A07", "账户已被禁用"),
 
     // ===== 参数校验 (Pxx) =====
     PARAM_MISSING("HIS-P01", "必填参数缺失: %s"),

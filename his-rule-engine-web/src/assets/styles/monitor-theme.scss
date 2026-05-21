@@ -1,0 +1,93 @@
+// ============================================================
+// HIS Design System - Monitor Theme (Sentry Dark)
+// Based on DESIGN.md Monitor Section
+// ============================================================
+
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.monitor-theme {
+  --monitor-canvas: #{$color-monitor-canvas-dark};
+  --monitor-night: #{$color-monitor-night};
+  --monitor-accent-lime: #{$color-monitor-accent-lime};
+  --monitor-accent-pink: #{$color-monitor-accent-pink};
+  --monitor-accent-violet: #{$color-monitor-accent-violet};
+  --monitor-text: #{$color-inverse-ink};
+  --monitor-text-muted: #{$color-monitor-on-dark-muted};
+  --monitor-border: #{$color-monitor-hairline-violet};
+
+  background-color: $color-monitor-canvas-dark;
+  color: $color-inverse-ink;
+  min-height: 100vh;
+
+  // Override Element Plus for dark theme
+  --el-bg-color: #{$color-monitor-canvas-dark};
+  --el-bg-color-page: #{$color-monitor-canvas-dark};
+  --el-text-color-primary: #{$color-inverse-ink};
+  --el-text-color-regular: #{$color-monitor-on-dark-muted};
+  --el-text-color-secondary: #{$color-monitor-on-dark-muted};
+  --el-border-color: #{$color-monitor-hairline-violet};
+  --el-fill-color: #{$color-monitor-ink-deep};
+
+  .el-card {
+    background-color: $color-monitor-ink-deep;
+    border-color: $color-monitor-hairline-violet;
+    color: $color-inverse-ink;
+    border-radius: $radius-md;
+
+    .el-card__header {
+      border-bottom-color: $color-monitor-hairline-violet;
+      color: $color-inverse-ink;
+    }
+  }
+
+  .el-table {
+    --el-table-border-color: #{$color-monitor-hairline-violet};
+    --el-table-header-bg-color: #{$color-monitor-ink-deep};
+    --el-table-row-hover-bg-color: #{$color-monitor-night};
+    --el-table-bg-color: #{$color-monitor-ink-deep};
+    --el-table-text-color: #{$color-inverse-ink};
+    --el-table-header-text-color: #{$color-monitor-on-dark-muted};
+  }
+
+  .el-input__wrapper {
+    background-color: $color-monitor-night;
+    box-shadow: 0 0 0 1px $color-monitor-hairline-violet inset;
+    color: $color-inverse-ink;
+  }
+
+  .monitor-stat-value {
+    font-size: $font-size-display-lg;
+    font-weight: $font-weight-light;
+    color: $color-monitor-accent-lime;
+    line-height: 1.25;
+  }
+
+  .monitor-stat-label {
+    font-size: $font-size-caption;
+    color: $color-monitor-on-dark-muted;
+    letter-spacing: $letter-spacing-caption;
+    text-transform: uppercase;
+    margin-top: $spacing-xxs;
+  }
+
+  .monitor-code-block {
+    background-color: $color-monitor-night;
+    border: 1px solid $color-monitor-hairline-violet;
+    border-radius: $radius-sm;
+    padding: $spacing-md;
+    font-family: $font-family-mono;
+    font-size: $font-size-body;
+    color: $color-inverse-ink;
+    overflow-x: auto;
+  }
+
+  .monitor-alert-pulse {
+    animation: monitor-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes monitor-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+}

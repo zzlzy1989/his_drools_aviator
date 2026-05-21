@@ -100,8 +100,8 @@ public class MonitorService {
         } catch (Exception e) {
             redisAvailable = false;
             log.warn("Redis不可用，使用内存存储: {}", e.getMessage());
-            log.info("MonitorService initialized with in-memory storage");
         }
+        log.info("MonitorService initialized with in-memory storage");
     }
 
     /**

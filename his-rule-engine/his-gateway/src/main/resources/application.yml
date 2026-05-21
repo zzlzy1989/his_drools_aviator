@@ -6,6 +6,15 @@ spring:
     name: his-gateway
   config:
     import: optional:nacos
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:192.168.1.105}:${MYSQL_PORT:3306}/his_rule_engine?characterEncoding=utf8&useUnicode=true&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:testhub123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
   cloud:
     nacos:
       discovery:
@@ -86,8 +95,12 @@ logging:
 
 his:
   jwt:
-    enabled: true  # JWT认证已开启，请通过 /api/v1/auth/login 获取Token
+    enabled: true
     secret: his-rule-engine-secret-key-must-be-at-least-256-bits-long
+    expiration: 86400000
+  auth:
+    max-login-fail-count: 5
+    lock-duration-minutes: 30
   cors:
     allowed-origins:
       - http://localhost:3000

@@ -1,7 +1,7 @@
 # 计划跟踪索引
 
 > 自动生成的计划跟踪索引
-> 最后更新: 2026-05-19
+> 最后更新: 2026-05-20
 
 ---
 
@@ -9,7 +9,7 @@
 
 | 计划 ID | 标题 | 类型 | 状态 | 阶段 | 创建时间 | 文件 |
 |---------|------|------|------|------|---------|------|
-| PLAN-20260519-002 | DESIGN.md 前端设计系统集成 | feature | pending | Phase 6 | 2026-05-19 10:00:00 | [链接](active/2026-05-19-feature-design-md-integration.md) |
+| PLAN-20260520-001 | 登录功能完整实现 | feature | in_progress | Phase 1 | 2026-05-20 14:00:00 | [链接](active/2026-05-20-login-auth-implementation.md) |
 
 ## 已完成计划 (completed/)
 
@@ -32,6 +32,7 @@
 | PLAN-20260518-001 | Phase 10 遗留问题修复 | bugfix + feature | 2026-05-18 | [链接](completed/2026-05-18-phase10-remaining-fixes.md) |
 | PLAN-20260518-002 | Phase 11 统一整改计划 | bugfix + feature + quality | 2026-05-18 | [链接](completed/2026-05-18-phase11-unified-remediation.md) |
 | PLAN-20260519-001 | Phase 4-5 增强功能开发 | feature | 2026-05-19 | [链接](completed/2026-05-19-phase4-5-remaining-features.md) |
+| PLAN-20260519-002 | DESIGN.md 前端设计系统集成 | feature | 2026-05-20 | [链接](active/2026-05-19-feature-design-md-integration.md) |
 
 ## 已归档 (archived/)
 
@@ -51,9 +52,9 @@
 
 | 状态 | 数量 |
 |------|------|
-| 活跃 (pending) | 1 |
+| 活跃 (pending) | 0 |
 | 进行中 (in_progress) | 0 |
-| 已完成 (completed) | 17 |
+| 已完成 (completed) | 18 |
 | 已归档 (archived) | 6 |
 | **总计** | **24** |
 

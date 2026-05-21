@@ -1,15 +1,14 @@
 <template>
-  <el-container class="layout-container">
-    <el-aside width="200px">
-      <div class="logo">
-        <h3>HIS规则中台</h3>
+  <el-container class="his-layout">
+    <el-aside :width="sidebarWidth" class="his-layout__sidebar">
+      <div class="his-layout__logo">
+        <span class="his-layout__logo-icon">HIS</span>
+        <h3 class="his-layout__logo-text">规则中台</h3>
       </div>
       <el-menu
         :default-active="activeMenu"
         router
-        background-color="#304156"
-        text-color="#bfcbd9"
-        active-text-color="#409EFF"
+        class="his-layout__menu"
       >
         <el-menu-item index="/dashboard">
           <el-icon><HomeFilled /></el-icon>
@@ -69,31 +68,31 @@
         </el-sub-menu>
       </el-menu>
     </el-aside>
-    <el-container>
-      <el-header>
-        <div class="header-content">
+    <el-container class="his-layout__main-container">
+      <el-header class="his-layout__header" height="48px">
+        <div class="his-layout__header-left">
           <el-breadcrumb separator="/">
             <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
             <el-breadcrumb-item v-if="$route.meta.title">
               {{ $route.meta.title }}
             </el-breadcrumb-item>
           </el-breadcrumb>
-          <div class="header-actions">
-            <el-dropdown @command="handleCommand">
-              <span class="user-info">
-                <el-icon><User /></el-icon>
-                <span>{{ currentUser }}</span>
-              </span>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="logout">退出登录</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </div>
+        </div>
+        <div class="his-layout__header-right">
+          <el-dropdown @command="handleCommand">
+            <span class="his-layout__user">
+              <el-icon><User /></el-icon>
+              <span>{{ currentUser }}</span>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
       </el-header>
-      <el-main>
+      <el-main class="his-layout__content">
         <router-view />
       </el-main>
     </el-container>
@@ -111,6 +110,7 @@ import {
 const router = useRouter()
 const route = useRoute()
 
+const sidebarWidth = '200px'
 const activeMenu = computed(() => route.path)
 const currentUser = computed(() => localStorage.getItem('userId') || 'admin')
 
@@ -123,62 +123,131 @@ function handleCommand(command: string) {
 </script>
 
 <style lang="scss" scoped>
-.layout-container {
+
+.his-layout {
   width: 100%;
   height: 100vh;
 }
 
-.el-aside {
-  background-color: #304156;
-
-  .logo {
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #263445;
-
-    h3 {
-      color: #fff;
-      margin: 0;
-      font-size: 16px;
-      font-weight: 500;
-    }
-  }
+.his-layout__sidebar {
+  background-color: $color-inverse-canvas;
+  width: $sidebar-width;
+  overflow-y: auto;
+  overflow-x: hidden;
 
   .el-menu {
     border-right: none;
+    background-color: $color-inverse-canvas;
+    color: $color-inverse-ink-muted;
+
+    --el-menu-bg-color: #{$color-inverse-canvas};
+    --el-menu-text-color: #{$color-inverse-ink-muted};
+    --el-menu-active-color: #{$color-on-primary};
+    --el-menu-hover-bg-color: #{$color-inverse-surface-1};
+
+    .el-menu-item {
+      height: 40px;
+      line-height: 40px;
+      font-size: $font-size-body;
+      letter-spacing: $letter-spacing-body;
+
+      &:hover {
+        background-color: $color-inverse-surface-1;
+        color: $color-inverse-ink;
+      }
+
+      &.is-active {
+        background-color: $color-primary;
+        color: $color-on-primary;
+      }
+    }
+
+    .el-sub-menu {
+      .el-sub-menu__title {
+        height: 40px;
+        line-height: 40px;
+        color: $color-inverse-ink-muted;
+
+        &:hover {
+          background-color: $color-inverse-surface-1;
+          color: $color-inverse-ink;
+        }
+      }
+    }
   }
 }
 
-.el-header {
-  background-color: #fff;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
-  padding: 0 16px;
+.his-layout__logo {
+  height: $header-height;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  background-color: $color-inverse-surface-1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
 
-  .header-content {
-    height: 100%;
+.his-layout__logo-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background-color: $color-primary;
+  color: $color-on-primary;
+  font-size: $font-size-caption;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.5px;
+}
+
+.his-layout__logo-text {
+  color: $color-inverse-ink;
+  margin: 0;
+  font-size: $font-size-body-lg;
+  font-weight: $font-weight-regular;
+  letter-spacing: $letter-spacing-body;
+}
+
+.his-layout__main-container {
+  flex-direction: column;
+}
+
+.his-layout__header {
+  background-color: $color-canvas;
+  border-bottom: 1px solid $color-hairline;
+  padding: 0 $spacing-md;
+  height: $header-height;
+  display: flex;
+  align-items: center;
+
+  .his-layout__header-left,
+  .his-layout__header-right {
     display: flex;
     align-items: center;
-    justify-content: space-between;
   }
 
-  .header-actions {
-    display: flex;
-    align-items: center;
-  }
-
-  .user-info {
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    color: #333;
+  .his-layout__header-left {
+    flex: 1;
   }
 }
 
-.el-main {
-  background-color: #f0f2f5;
-  padding: 16px;
+.his-layout__user {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xxs;
+  color: $color-ink-secondary;
+  font-size: $font-size-body;
+  letter-spacing: $letter-spacing-body;
+
+  &:hover {
+    color: $color-ink;
+  }
+}
+
+.his-layout__content {
+  background-color: $color-surface-1;
+  padding: $spacing-md;
+  overflow-y: auto;
 }
 </style>
