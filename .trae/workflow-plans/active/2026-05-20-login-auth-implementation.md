@@ -1,10 +1,10 @@
 ---
 title: "登录功能完整实现：数据库认证 + 密码加密 + 安全防护"
 type: "feature"
-status: "in_progress"
+status: "completed"
 created_at: "2026-05-20 14:00:00"
 updated_at: "2026-05-21 07:50:00"
-completed_at: null
+completed_at: "2026-05-21 15:54:00"
 phase: "Phase 1"
 owner: "developer"
 reviewer: ""
@@ -357,6 +357,7 @@ AuthController
 | 2026-05-21 07:49 | Step 6 完成 | ✅ | AuthController 重构为响应式（Mono+Schedulers.boundedElastic） |
 | 2026-05-21 07:50 | Step 7 完成 | ✅ | 前端 Login.vue 使用 loginApi + userStore，auth.ts API 封装 |
 | 2026-05-21 07:50 | Step 8 进行中 | 🔄 | 后端编译✅ 前端构建✅，运行时测试待完成（端口9000被旧进程占用） |
+| 2026-05-21 15:54 | Step 8 完成 | ✅ | 运行时功能测试全部通过 |
 
 ---
 
@@ -370,8 +371,7 @@ AuthController
 - [x] AuthController 重构完成
 - [x] 前端登录对接优化完成
 - [x] 构建验证通过（后端 Maven compile ✅，前端 Vite build ✅）
-- [ ] 运行时功能测试（需重启 Gateway 服务）
-- [ ] 安全测试
+- [x] 运行时功能测试通过（admin/operator01 登录成功、错误密码返回 HIS-A05、SQL注入/XSS防护验证）
 
 ---
 
