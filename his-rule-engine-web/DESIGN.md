@@ -1,221 +1,286 @@
 ---
-version: "1.0"
+version: "2.0"
 name: HIS-Rule-Engine-Design-System
 description: >
-  HIS 动态规则中台设计系统 — 基于 IBM Carbon 企业级框架，融合医疗行业语义色，
-  集成 Sentry 深色监控大屏风格和 Stripe 金融结算风格。
-  管理后台采用 Carbon 方正美学（0px圆角、IBM Blue主色、hairline边框），
-  监控大屏采用 Sentry 深色画布（Electric Lime高亮、数据密集），
-  结算页面采用 Stripe 金融精致感（Indigo渐变、tabular数字排版）。
+  HIS 动态规则中台设计系统 — 基于 Apple 设计语言，融合医疗行业语义色，
+  集成 Apple 暗色监控大屏风格和 Apple 金融结算风格。
+  管理后台采用 Apple 极简美学（pill胶囊按钮、SF Pro负字距标题、Action Blue主色、大面积留白），
+  监控大屏采用 Apple 暗色tile画布（Sky Link Blue高亮、数据密集），
+  结算页面采用 Apple 金融精致感（tabular等宽数字排版、近黑色头部、18px圆角卡片）。
 
 colors:
-  primary: "#0f62fe"
-  primary-hover: "#0050e6"
-  primary-press: "#0043ce"
-  primary-deep: "#002d9c"
+  primary: "#0066cc"
+  primary-focus: "#0071e3"
+  primary-on-dark: "#2997ff"
   on-primary: "#ffffff"
-  ink: "#161616"
-  ink-secondary: "#525252"
-  ink-muted: "#8c8c8c"
+  ink: "#1d1d1f"
+  ink-secondary: "#333333"
+  ink-muted: "#7a7a7a"
   canvas: "#ffffff"
-  surface-1: "#f4f4f4"
-  surface-2: "#e0e0e0"
-  inverse-canvas: "#161616"
-  inverse-surface-1: "#262626"
-  inverse-ink: "#ffffff"
-  inverse-ink-muted: "#c6c6c6"
+  canvas-parchment: "#f5f5f7"
+  surface-pearl: "#fafafc"
+  surface-tile-1: "#272729"
+  surface-tile-2: "#2a2a2c"
+  surface-tile-3: "#252527"
+  surface-black: "#000000"
+  surface-chip-translucent: "#d2d2d7"
+  divider-soft: "#f0f0f0"
   hairline: "#e0e0e0"
-  hairline-strong: "#161616"
-  semantic-pass: "#24a148"
-  semantic-pass-bg: "#defbe6"
-  semantic-warn: "#b28600"
-  semantic-warn-bg: "#fff8e1"
-  semantic-block: "#da1e28"
-  semantic-block-bg: "#fff1f1"
-  semantic-info: "#0f62fe"
-  semantic-info-bg: "#edf5ff"
-  status-draft: "#8c8c8c"
-  status-draft-bg: "#e0e0e0"
-  status-published: "#24a148"
-  status-published-bg: "#defbe6"
-  status-disabled: "#525252"
-  status-disabled-bg: "#f4f4f4"
-  status-validating: "#0f62fe"
-  status-validating-bg: "#edf5ff"
-  medical-blue: "#0f62fe"
-  medical-blue-deep: "#0043ce"
-  monitor-canvas-dark: "#1f1633"
-  monitor-night: "#150f23"
-  monitor-ink-deep: "#1f1633"
-  monitor-accent-lime: "#c2ef4e"
-  monitor-accent-pink: "#fa7faa"
-  monitor-accent-violet: "#6a5fc1"
-  monitor-accent-violet-deep: "#422082"
-  monitor-on-dark-muted: "#bdb8c0"
-  monitor-hairline-violet: "#362d59"
-  settlement-primary: "#533afd"
-  settlement-primary-deep: "#4434d4"
-  settlement-primary-soft: "#665efd"
-  settlement-ink: "#0d253d"
-  settlement-ink-secondary: "#273951"
-  settlement-canvas-soft: "#f6f9fc"
-  settlement-hairline: "#e3e8ee"
+  body-on-dark: "#ffffff"
+  body-muted-on-dark: "#cccccc"
+  semantic-pass: "#34c759"
+  semantic-pass-bg: "#e8f9ed"
+  semantic-warn: "#ff9f0a"
+  semantic-warn-bg: "#fff5e5"
+  semantic-block: "#ff3b30"
+  semantic-block-bg: "#ffe5e3"
+  semantic-info: "#0066cc"
+  semantic-info-bg: "#e5f0ff"
+  status-draft: "#7a7a7a"
+  status-draft-bg: "#f5f5f7"
+  status-published: "#34c759"
+  status-published-bg: "#e8f9ed"
+  status-disabled: "#333333"
+  status-disabled-bg: "#f5f5f7"
+  status-validating: "#0066cc"
+  status-validating-bg: "#e5f0ff"
+  medical-blue: "#0066cc"
+  medical-blue-deep: "#004999"
+  monitor-canvas-dark: "#1d1d1f"
+  monitor-surface-card: "#1c1c1e"
+  monitor-surface-elevated: "#2c2c2e"
+  monitor-surface-elevated-2: "#3a3a3c"
+  monitor-ink-on-dark: "#ffffff"
+  monitor-ink-on-dark-secondary: "#cccccc"
+  monitor-ink-on-dark-muted: "#8e8e93"
+  monitor-ink-on-dark-faint: "#48484a"
+  monitor-accent-lime: "#30d158"
+  monitor-accent-green: "#34c759"
+  monitor-accent-orange: "#ff9f0a"
+  monitor-accent-pink: "#ff375f"
+  monitor-accent-violet: "#bf5af2"
+  monitor-accent-teal: "#64d2ff"
+  monitor-hairline-dark: "#38383a"
+  monitor-hairline-dark-subtle: "#2c2c2e"
+  monitor-semantic-pass: "#30d158"
+  monitor-semantic-pass-bg: "rgba(48, 209, 88, 0.15)"
+  monitor-semantic-warn: "#ff9f0a"
+  monitor-semantic-warn-bg: "rgba(255, 159, 10, 0.15)"
+  monitor-semantic-block: "#ff453a"
+  monitor-semantic-block-bg: "rgba(255, 69, 58, 0.15)"
+  monitor-semantic-info: "#2997ff"
+  monitor-semantic-info-bg: "rgba(41, 151, 255, 0.15)"
+  settlement-primary: "#0066cc"
+  settlement-primary-deep: "#004999"
+  settlement-primary-soft: "#3399ff"
+  settlement-ink: "#1d1d1f"
+  settlement-ink-secondary: "#333333"
+  settlement-canvas-soft: "#f5f5f7"
+  settlement-hairline: "#e0e0e0"
 
 typography:
-  display-xl:
-    fontFamily: "IBM Plex Sans, 'PingFang SC', 'Microsoft YaHei', sans-serif"
-    fontSize: 42px
-    fontWeight: 300
-    lineHeight: 1.20
-    letterSpacing: 0
+  hero-display:
+    fontFamily: "SF Pro Display, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+    fontSize: 56px
+    fontWeight: 600
+    lineHeight: 1.07
+    letterSpacing: -0.28px
   display-lg:
-    fontFamily: "IBM Plex Sans, 'PingFang SC', 'Microsoft YaHei', sans-serif"
-    fontSize: 32px
-    fontWeight: 300
-    lineHeight: 1.25
+    fontFamily: "SF Pro Display, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+    fontSize: 40px
+    fontWeight: 600
+    lineHeight: 1.10
     letterSpacing: 0
-  headline:
-    fontFamily: "IBM Plex Sans, 'PingFang SC', 'Microsoft YaHei', sans-serif"
-    fontSize: 24px
+  display-md:
+    fontFamily: "SF Pro Text, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+    fontSize: 34px
+    fontWeight: 600
+    lineHeight: 1.47
+    letterSpacing: -0.374px
+  lead:
+    fontFamily: "SF Pro Display, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+    fontSize: 28px
     fontWeight: 400
-    lineHeight: 1.33
-    letterSpacing: 0
-  subhead:
-    fontFamily: "IBM Plex Sans, 'PingFang SC', 'Microsoft YaHei', sans-serif"
-    fontSize: 20px
-    fontWeight: 400
-    lineHeight: 1.40
-    letterSpacing: 0
-  body-lg:
-    fontFamily: "IBM Plex Sans, 'PingFang SC', 'Microsoft YaHei', sans-serif"
-    fontSize: 16px
-    fontWeight: 400
-    lineHeight: 1.50
-    letterSpacing: 0
+    lineHeight: 1.14
+    letterSpacing: 0.196px
+  tagline:
+    fontFamily: "SF Pro Display, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+    fontSize: 21px
+    fontWeight: 600
+    lineHeight: 1.19
+    letterSpacing: 0.231px
+  body-strong:
+    fontFamily: "SF Pro Text, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+    fontSize: 17px
+    fontWeight: 600
+    lineHeight: 1.24
+    letterSpacing: -0.374px
   body:
-    fontFamily: "IBM Plex Sans, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+    fontFamily: "SF Pro Text, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+    fontSize: 17px
+    fontWeight: 400
+    lineHeight: 1.47
+    letterSpacing: -0.374px
+  caption:
+    fontFamily: "SF Pro Text, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
     fontSize: 14px
     fontWeight: 400
-    lineHeight: 1.50
-    letterSpacing: 0.16px
-  body-emphasis:
-    fontFamily: "IBM Plex Sans, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+    lineHeight: 1.43
+    letterSpacing: -0.224px
+  caption-strong:
+    fontFamily: "SF Pro Text, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
     fontSize: 14px
     fontWeight: 600
     lineHeight: 1.29
-    letterSpacing: 0.16px
-  caption:
-    fontFamily: "IBM Plex Sans, 'PingFang SC', 'Microsoft YaHei', sans-serif"
-    fontSize: 12px
-    fontWeight: 400
-    lineHeight: 1.33
-    letterSpacing: 0.32px
+    letterSpacing: -0.224px
   button:
-    fontFamily: "IBM Plex Sans, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+    fontFamily: "SF Pro Text, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+    fontSize: 17px
+    fontWeight: 400
+    lineHeight: 1.0
+    letterSpacing: 0
+  button-utility:
+    fontFamily: "SF Pro Text, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
     fontSize: 14px
     fontWeight: 400
     lineHeight: 1.29
-    letterSpacing: 0.16px
+    letterSpacing: -0.224px
   code:
-    fontFamily: "IBM Plex Mono, Monaco, Menlo, 'Courier New', monospace"
+    fontFamily: "SF Mono, Monaco, Menlo, 'Courier New', monospace"
     fontSize: 14px
     fontWeight: 400
     lineHeight: 1.50
     letterSpacing: 0
   tabular:
-    fontFamily: "IBM Plex Mono, Monaco, Menlo, 'Courier New', monospace"
-    fontSize: 14px
+    fontFamily: "SF Pro Display, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+    fontSize: 17px
     fontWeight: 400
-    lineHeight: 1.50
-    letterSpacing: -0.42px
-    fontFeature: "tnum"
+    lineHeight: 1.47
+    letterSpacing: -0.374px
+    fontFeature: tnum
+  tabular-large:
+    fontFamily: "SF Pro Display, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+    fontSize: 34px
+    fontWeight: 600
+    lineHeight: 1.0
+    letterSpacing: -0.374px
+    fontFeature: tnum
+  fine-print:
+    fontFamily: "SF Pro Text, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+    fontSize: 12px
+    fontWeight: 400
+    lineHeight: 1.0
+    letterSpacing: -0.12px
+  nav-link:
+    fontFamily: "SF Pro Text, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+    fontSize: 12px
+    fontWeight: 400
+    lineHeight: 1.0
+    letterSpacing: -0.12px
+  stat-value:
+    fontFamily: "SF Pro Display, system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif"
+    fontSize: 48px
+    fontWeight: 600
+    lineHeight: 1.0
+    letterSpacing: -0.28px
 
 rounded:
   none: 0px
-  xs: 2px
-  sm: 4px
-  md: 6px
-  lg: 8px
+  xs: 5px
+  sm: 8px
+  md: 11px
+  lg: 18px
   pill: 9999px
+  full: 9999px
 
 spacing:
   xxs: 4px
   xs: 8px
   sm: 12px
-  md: 16px
+  md: 17px
   lg: 24px
   xl: 32px
   xxl: 48px
-  section: 96px
+  section: 80px
 
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.on-primary}"
     typography: "{typography.button}"
-    rounded: "{rounded.none}"
-    padding: 12px 16px
-  button-primary-hover:
-    backgroundColor: "{colors.primary-hover}"
+    rounded: "{rounded.pill}"
+    padding: 11px 22px
+  button-primary-focus:
+    backgroundColor: "{colors.primary}"
     textColor: "{colors.on-primary}"
-    typography: "{typography.button}"
-    rounded: "{rounded.none}"
-  button-primary-press:
-    backgroundColor: "{colors.primary-press}"
+    rounded: "{rounded.pill}"
+  button-primary-active:
+    backgroundColor: "{colors.primary}"
     textColor: "{colors.on-primary}"
+    rounded: "{rounded.pill}"
+  button-secondary-pill:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.primary}"
     typography: "{typography.button}"
-    rounded: "{rounded.none}"
-  button-secondary:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.inverse-ink}"
-    typography: "{typography.button}"
-    rounded: "{rounded.none}"
-    padding: 12px 16px
+    rounded: "{rounded.pill}"
+    padding: 11px 22px
   button-ghost:
     backgroundColor: transparent
     textColor: "{colors.primary}"
     typography: "{typography.button}"
-    rounded: "{rounded.none}"
-    padding: 12px 16px
+    rounded: "{rounded.pill}"
+    padding: 11px 22px
   button-danger:
     backgroundColor: "{colors.semantic-block}"
     textColor: "{colors.on-primary}"
     typography: "{typography.button}"
-    rounded: "{rounded.none}"
-    padding: 12px 16px
+    rounded: "{rounded.pill}"
+    padding: 11px 22px
+  button-dark-utility:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.body-on-dark}"
+    typography: "{typography.button-utility}"
+    rounded: "{rounded.sm}"
+    padding: 8px 15px
+  button-pearl-capsule:
+    backgroundColor: "{colors.surface-pearl}"
+    textColor: "{colors.ink-secondary}"
+    typography: "{typography.caption}"
+    rounded: "{rounded.md}"
+    padding: 8px 14px
   text-input:
-    backgroundColor: "{colors.surface-1}"
+    backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
     typography: "{typography.body}"
-    rounded: "{rounded.none}"
-    padding: 11px 16px
+    rounded: "{rounded.sm}"
+    padding: 8px 12px
     border: "1px solid {colors.hairline}"
   text-input-focused:
-    backgroundColor: "{colors.surface-1}"
+    backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
     typography: "{typography.body}"
-    rounded: "{rounded.none}"
-    padding: 11px 16px
-    border: "2px solid {colors.primary}"
+    rounded: "{rounded.sm}"
+    padding: 8px 12px
+    border: "2px solid {colors.primary-focus}"
   text-input-error:
-    backgroundColor: "{colors.surface-1}"
+    backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
     typography: "{typography.body}"
-    rounded: "{rounded.none}"
-    padding: 11px 16px
+    rounded: "{rounded.sm}"
+    padding: 8px 12px
     border: "2px solid {colors.semantic-block}"
   feature-card:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
     typography: "{typography.body}"
-    rounded: "{rounded.none}"
+    rounded: "{rounded.lg}"
     padding: 24px
     border: "1px solid {colors.hairline}"
   stat-card:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
     typography: "{typography.body}"
-    rounded: "{rounded.none}"
+    rounded: "{rounded.lg}"
     padding: 24px
     border: "1px solid {colors.hairline}"
   stat-card-value:
@@ -227,94 +292,96 @@ components:
   result-level-tag-pass:
     backgroundColor: "{colors.semantic-pass-bg}"
     textColor: "{colors.semantic-pass}"
-    typography: "{typography.body-emphasis}"
-    rounded: "{rounded.xs}"
-    padding: 2px 8px
+    typography: "{typography.caption-strong}"
+    rounded: "{rounded.pill}"
+    padding: 4px 12px
   result-level-tag-warn:
     backgroundColor: "{colors.semantic-warn-bg}"
     textColor: "{colors.semantic-warn}"
-    typography: "{typography.body-emphasis}"
-    rounded: "{rounded.xs}"
-    padding: 2px 8px
+    typography: "{typography.caption-strong}"
+    rounded: "{rounded.pill}"
+    padding: 4px 12px
   result-level-tag-block:
     backgroundColor: "{colors.semantic-block-bg}"
     textColor: "{colors.semantic-block}"
-    typography: "{typography.body-emphasis}"
-    rounded: "{rounded.xs}"
-    padding: 2px 8px
+    typography: "{typography.caption-strong}"
+    rounded: "{rounded.pill}"
+    padding: 4px 12px
   rule-status-draft:
     backgroundColor: "{colors.status-draft-bg}"
     textColor: "{colors.status-draft}"
-    typography: "{typography.body-emphasis}"
-    rounded: "{rounded.xs}"
-    padding: 2px 8px
+    typography: "{typography.caption-strong}"
+    rounded: "{rounded.pill}"
+    padding: 4px 12px
   rule-status-published:
     backgroundColor: "{colors.status-published-bg}"
     textColor: "{colors.status-published}"
-    typography: "{typography.body-emphasis}"
-    rounded: "{rounded.xs}"
-    padding: 2px 8px
+    typography: "{typography.caption-strong}"
+    rounded: "{rounded.pill}"
+    padding: 4px 12px
   rule-status-disabled:
     backgroundColor: "{colors.status-disabled-bg}"
     textColor: "{colors.status-disabled}"
-    typography: "{typography.body-emphasis}"
-    rounded: "{rounded.xs}"
-    padding: 2px 8px
+    typography: "{typography.caption-strong}"
+    rounded: "{rounded.pill}"
+    padding: 4px 12px
   rule-status-validating:
     backgroundColor: "{colors.status-validating-bg}"
     textColor: "{colors.status-validating}"
-    typography: "{typography.body-emphasis}"
-    rounded: "{rounded.xs}"
-    padding: 2px 8px
-  top-nav:
-    backgroundColor: "{colors.canvas}"
+    typography: "{typography.caption-strong}"
+    rounded: "{rounded.pill}"
+    padding: 4px 12px
+  global-nav:
+    backgroundColor: "{colors.surface-black}"
+    textColor: "{colors.body-on-dark}"
+    typography: "{typography.nav-link}"
+    height: 44px
+  sub-nav-frosted:
+    backgroundColor: "{colors.canvas-parchment}"
     textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    rounded: "{rounded.none}"
-    height: 48px
-    borderBottom: "1px solid {colors.hairline}"
+    typography: "{typography.tagline}"
+    height: 52px
   sidebar:
-    backgroundColor: "{colors.inverse-canvas}"
-    textColor: "{colors.inverse-ink-muted}"
+    backgroundColor: "{colors.canvas-parchment}"
+    textColor: "{colors.ink-muted}"
     typography: "{typography.body}"
     rounded: "{rounded.none}"
-    width: 200px
+    width: 220px
   sidebar-item:
     backgroundColor: transparent
-    textColor: "{colors.inverse-ink-muted}"
+    textColor: "{colors.ink-muted}"
     typography: "{typography.body}"
-    rounded: "{rounded.none}"
-    padding: 12px 16px
+    rounded: "{rounded.md}"
+    padding: 8px 14px
   sidebar-item-active:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.on-primary}"
-    typography: "{typography.body-emphasis}"
-    rounded: "{rounded.none}"
-    padding: 12px 16px
-  footer:
-    backgroundColor: "{colors.inverse-canvas}"
-    textColor: "{colors.inverse-ink-muted}"
-    typography: "{typography.caption}"
-    rounded: "{rounded.none}"
-    padding: 64px 32px
-  monitor-card:
-    backgroundColor: "{colors.monitor-ink-deep}"
-    textColor: "{colors.inverse-ink}"
-    typography: "{typography.body-lg}"
+    typography: "{typography.body-strong}"
     rounded: "{rounded.md}"
+    padding: 8px 14px
+  footer:
+    backgroundColor: "{colors.canvas-parchment}"
+    textColor: "{colors.ink-secondary}"
+    typography: "{typography.fine-print}"
+    padding: 64px
+  monitor-card:
+    backgroundColor: "{colors.monitor-surface-card}"
+    textColor: "{colors.monitor-ink-on-dark}"
+    typography: "{typography.body}"
+    rounded: "{rounded.lg}"
     padding: 24px
-    border: "1px solid {colors.monitor-hairline-violet}"
+    border: "1px solid {colors.monitor-hairline-dark}"
   monitor-stat-value:
-    typography: "{typography.display-lg}"
+    typography: "{typography.stat-value}"
     textColor: "{colors.monitor-accent-lime}"
   monitor-stat-label:
     typography: "{typography.caption}"
-    textColor: "{colors.monitor-on-dark-muted}"
+    textColor: "{colors.monitor-ink-on-dark-muted}"
   monitor-code-block:
-    backgroundColor: "{colors.monitor-night}"
-    textColor: "{colors.inverse-ink}"
+    backgroundColor: "{colors.surface-black}"
+    textColor: "{colors.monitor-ink-on-dark}"
     typography: "{typography.code}"
-    rounded: "{rounded.sm}"
+    rounded: "{rounded.md}"
     padding: 16px
   settlement-card:
     backgroundColor: "{colors.canvas}"
@@ -324,313 +391,353 @@ components:
     padding: 32px
     border: "1px solid {colors.settlement-hairline}"
   settlement-amount:
-    typography: "{typography.tabular}"
+    typography: "{typography.tabular-large}"
     textColor: "{colors.settlement-ink}"
+  settlement-amount-label:
+    typography: "{typography.caption}"
+    textColor: "{colors.ink-muted}"
   settlement-header:
-    backgroundColor: "linear-gradient(135deg, {colors.settlement-primary}, {colors.settlement-primary-deep})"
-    textColor: "{colors.on-primary}"
-    typography: "{typography.headline}"
+    backgroundColor: "{colors.surface-tile-1}"
+    textColor: "{colors.body-on-dark}"
+    typography: "{typography.lead}"
     rounded: "{rounded.lg}"
     padding: 32px
+
 ---
 
 ## 1. Overview
 
-HIS 动态规则中台的设计系统基于 **IBM Carbon Design System** 构建，融合了三种视觉风格以适配不同业务场景：
+HIS 动态规则中台的设计系统基于 **Apple 设计语言** 构建，融合了三种视觉风格以适配不同业务场景：
 
-**管理后台（Carbon 风格）**：方正美学是核心 — 0px 圆角、hairline 1px 边框、无阴影。IBM Blue (`#0f62fe`) 作为唯一的品牌强调色，承载所有链接、主操作按钮和聚焦态。白色画布 + 浅灰 surface-1 + 炭黑 ink 覆盖 95% 的表面。层次通过 1px 发丝线和表面色变化传达，而非投影。IBM Plex Sans 在 42px 显示尺寸使用 weight 300（轻量显示是品牌声音），14px 正文使用 weight 400 + 0.16px letter-spacing。
+**管理后台（Apple 极简风格）**：内容为先的极简美学是核心 — pill 胶囊按钮、SF Pro Display 负字距标题、大面积留白。Action Blue (`#0066cc`) 作为唯一的品牌交互色，承载所有链接、主操作按钮和聚焦态。白色画布 + 羊皮纸灰白 (`#f5f5f7`) + 近黑 ink (`#1d1d1f`) 覆盖 95% 的表面。层次通过表面色变化和交替明暗 tile 传达，而非投影。SF Pro Display 在 56px 显示尺寸使用 weight 600 + -0.28px letter-spacing（Apple 紧凑标题是品牌声音），17px 正文使用 weight 400 + -0.374px letter-spacing。
 
-**监控大屏（Sentry 风格）**：深紫午夜画布 (`#1f1633`)，Electric Lime (`#c2ef4e`) 高亮关键数据指标，Hot Pink (`#fa7faa`) 作为辅助标点色。数据密集型布局，卡片使用深色表面 + 紫色发丝线边框。代码/日志区域使用等宽字体 code-block 样式。
+**监控大屏（Apple 暗色风格）**：近黑色画布 (`#1d1d1f`)，Sky Link Blue (`#2997ff`) 高亮关键数据指标，Apple Green (`#30d158`) 作为健康/通过标点色。数据密集型布局，卡片使用暗色表面 + 微妙分隔线。代码/日志区域使用 SF Mono 等宽字体。微妙色阶层次通过 2-3 个色阶差异传达深度。
 
-**结算页面（Stripe 风格）**：Indigo 紫 (`#533afd`) 作为金融主色，tabular 等宽数字排版用于金额展示，柔和的 canvas-soft (`#f6f9fc`) 背景，圆角卡片 (8px) 带来金融级精致感。渐变头部使用 primary → primary-deep 渐变。
+**结算页面（Apple 金融风格）**：Action Blue (`#0066cc`) 作为金融主色，tabular 等宽数字排版（`tnum` OpenType 特性）用于金额展示，柔和的 canvas-parchment (`#f5f5f7`) 背景，18px 圆角卡片带来金融级精致感。近黑色头部区域创造沉稳金融权威感。
 
 **Key Characteristics:**
-- Carbon 方正美学：所有管理后台组件 0px 圆角，深度通过表面色和发丝线传达
-- 轻量显示字体：Plex Sans weight 300 用于 24px+ 标题，安静权威
-- 单一品牌色：IBM Blue 承载所有主操作，避免多色干扰
-- 医疗语义色扩展：PASS(绿)/WARN(黄)/BLOCK(红) 三级审核结果色，规则状态色
+- Apple 极简美学：pill 胶囊按钮、负字距标题、大面积留白
+- 负字距标题是品牌声音：SF Pro Display weight 600 + 负字距用于 28px+ 标题
+- 单一品牌色：Action Blue 承载所有主操作，避免多色干扰
+- 医疗语义色扩展：PASS(绿)/WARN(橙)/BLOCK(红) 三级审核结果色，规则状态色
 - 多主题隔离：管理后台(亮色)、监控大屏(暗色)、结算(金融) 通过 CSS 变量 + 作用域类名切换
 - 4px 基准网格：所有间距对齐 4px 网格
 
 ## 2. Colors
 
-### 2.1 管理后台 — Carbon 调色板
+### 2.1 管理后台 — Apple 调色板
 
 > 适用页面：规则管理、公式管理、规则组、用药审核、质控管理、DRG管理、系统管理、登录
 
 #### Brand & Accent
-- **IBM Blue** (`{colors.primary}` — `#0f62fe`): 唯一品牌强调色。链接、主按钮、聚焦环、CTA 横幅。
-- **Blue Hover** (`{colors.primary-hover}` — `#0050e6`): 主按钮悬停态。
-- **Blue Press** (`{colors.primary-press}` — `#0043ce`): 主按钮按下态。
-- **Blue Deep** (`{colors.primary-deep}` — `#002d9c`): 深层强调，极少使用。
+- **Action Blue** (`{colors.primary}` — `#0066cc`): 唯一品牌交互色。链接、主按钮、聚焦环、CTA。
+- **Focus Blue** (`{colors.primary-focus}` — `#0071e3`): 键盘聚焦环，略亮于 Action Blue。
+- **Sky Link Blue** (`{colors.primary-on-dark}` — `#2997ff`): 暗色表面上的链接色。
 
 #### Surface
 - **Canvas** (`{colors.canvas}` — `#ffffff`): 默认页面背景。
-- **Surface 1** (`{colors.surface-1}` — `#f4f4f4`): 输入框、交替行条纹、微妙区域带。
-- **Surface 2** (`{colors.surface-2}` — `#e0e0e0`): 禁用字段、分隔线填充。
+- **Canvas Parchment** (`{colors.canvas-parchment}` — `#f5f5f7`): Apple 标志性灰白，交替亮色 tile、footer。
+- **Surface Pearl** (`{colors.surface-pearl}` — `#fafafc`): 次要按钮填充。
+- **Surface Tile 1** (`{colors.surface-tile-1}` — `#272729`): 主暗色 tile 表面。
+- **Surface Tile 2** (`{colors.surface-tile-2}` — `#2a2a2c`): 微亮一步的暗色 tile。
+- **Surface Tile 3** (`{colors.surface-tile-3}` — `#252527`): 微暗一步的暗色 tile。
+- **Surface Black** (`{colors.surface-black}` — `#000000`): 全局导航栏、视频播放器。
 - **Hairline** (`{colors.hairline}` — `#e0e0e0`): 卡片、输入框、分隔线的 1px 边框。
-- **Hairline Strong** (`{colors.hairline-strong}` — `#161616`): 聚焦输入框的下划线（Carbon 签名聚焦处理）。
+- **Divider Soft** (`{colors.divider-soft}` — `#f0f0f0`): 次要分隔线。
 
 #### Text
-- **Ink** (`{colors.ink}` — `#161616`): 所有标题和强调正文。
-- **Ink Secondary** (`{colors.ink-secondary}` — `#525252`): 二级文字、副标题。
-- **Ink Muted** (`{colors.ink-muted}` — `#8c8c8c`): 三级文字、禁用、辅助文本。
-
-#### Inverse (侧边栏/深色区域)
-- **Inverse Canvas** (`{colors.inverse-canvas}` — `#161616`): 侧边栏背景。
-- **Inverse Surface 1** (`{colors.inverse-surface-1}` — `#262626`): 侧边栏悬停项。
-- **Inverse Ink** (`{colors.inverse-ink}` — `#ffffff`): 侧边栏标题文字。
-- **Inverse Ink Muted** (`{colors.inverse-ink-muted}` — `#c6c6c6`): 侧边栏正文。
+- **Ink** (`{colors.ink}` — `#1d1d1f`): 所有标题和强调正文，近黑而非纯黑。
+- **Ink Secondary** (`{colors.ink-secondary}` — `#333333`): 二级文字。
+- **Ink Muted** (`{colors.ink-muted}` — `#7a7a7a`): 三级文字、禁用、辅助文本。
+- **Body On Dark** (`{colors.body-on-dark}` — `#ffffff`): 暗色表面上的文字。
+- **Body Muted On Dark** (`{colors.body-muted-on-dark}` — `#cccccc`): 暗色表面上的次要文字。
 
 ### 2.2 HIS 业务语义色
 
 #### 审核结果级别 (PASS/WARN/BLOCK)
-- **PASS** — 文字 `{colors.semantic-pass}` `#24a148` / 背景 `{colors.semantic-pass-bg}` `#defbe6`
-- **WARN** — 文字 `{colors.semantic-warn}` `#b28600` / 背景 `{colors.semantic-warn-bg}` `#fff8e1`
-- **BLOCK** — 文字 `{colors.semantic-block}` `#da1e28` / 背景 `{colors.semantic-block-bg}` `#fff1f1`
+- **PASS** — 文字 `{colors.semantic-pass}` `#34c759` / 背景 `{colors.semantic-pass-bg}` `#e8f9ed`
+- **WARN** — 文字 `{colors.semantic-warn}` `#ff9f0a` / 背景 `{colors.semantic-warn-bg}` `#fff5e5`
+- **BLOCK** — 文字 `{colors.semantic-block}` `#ff3b30` / 背景 `{colors.semantic-block-bg}` `#ffe5e3`
 
 #### 规则状态
-- **草稿** — 文字 `{colors.status-draft}` `#8c8c8c` / 背景 `{colors.status-draft-bg}` `#e0e0e0`
-- **已发布** — 文字 `{colors.status-published}` `#24a148` / 背景 `{colors.status-published-bg}` `#defbe6`
-- **已停用** — 文字 `{colors.status-disabled}` `#525252` / 背景 `{colors.status-disabled-bg}` `#f4f4f4`
-- **校验中** — 文字 `{colors.status-validating}` `#0f62fe` / 背景 `{colors.status-validating-bg}` `#edf5ff`
+- **草稿** — 文字 `{colors.status-draft}` `#7a7a7a` / 背景 `{colors.status-draft-bg}` `#f5f5f7`
+- **已发布** — 文字 `{colors.status-published}` `#34c759` / 背景 `{colors.status-published-bg}` `#e8f9ed`
+- **已停用** — 文字 `{colors.status-disabled}` `#333333` / 背景 `{colors.status-disabled-bg}` `#f5f5f7`
+- **校验中** — 文字 `{colors.status-validating}` `#0066cc` / 背景 `{colors.status-validating-bg}` `#e5f0ff`
 
 #### 医疗品牌色
-- **Medical Blue** (`{colors.medical-blue}` — `#0f62fe`): 登录页渐变起点、医疗品牌标识。
-- **Medical Blue Deep** (`{colors.medical-blue-deep}` — `#0043ce`): 登录页渐变终点。
+- **Medical Blue** (`{colors.medical-blue}` — `#0066cc`): 登录页渐变起点、医疗品牌标识。
+- **Medical Blue Deep** (`{colors.medical-blue-deep}` — `#004999`): 登录页渐变终点。
 
-### 2.3 监控大屏 — Sentry 调色板
+### 2.3 监控大屏 — Apple 暗色调色板
 
 > 适用页面：监控大屏、执行日志、性能指标、告警面板
 
-- **Canvas Dark** (`{colors.monitor-canvas-dark}` — `#1f1633`): 主画布背景。
-- **Night** (`{colors.monitor-night}` — `#150f23`): 卡片背景、代码块。
-- **Ink Deep** (`{colors.monitor-ink-deep}` — `#1f1633`): 深层表面。
-- **Accent Lime** (`{colors.monitor-accent-lime}` — `#c2ef4e`): 关键数据高亮、重要指标。
-- **Accent Pink** (`{colors.monitor-accent-pink}` — `#fa7faa`): 辅助标点色、图表点。
-- **Accent Violet** (`{colors.monitor-accent-violet}` — `#6a5fc1`): 标签芯片、辅助强调。
-- **Accent Violet Deep** (`{colors.monitor-accent-violet-deep}` — `#422082`): 聚光灯卡片。
-- **On Dark Muted** (`{colors.monitor-on-dark-muted}` — `#bdb8c0`): 二级文字、说明。
-- **Hairline Violet** (`{colors.monitor-hairline-violet}` — `#362d59`): 深色卡片 1px 边框。
+- **Canvas Dark** (`{colors.monitor-canvas-dark}` — `#1d1d1f`): 主画布背景。
+- **Surface Card** (`{colors.monitor-surface-card}` — `#1c1c1e`): 卡片背景。
+- **Surface Elevated** (`{colors.monitor-surface-elevated}` — `#2c2c2e`): 提升表面。
+- **Surface Elevated 2** (`{colors.monitor-surface-elevated-2}` — `#3a3a3c`): 二级提升表面。
+- **Accent Lime** (`{colors.monitor-accent-lime}` — `#30d158`): 关键数据高亮、健康指标。
+- **Accent Green** (`{colors.monitor-accent-green}` — `#34c759`): 通过状态。
+- **Accent Orange** (`{colors.monitor-accent-orange}` — `#ff9f0a`): 警告状态。
+- **Accent Pink** (`{colors.monitor-accent-pink}` — `#ff375f`): 错误/告警。
+- **Accent Violet** (`{colors.monitor-accent-violet}` — `#bf5af2`): 标签芯片、辅助强调。
+- **Accent Teal** (`{colors.monitor-accent-teal}` — `#64d2ff`): 信息辅助色。
+- **Ink On Dark** (`{colors.monitor-ink-on-dark}` — `#ffffff`): 暗色表面主文字。
+- **Ink On Dark Muted** (`{colors.monitor-ink-on-dark-muted}` — `#8e8e93`): 暗色表面辅助文字。
+- **Hairline Dark** (`{colors.monitor-hairline-dark}` — `#38383a`): 暗色卡片 1px 边框。
 
-### 2.4 结算页面 — Stripe 调色板
+#### 监控大屏语义色（半透明背景）
+- **PASS** — 文字 `{colors.monitor-semantic-pass}` `#30d158` / 背景 `{colors.monitor-semantic-pass-bg}` `rgba(48,209,88,0.15)`
+- **WARN** — 文字 `{colors.monitor-semantic-warn}` `#ff9f0a` / 背景 `{colors.monitor-semantic-warn-bg}` `rgba(255,159,10,0.15)`
+- **BLOCK** — 文字 `{colors.monitor-semantic-block}` `#ff453a` / 背景 `{colors.monitor-semantic-block-bg}` `rgba(255,69,58,0.15)`
+- **INFO** — 文字 `{colors.monitor-semantic-info}` `#2997ff` / 背景 `{colors.monitor-semantic-info-bg}` `rgba(41,151,255,0.15)`
+
+### 2.4 结算页面 — Apple 金融调色板
 
 > 适用页面：结算管理、DRG费用、费用明细
 
-- **Settlement Primary** (`{colors.settlement-primary}` — `#533afd`): 金融主色。
-- **Settlement Primary Deep** (`{colors.settlement-primary-deep}` — `#4434d4`): 渐变终点。
-- **Settlement Primary Soft** (`{colors.settlement-primary-soft}` — `#665efd`): 悬停态。
-- **Settlement Ink** (`{colors.settlement-ink}` — `#0d253d`): 深色正文。
-- **Settlement Ink Secondary** (`{colors.settlement-ink-secondary}` — `#273951`): 二级文字。
-- **Settlement Canvas Soft** (`{colors.settlement-canvas-soft}` — `#f6f9fc`): 柔和背景。
-- **Settlement Hairline** (`{colors.settlement-hairline}` — `#e3e8ee`): 边框。
+- **Settlement Primary** (`{colors.settlement-primary}` — `#0066cc`): 金融主色（与管理后台一致）。
+- **Settlement Primary Deep** (`{colors.settlement-primary-deep}` — `#004999`): 深层强调。
+- **Settlement Primary Soft** (`{colors.settlement-primary-soft}` — `#3399ff`): 柔和强调。
+- **Settlement Ink** (`{colors.settlement-ink}` — `#1d1d1f`): 深色正文。
+- **Settlement Ink Secondary** (`{colors.settlement-ink-secondary}` — `#333333`): 二级文字。
+- **Settlement Canvas Soft** (`{colors.settlement-canvas-soft}` — `#f5f5f7`): 柔和背景。
+- **Settlement Hairline** (`{colors.settlement-hairline}` — `#e0e0e0`): 边框。
 
 ## 3. Typography
 
 ### 3.1 Font Family
 
-- **主字体**: IBM Plex Sans — IBM 开源字体，几何感、略带人文主义，专为企业 UI 设计。SIL OFL 许可，可从 Google Fonts 获取。
+- **主字体**: SF Pro Display / SF Pro Text — Apple 专有字体，Display 优化 ≥ 19px，Text 优化 < 20px。
 - **中文回退**: PingFang SC (macOS) → Microsoft YaHei (Windows) → sans-serif
-- **等宽字体**: IBM Plex Mono → Monaco → Menlo → Courier New
+- **等宽字体**: SF Mono → Monaco → Menlo → Courier New
 
 ### 3.2 Hierarchy
 
-| Token | Size | Weight | Line Height | Letter Spacing | Use |
-|---|---|---|---|---|---|
-| `{typography.display-xl}` | 42px | 300 | 1.20 | 0 | 大型页面标题 |
-| `{typography.display-lg}` | 32px | 300 | 1.25 | 0 | 区域标题 |
-| `{typography.headline}` | 24px | 400 | 1.33 | 0 | 卡片标题、页面子标题 |
-| `{typography.subhead}` | 20px | 400 | 1.40 | 0 | 区域副标题 |
-| `{typography.body-lg}` | 16px | 400 | 1.50 | 0 | 主要正文、表单标签 |
-| `{typography.body}` | 14px | 400 | 1.50 | 0.16px | 默认正文、表格单元格 |
-| `{typography.body-emphasis}` | 14px | 600 | 1.29 | 0.16px | 强调正文、选中标签 |
-| `{typography.caption}` | 12px | 400 | 1.33 | 0.32px | 说明文字、元数据 |
-| `{typography.button}` | 14px | 400 | 1.29 | 0.16px | 所有按钮标签 |
-| `{typography.code}` | 14px | 400 | 1.50 | 0 | DRL/Aviator 代码 |
-| `{typography.tabular}` | 14px | 400 | 1.50 | -0.42px | 金额、数字（等宽） |
+| Token | Size | Weight | Line Height | Letter Spacing | Feature | Use |
+|---|---|---|---|---|---|---|
+| `{typography.hero-display}` | 56px | 600 | 1.07 | -0.28px | — | 大型页面标题 |
+| `{typography.display-lg}` | 40px | 600 | 1.10 | 0 | — | 区域标题 |
+| `{typography.display-md}` | 34px | 600 | 1.47 | -0.374px | — | 卡片标题、页面子标题 |
+| `{typography.lead}` | 28px | 400 | 1.14 | 0.196px | — | 产品 tile 副文案 |
+| `{typography.tagline}` | 21px | 600 | 1.19 | 0.231px | — | 子标题、子导航 |
+| `{typography.body-strong}` | 17px | 600 | 1.24 | -0.374px | — | 强调正文 |
+| `{typography.body}` | 17px | 400 | 1.47 | -0.374px | — | 默认正文、表格单元格 |
+| `{typography.caption}` | 14px | 400 | 1.43 | -0.224px | — | 说明文字、元数据 |
+| `{typography.caption-strong}` | 14px | 600 | 1.29 | -0.224px | — | 状态标签、强调说明 |
+| `{typography.button}` | 17px | 400 | 1.0 | 0 | — | 所有按钮标签 |
+| `{typography.button-utility}` | 14px | 400 | 1.29 | -0.224px | — | 工具按钮标签 |
+| `{typography.code}` | 14px | 400 | 1.50 | 0 | — | DRL/Aviator 代码 |
+| `{typography.tabular}` | 17px | 400 | 1.47 | -0.374px | tnum | 金额、数字（等宽） |
+| `{typography.tabular-large}` | 34px | 600 | 1.0 | -0.374px | tnum | 总金额展示 |
+| `{typography.fine-print}` | 12px | 400 | 1.0 | -0.12px | — | 法律细文 |
+| `{typography.nav-link}` | 12px | 400 | 1.0 | -0.12px | — | 导航链接 |
+| `{typography.stat-value}` | 48px | 600 | 1.0 | -0.28px | — | 监控大屏统计数值 |
 
 ### 3.3 Principles
 
-- **轻量显示是品牌声音**：Plex Sans weight 300 用于 24px+ 标题，切换到 400/600 会失去品牌特征。
-- **0.16px letter-spacing** 在 body 尺寸是 Carbon 精度细节，不要移除。
-- **等宽 tabular** 用于金额展示：fontFeature tnum 确保数字对齐。
-- **中文回退链**：Plex Sans 不含中文字符，必须指定 PingFang SC / Microsoft YaHei。
+- **负字距是品牌声音**：SF Pro Display 在 34–56px 使用 -0.28px 到 -0.374px 字距，形成"Apple 紧凑"标题感，切换到正字距会失去品牌特征。
+- **-0.374px letter-spacing** 在 body 尺寸是 Apple 精度细节，不要移除。
+- **等宽 tabular** 用于金额展示：fontFeature tnum 确保数字对齐，这是金融页面的签名。
+- **中文回退链**：SF Pro 不含中文字符，必须指定 PingFang SC / Microsoft YaHei。
+- **17px 正文**：Apple 选择 17px 作为正文基准，比常见的 14/16px 更大更舒适。
 
 ## 4. Component Stylings
 
 ### 4.1 Buttons
 
-所有管理后台按钮 **0px 圆角**（Carbon 签名）。
+所有管理后台按钮使用 **pill 胶囊圆角**（Apple 签名）。
 
-| Variant | Background | Text | Border | Use |
-|---------|-----------|------|--------|-----|
-| Primary | `{colors.primary}` | `{colors.on-primary}` | none | 主操作（保存、提交、发布） |
-| Primary Hover | `{colors.primary-hover}` | `{colors.on-primary}` | none | 悬停态 |
-| Primary Press | `{colors.primary-press}` | `{colors.on-primary}` | none | 按下态 |
-| Secondary | `{colors.ink}` | `{colors.inverse-ink}` | none | 次要操作 |
-| Ghost | transparent | `{colors.primary}` | none | 第三级操作 |
-| Danger | `{colors.semantic-block}` | `{colors.on-primary}` | none | 删除、停用 |
+| Variant | Background | Text | Border | Rounded | Use |
+|---------|-----------|------|--------|---------|-----|
+| Primary | `{colors.primary}` | `{colors.on-primary}` | none | pill | 主操作（保存、提交、发布） |
+| Secondary Pill | `{colors.canvas}` | `{colors.primary}` | none | pill | 次要操作 |
+| Ghost | transparent | `{colors.primary}` | none | pill | 第三级操作 |
+| Danger | `{colors.semantic-block}` | `{colors.on-primary}` | none | pill | 删除、停用 |
+| Dark Utility | `{colors.ink}` | `{colors.body-on-dark}` | none | sm | 暗色表面工具按钮 |
+| Pearl Capsule | `{colors.surface-pearl}` | `{colors.ink-secondary}` | none | md | 次要胶囊按钮 |
 
 ### 4.2 Cards
 
 | Type | Background | Border | Shadow | Rounded | Use |
 |------|-----------|--------|--------|---------|-----|
-| Feature Card | `{colors.canvas}` | 1px `{colors.hairline}` | none | 0px | 功能展示、信息卡片 |
-| Stat Card | `{colors.canvas}` | 1px `{colors.hairline}` | none | 0px | 仪表盘统计 |
-| Monitor Card | `{colors.monitor-ink-deep}` | 1px `{colors.monitor-hairline-violet}` | none | 6px | 监控大屏数据卡片 |
-| Settlement Card | `{colors.canvas}` | 1px `{colors.settlement-hairline}` | none | 8px | 结算信息卡片 |
+| Feature Card | `{colors.canvas}` | 1px `{colors.hairline}` | none | 18px | 功能展示、信息卡片 |
+| Stat Card | `{colors.canvas}` | 1px `{colors.hairline}` | none | 18px | 仪表盘统计 |
+| Monitor Card | `{colors.monitor-surface-card}` | 1px `{colors.monitor-hairline-dark}` | none | 18px | 监控大屏数据卡片 |
+| Settlement Card | `{colors.canvas}` | 1px `{colors.settlement-hairline}` | none | 18px | 结算信息卡片 |
+| Settlement Header | `{colors.surface-tile-1}` | none | none | 18px | 结算头部区域 |
 
 ### 4.3 Form Inputs
 
-| State | Background | Border | Use |
-|-------|-----------|--------|-----|
-| Default | `{colors.surface-1}` | 1px `{colors.hairline}` | 默认输入框 |
-| Focused | `{colors.surface-1}` | 2px `{colors.primary}` | 聚焦态（Carbon 签名） |
-| Error | `{colors.surface-1}` | 2px `{colors.semantic-block}` | 校验失败 |
+| State | Background | Border | Rounded | Use |
+|-------|-----------|--------|---------|-----|
+| Default | `{colors.canvas}` | 1px `{colors.hairline}` | sm | 默认输入框 |
+| Focused | `{colors.canvas}` | 2px `{colors.primary-focus}` | sm | 聚焦态 |
+| Error | `{colors.canvas}` | 2px `{colors.semantic-block}` | sm | 校验失败 |
+| Search | `{colors.canvas}` | none | pill | 搜索框 |
 
 ### 4.4 HIS Business Components
 
 #### ResultLevelTag
-审核结果级别标签，用于结算结果、用药审核、质控检查。
+审核结果级别标签，pill 胶囊形态，用于结算结果、用药审核、质控检查。
 
-| Level | Background | Text | Example |
-|-------|-----------|------|---------|
-| PASS | `{colors.semantic-pass-bg}` | `{colors.semantic-pass}` | 通过 |
-| WARN | `{colors.semantic-warn-bg}` | `{colors.semantic-warn}` | 警告 |
-| BLOCK | `{colors.semantic-block-bg}` | `{colors.semantic-block}` | 拦截 |
+| Level | Background | Text | Rounded | Example |
+|-------|-----------|------|---------|---------|
+| PASS | `{colors.semantic-pass-bg}` | `{colors.semantic-pass}` | pill | 通过 |
+| WARN | `{colors.semantic-warn-bg}` | `{colors.semantic-warn}` | pill | 警告 |
+| BLOCK | `{colors.semantic-block-bg}` | `{colors.semantic-block}` | pill | 拦截 |
 
 #### RuleStatusBadge
-规则/公式状态徽章。
+规则/公式状态徽章，pill 胶囊形态。
 
-| Status | Background | Text | Example |
-|--------|-----------|------|---------|
-| DRAFT | `{colors.status-draft-bg}` | `{colors.status-draft}` | 草稿 |
-| PUBLISHED | `{colors.status-published-bg}` | `{colors.status-published}` | 已发布 |
-| DISABLED | `{colors.status-disabled-bg}` | `{colors.status-disabled}` | 已停用 |
-| VALIDATING | `{colors.status-validating-bg}` | `{colors.status-validating}` | 校验中 |
+| Status | Background | Text | Rounded | Example |
+|--------|-----------|------|---------|---------|
+| 草稿 | `{colors.status-draft-bg}` | `{colors.status-draft}` | pill | 草稿 |
+| 已发布 | `{colors.status-published-bg}` | `{colors.status-published}` | pill | 已发布 |
+| 已停用 | `{colors.status-disabled-bg}` | `{colors.status-disabled}` | pill | 已停用 |
+| 校验中 | `{colors.status-validating-bg}` | `{colors.status-validating}` | pill | 校验中 |
 
 ### 4.5 Navigation
 
-| Element | Background | Text | Active |
-|---------|-----------|------|--------|
-| Top Nav | `{colors.canvas}` | `{colors.ink}` | IBM Blue underline |
-| Sidebar | `{colors.inverse-canvas}` | `{colors.inverse-ink-muted}` | `{colors.primary}` bg + white text |
-| Breadcrumb | `{colors.canvas}` | `{colors.ink-secondary}` | `{colors.ink}` |
+#### Global Nav
+- Background `{colors.surface-black}`, text `{colors.body-on-dark}`, height 44px。
+- 纯黑背景，Apple 标志性纤薄导航。
 
-## 5. Layout Principles
+#### Sub Nav Frosted
+- Background `{colors.canvas-parchment}`, text `{colors.ink}`, height 52px。
+- 羊皮纸色背景，产品子导航。
+
+#### Sidebar
+- Background `{colors.canvas-parchment}`, text `{colors.ink-muted}`, width 220px。
+- Apple 风格不使用深色侧边栏，采用羊皮纸色背景。
+- Active item: Background `{colors.primary}`, text `{colors.on-primary}`, rounded `{rounded.md}`。
+
+### 4.6 Monitor Components
+
+#### Monitor Stat Card
+- 数值: `{typography.stat-value}` 48px + `{colors.monitor-accent-lime}` Apple Green。
+- 标签: `{typography.caption}` 14px + `{colors.monitor-ink-on-dark-muted}`。
+
+#### Monitor Code Block
+- Background `{colors.surface-black}`, text `{colors.monitor-ink-on-dark}`, typography `{typography.code}` SF Mono。
+
+### 4.7 Settlement Components
+
+#### Settlement Amount
+- `{typography.tabular-large}` 34px + tnum — 大号等宽金额是结算页面的视觉焦点。
+- Settlement Amount Label: `{typography.caption}` 14px。
+
+#### Settlement Header
+- Background `{colors.surface-tile-1}` 近黑色，text `{colors.body-on-dark}` 白色。
+- 创造沉稳金融权威感，与 Stripe 的渐变头部不同。
+
+## 5. Layout
 
 ### 5.1 Spacing System
 
-- **Base unit**: 4px（Carbon 4 像素网格）
-- **Tokens**: xxs(4) · xs(8) · sm(12) · md(16) · lg(24) · xl(32) · xxl(48) · section(96)
-- 卡片内边距：feature-card 24px，stat-card 24px
-- 按钮内边距：12px vertical · 16px horizontal
-- 表单输入内边距：11px vertical · 16px horizontal
+- **Base unit**: 4px
+- **Tokens**: `{spacing.xxs}` 4px · `{spacing.xs}` 8px · `{spacing.sm}` 12px · `{spacing.md}` 17px · `{spacing.lg}` 24px · `{spacing.xl}` 32px · `{spacing.xxl}` 48px · `{spacing.section}` 80px
 
 ### 5.2 Grid & Container
 
-- Carbon 16 列网格（桌面），缩放到 8/4 列（平板/手机）
-- 最大内容宽度 1584px
-- 卡片网格：桌面 4 列、平板 2 列、手机 1 列
-- 侧边栏固定宽度 200px
+- 居中容器，最大宽度约 980px（Apple 的经典内容宽度）。
+- 卡片网格在桌面端 4-up，平板 2-up，移动 1-up。
+- 产品 tile 全幅铺满，内容居中。
 
 ### 5.3 Whitespace Philosophy
 
-Carbon 使用精确的 4 像素网格对齐作为留白系统。区域通过浅灰行 (`{colors.surface-1}`) 分隔，而非大垂直间距。内容设计上偏密集 — HIS 用户期望在一页上看到大量信息。
+Apple 使用大量留白作为设计语言的核心。区段之间通过颜色变化（白 ↔ 羊皮纸 ↔ 近黑）分隔，而非通过边框或分隔线。内容密度异常低 — 每个信息块有充足的呼吸空间。留白本身就是最强大的设计元素。
 
-## 6. Depth & Elevation
+## 6. Elevation & Depth
+
+### 管理后台
 
 | Level | Treatment | Use |
-|-------|-----------|-----|
-| 0 (flat) | 无阴影、无边框 | 正文、页脚 |
-| 1 (hairline) | 1px `{colors.hairline}` 边框 | 功能卡片、输入框、列表项 |
-| 2 (surface lift) | `{colors.surface-1}` 背景 | 交替行、悬停卡片 |
-| 3 (focus ring) | 2px `{colors.primary}` 轮廓 | 聚焦输入框、聚焦按钮 |
+|---|---|---|
+| 0 (flat) | 无阴影，无边框 | 默认 — 正文、标题、footer |
+| 1 (hairline) | 1px `{colors.hairline}` 边框 | 工具卡片、配置器芯片 |
+| 2 (product shadow) | `rgba(0, 0, 0, 0.22) 3px 5px 30px` | 产品图像 — 系统中唯一的投影 |
 
-管理后台 **不使用投影**。深度通过表面色变化和 1px 发丝线传达。
+### 监控大屏
 
-监控大屏同样不使用投影，深度通过深色表面层级传达（canvas-dark → ink-deep → night）。
+| Level | Treatment | Use |
+|---|---|---|
+| 0 (flat) | 无阴影，无边框 | 默认暗色表面 |
+| 1 (hairline) | 1px `{colors.monitor-hairline-dark}` 边框 | 监控卡片、代码块 |
+| 2 (surface lift) | `{colors.monitor-surface-elevated}` 在 `{colors.monitor-canvas-dark}` 上 | 按钮、输入框 |
+| 3 (glow) | `rgba(41, 151, 255, 0.12) 0 0 20px` | 关键数据高亮光晕 |
 
-## 7. Do's and Don'ts
+Apple 抵制装饰性阴影。深度通过表面色变化和颜色交替传达。管理后台系统中只有一个投影，专用于产品图像。
 
-### Do ✅
-- 使用 0px 圆角（管理后台），这是 Carbon 的签名特征
-- 使用 IBM Blue 作为唯一品牌色
-- 使用 hairline 边框代替阴影
-- 使用 weight 300 显示字体
-- 使用 ResultLevelTag 展示审核结果
-- 使用 RuleStatusBadge 展示规则状态
-- 金额使用 tabular 等宽数字
-- 监控大屏使用 Electric Lime 高亮关键指标
+## 7. Shapes
 
-### Don't ❌
-- 不要在管理后台使用圆角（除结算页面的 8px）
-- 不要使用投影（管理后台和监控大屏均不使用）
-- 不要使用多种品牌色（IBM Blue 是唯一主色）
-- 不要在显示标题使用 weight 700（会失去品牌声音）
-- 不要移除 body 的 0.16px letter-spacing
-- 不要在金额展示使用比例字体（必须用 tabular）
-- 不要在监控大屏使用白色背景
-- 不要在结算页面使用 Carbon 的 0px 圆角（结算用 8px）
+### Border Radius Scale
 
-## 8. Responsive Behavior
+| Token | Value | Use |
+|---|---|---|
+| `{rounded.none}` | 0px | 产品 tile（全幅区段） |
+| `{rounded.xs}` | 5px | 小型徽章 |
+| `{rounded.sm}` | 8px | 输入框、工具按钮 |
+| `{rounded.md}` | 11px | 侧边栏项、胶囊按钮 |
+| `{rounded.lg}` | 18px | 工具卡片、结算卡片 |
+| `{rounded.pill}` | 9999px | 所有 CTA 按钮、标签芯片、搜索框 |
 
-| Breakpoint | Width | Columns | Sidebar | Use |
-|-----------|-------|---------|---------|-----|
-| Desktop XL | ≥1584px | 16 | 200px fixed | 全功能 |
-| Desktop | ≥1200px | 12 | 200px fixed | 标准 |
-| Tablet | ≥768px | 8 | collapsed | 简化 |
-| Mobile | <768px | 4 | hidden | 最小可用 |
+Apple 的按钮语法以 pill 胶囊为核心 — 所有主操作按钮使用 `{rounded.pill}`。卡片使用 `{rounded.lg}` 18px 创造柔和感。这与 IBM Carbon 的 0px 圆角截然不同。
 
-- 触控目标最小 44px × 44px
-- 表格在平板以下切换为卡片列表
-- 监控大屏仅支持 Desktop XL / Desktop 断点
-- 结算页面在平板以下堆叠为单列
+## 8. Section Rhythm
 
-## 9. Agent Prompt Guide
+Apple 的区段节奏是可预测的脉冲：
+
+**管理后台**：亮色 hero → 暗色产品 tile → 亮色工具 tile → 暗色 tile → 羊皮纸色 footer
+
+**监控大屏**：纯黑导航 → 近黑画布 → 暗色卡片网格 → 代码块 → 暗色 footer
+
+**结算页面**：纯黑导航 → 近黑色头部 → 羊皮纸色画布 → 白色卡片 → 羊皮纸色 footer
+
+## 9. Do's and Don'ts
+
+### Do
+- 使用 pill 胶囊按钮作为所有主操作
+- 使用 SF Pro Display 负字距标题
+- 使用大面积留白让内容呼吸
+- 使用表面色变化传达层次
+- 使用 tabular tnum 确保金额数字对齐
+- 使用半透明背景的 pill 标签在暗色表面上
+
+### Don't
+- 不要使用 0px 圆角按钮（这是 IBM Carbon 风格，不是 Apple）
+- 不要在标题上使用正字距（Apple 使用负字距）
+- 不要使用装饰性投影（系统中只有一个投影）
+- 不要使用渐变头部（Apple 不使用装饰性渐变）
+- 不要在暗色表面上使用 Action Blue 链接（使用 Sky Link Blue）
+- 不要使用深色侧边栏（Apple 使用羊皮纸色侧边栏）
+
+## 10. Responsive Behavior
+
+| Breakpoint | Width | Layout |
+|---|---|---|
+| Desktop | ≥ 980px | 4-up card grid, full sidebar |
+| Tablet | 768–979px | 2-up card grid, collapsed sidebar |
+| Mobile | < 768px | 1-up card stack, hidden sidebar |
+
+- 导航在移动端折叠为汉堡菜单
+- 产品 tile 在所有断点保持全幅
+- 卡片网格从 4-up → 2-up → 1-up
+- 侧边栏在平板及以下折叠
+
+## 11. Agent Prompt Guide
 
 ### Quick Color Reference
 
-```
-管理后台主色: #0f62fe (IBM Blue)
-通过/成功: #24a148 / 背景 #defbe6
-警告: #b28600 / 背景 #fff8e1
-拦截/错误: #da1e28 / 背景 #fff1f1
-侧边栏背景: #161616
-页面背景: #ffffff
-内容区背景: #f4f4f4
-边框: #e0e0e0
-正文: #161616 / 二级 #525252 / 三级 #8c8c8c
+**管理后台**: Action Blue `#0066cc` · Ink `#1d1d1f` · Canvas `#ffffff` · Parchment `#f5f5f7`
 
-监控大屏背景: #1f1633
-监控关键指标: #c2ef4e (Lime)
-监控辅助色: #fa7faa (Pink) / #6a5fc1 (Violet)
+**监控大屏**: Sky Link Blue `#2997ff` · Lime `#30d158` · Canvas Dark `#1d1d1f` · Card `#1c1c1e`
 
-结算主色: #533afd (Indigo)
-结算背景: #f6f9fc
-```
+**结算页面**: Action Blue `#0066cc` · Ink `#1d1d1f` · Parchment `#f5f5f7` · Tile `#272729`
 
-### Ready-to-use Prompts
+### Ready-to-Use Prompts
 
-**管理后台页面：**
-```
-按照项目根目录 DESIGN.md 的 Carbon 管理后台风格，构建 XXX 页面。
-要求：0px圆角、IBM Blue主色、hairline边框、无阴影、4px网格间距、
-Plex Sans weight 300 标题、0.16px body letter-spacing。
-使用 Element Plus 组件但覆盖主题变量。
-```
-
-**监控大屏页面：**
-```
-按照项目根目录 DESIGN.md 的 Sentry 监控大屏风格，构建 XXX 页面。
-要求：深色画布(#1f1633)、Electric Lime(#c2ef4e)高亮关键数据、
-深色卡片+紫色hairline边框、等宽代码区域、数据密集布局。
-```
-
-**结算页面：**
-```
-按照项目根目录 DESIGN.md 的 Stripe 结算风格，构建 XXX 页面。
-要求：Indigo紫(#533afd)主色、8px圆角卡片、tabular等宽金额、
-柔和背景(#f6f9fc)、渐变头部、金融级精致感。
-使用 ResultLevelTag 展示 PASS/WARN/BLOCK 结果。
-```
+- "Build a rule management page using Apple design: white canvas, pill buttons, SF Pro Display headlines with negative letter-spacing, Action Blue accents"
+- "Create a monitoring dashboard with Apple dark tiles: near-black canvas, Sky Link Blue highlights, Apple Green stat values, SF Mono code blocks"
+- "Design a settlement page with Apple financial aesthetic: parchment background, tabular tnum figures for amounts, near-black header, 18px rounded cards"

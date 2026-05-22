@@ -93,7 +93,11 @@
         </div>
       </el-header>
       <el-main class="his-layout__content">
-        <router-view />
+        <router-view v-slot="{ Component, route }">
+          <transition name="fade-slide" mode="out-in">
+            <component :is="Component" :key="route.path" />
+          </transition>
+        </router-view>
       </el-main>
     </el-container>
   </el-container>
@@ -249,5 +253,19 @@ function handleCommand(command: string) {
   background-color: $color-surface-1;
   padding: $spacing-md;
   overflow-y: auto;
+}
+
+/* 路由切换动画 - 内容区过渡 */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
 }
 </style>
