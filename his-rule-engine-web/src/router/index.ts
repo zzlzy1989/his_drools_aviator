@@ -127,17 +127,43 @@ const routes: RouteRecordRaw[] = [
   },
 ]
 
+// 预加载关键组件（空闲时）
+const preloadRoutes = [
+  () => import('@/views/rule/RuleList.vue'),
+  () => import('@/views/formula/FormulaList.vue'),
+  () => import('@/views/settlement/SettlementList.vue'),
+]
+
+// 空闲时预加载
+if ('requestIdleCallback' in window) {
+  requestIdleCallback(() => {
+    preloadRoutes.forEach(route => route())
+  })
+} else {
+  // 兼容不支持 requestIdleCallback 的浏览器
+  setTimeout(() => {
+    preloadRoutes.forEach(route => route())
+  }, 3000)
+}
+
 const router = createRouter({
   history: createWebHistory(),
   routes,
 })
 
-// 路由守卫
+// 路由预加载守卫
 router.beforeEach((to) => {
-  const redirect = authGuard(to)
-  if (redirect) {
-    return redirect
+  // 识别下一可能访问的路由并预加载
+  const currentPath = to.path
+  if (currentPath === '/') {
+    // 首页加载后预加载仪表板
+    requestIdleCallback(() => import('@/views/dashboard/Dashboard.vue'))
   }
+  if (currentPath.startsWith('/flow')) {
+    // 预加载规则流相关组件
+    requestIdleCallback(() => import('@/views/flow/FlowList.vue'))
+  }
+  return true
 })
 
 export default router

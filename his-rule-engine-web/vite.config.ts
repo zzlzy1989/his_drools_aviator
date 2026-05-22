@@ -44,13 +44,34 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'element-plus': ['element-plus'],
-          'antv-x6': ['@antv/x6', '@antv/x6-vue-shape'],
-          'monaco-editor': ['monaco-editor'],
+        manualChunks: (id) => {
+          // Vue 核心单独 chunk
+          if (id.includes('node_modules/vue')) {
+            return 'vue-vendor'
+          }
+          // Element Plus 单独 chunk
+          if (id.includes('element-plus')) {
+            return 'element-plus-vendor'
+          }
+          // AntV X6 单独 chunk
+          if (id.includes('@antv/x6') || id.includes('@antv/x6-vue-shape')) {
+            return 'antv-x6-vendor'
+          }
+          // Monaco Editor 单独 chunk
+          if (id.includes('monaco-editor')) {
+            return 'monaco-vendor'
+          }
+          // 其他 node_modules 打包为 vendors
+          if (id.includes('node_modules')) {
+            return 'vendors'
+          }
         },
       },
     },
+    chunkSizeWarningLimit: 1000, // 提高阈值避免警告
+  },
+  optimizeDeps: {
+    include: ['vue', 'vue-router', 'pinia', 'element-plus'],
   },
   test: {
     globals: true,

@@ -66,6 +66,18 @@ export const useUserStore = defineStore('user', () => {
     return role.value === 'super_admin' || role.value === 'admin'
   }
 
+  function init() {
+    // Initialize store from localStorage if needed
+    const savedToken = localStorage.getItem('token')
+    if (savedToken) {
+      token.value = savedToken
+      tenantId.value = localStorage.getItem('tenantId') || 'default'
+      username.value = localStorage.getItem('username') || ''
+      realName.value = localStorage.getItem('realName') || ''
+      role.value = localStorage.getItem('role') || ''
+    }
+  }
+
   return {
     token,
     tenantId,
@@ -80,5 +92,6 @@ export const useUserStore = defineStore('user', () => {
     setLoginInfo,
     logout,
     isAdmin,
+    init,
   }
 })
