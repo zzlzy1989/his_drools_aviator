@@ -6,7 +6,7 @@
         <el-button :icon="Document" @click="handleReport" :disabled="!tableData.length">生成报告</el-button>
       </div>
 
-      <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" stripe style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="dataSetName" label="数据集名称" />
         <el-table-column prop="category" label="分类" width="120">
@@ -149,7 +149,7 @@
 
           <div v-if="r.diff && r.diff.length > 0" class="diff-section">
             <div class="section-title diff-title">差异 (Diff) — {{ r.diff.length }} 项不匹配</div>
-            <el-table :data="r.diff" size="small" border>
+            <el-table :data="r.diff" size="small" stripe>
               <el-table-column prop="field" label="字段" />
               <el-table-column prop="expected" label="期望值" />
               <el-table-column prop="actual" label="实际值" />
@@ -344,80 +344,107 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.test-case-item {
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  padding: 16px;
-  margin-bottom: 16px;
-  background: #fafafa;
+<style lang="scss" scoped>
+.page-container {
+  @include page-container;
 }
+
+.page-card {
+  @include apple-card;
+  border-radius: $radius-lg;
+}
+
+.toolbar {
+  @include toolbar;
+}
+
+.test-case-item {
+  border: 1px solid $color-hairline;
+  border-radius: $radius-sm;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+  background: $color-surface-1;
+}
+
 .test-case-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 12px;
-  font-weight: 500;
+  margin-bottom: $spacing-sm;
+  font-weight: $font-weight-medium;
 }
+
 .results-container {
   max-height: 500px;
   overflow-y: auto;
 }
+
 .result-item {
-  margin-bottom: 16px;
+  margin-bottom: $spacing-md;
 }
+
 .result-detail {
-  padding: 8px 12px;
-  background: #f5f7fa;
-  border-radius: 4px;
-  font-size: 13px;
+  padding: $spacing-xs $spacing-sm;
+  background: $color-surface-1;
+  border-radius: $radius-xs;
+  font-size: $font-size-fine-print;
   white-space: pre-wrap;
 }
+
 .result-meta {
   display: flex;
-  gap: 16px;
-  font-size: 13px;
-  color: #909399;
+  gap: $spacing-md;
+  font-size: $font-size-fine-print;
+  color: $color-ink-muted;
 }
+
 .result-section {
-  border: 1px solid #ebeef5;
-  border-radius: 4px;
+  border: 1px solid $color-hairline;
+  border-radius: $radius-xs;
   overflow: hidden;
 }
+
 .section-title {
-  background: #f5f7fa;
+  background: $color-surface-1;
   padding: 6px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #606266;
-  border-bottom: 1px solid #ebeef5;
+  font-size: $font-size-fine-print;
+  font-weight: $font-weight-semibold;
+  color: $color-ink-secondary;
+  border-bottom: 1px solid $color-hairline;
 }
+
 .diff-section {
-  margin-top: 10px;
+  margin-top: $spacing-xs;
 }
+
 .diff-title {
-  color: #f56c6c;
+  color: $color-semantic-block;
 }
+
 .skill-results {
-  margin-top: 10px;
+  margin-top: $spacing-xs;
 }
+
 .json-content {
   margin: 0;
-  padding: 8px;
+  padding: $spacing-xs;
   font-size: 11px;
   line-height: 1.4;
   max-height: 200px;
   overflow: auto;
-  background: #fff;
+  background: $color-canvas;
 }
+
 .json-hint {
   font-size: 11px;
-  color: #909399;
+  color: $color-ink-muted;
   margin-top: 4px;
 }
+
 .json-error {
-  border-color: #f56c6c !important;
+  border-color: $color-semantic-block !important;
 }
+
 :deep(.el-table .el-table__row) {
-  font-size: 12px;
+  font-size: $font-size-fine-print;
 }
 </style>

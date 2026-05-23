@@ -1,6 +1,6 @@
 // ============================================================
 // HIS Design System - Element Plus Theme Override
-// Based on DESIGN.md (IBM Carbon)
+// Based on DESIGN.md (Apple Design Language)
 // ============================================================
 
 @use 'variables' as *;
@@ -66,36 +66,42 @@
 
   // Background
   --el-bg-color: #{$color-canvas};
-  --el-bg-color-page: #{$color-surface-1};
+  --el-bg-color-page: #{$color-canvas-parchment};
   --el-bg-color-overlay: #{$color-canvas};
 
-  // Border Radius (Carbon: 0px)
-  --el-border-radius-base: #{$radius-none};
-  --el-border-radius-small: #{$radius-none};
+  // Border Radius (Apple: rounded)
+  --el-border-radius-base: #{$radius-sm};
+  --el-border-radius-small: #{$radius-xs};
   --el-border-radius-round: #{$radius-pill};
   --el-border-radius-circle: 100%;
 
   // Font
   --el-font-family: #{$font-family};
   --el-font-size-base: #{$font-size-body};
-  --el-font-size-small: 13px;
+  --el-font-size-small: #{$font-size-small};
   --el-font-size-extra-small: #{$font-size-caption};
 
-  // Shadow (Carbon: minimal)
-  --el-box-shadow: #{$shadow-card};
+  // Shadow (Apple: minimal)
+  --el-box-shadow: #{$shadow-none};
   --el-box-shadow-light: #{$shadow-none};
   --el-box-shadow-lighter: #{$shadow-none};
-  --el-box-shadow-dark: #{$shadow-elevated};
+  --el-box-shadow-dark: #{$shadow-none};
 }
 
 // ---- Element Plus Component Overrides ----
 
-// Button: Carbon square style
+// Button: Apple pill style
 .el-button {
-  border-radius: $radius-none;
+  border-radius: $radius-pill;
   font-family: $font-family;
   font-weight: $font-weight-regular;
-  letter-spacing: $letter-spacing-body;
+  letter-spacing: 0;
+  padding: 11px 22px;
+  transition: all 0.2s ease;
+
+  &--small {
+    padding: 7px 15px;
+  }
 }
 
 .el-button--primary {
@@ -107,9 +113,9 @@
   --el-button-active-border-color: #{$color-primary-press};
 }
 
-// Card: Carbon hairline style
+// Card: Apple rounded style
 .el-card {
-  border-radius: $radius-none;
+  border-radius: $radius-lg;
   border: 1px solid $color-hairline;
   box-shadow: $shadow-none;
 
@@ -123,78 +129,116 @@
   }
 }
 
-// Input: Carbon surface-1 style
+// Input: Apple rounded style
 .el-input {
   .el-input__wrapper {
-    border-radius: $radius-none;
-    background-color: $color-surface-1;
+    border-radius: $radius-sm;
+    background-color: $color-canvas;
     box-shadow: 0 0 0 1px $color-hairline inset;
-    transition: box-shadow 0.15s ease;
+    transition: box-shadow 0.2s ease;
+    padding: 4px 12px;
 
     &:hover {
       box-shadow: 0 0 0 1px $color-ink-muted inset;
     }
 
     &.is-focus {
-      box-shadow: 0 0 0 2px $color-primary inset;
+      box-shadow: 0 0 0 2px $color-primary-hover inset;
     }
   }
 }
 
-// Select
+// Select: Apple rounded style
 .el-select {
   .el-select__wrapper {
-    border-radius: $radius-none;
+    border-radius: $radius-sm;
   }
 }
 
-// Table: Carbon hairline style
+// Table: Apple clean style
 .el-table {
   --el-table-border-color: #{$color-hairline};
-  --el-table-header-bg-color: #{$color-surface-1};
-  --el-table-row-hover-bg-color: #{$color-surface-1};
+  --el-table-header-bg-color: #{$color-canvas-parchment};
+  --el-table-row-hover-bg-color: #{$color-canvas-parchment};
   --el-table-bg-color: #{$color-canvas};
+  --el-table-header-text-color: #{$color-ink};
+  --el-table-text-color: #{$color-ink-secondary};
+  --el-table-row-hover-bg-color: #{$color-canvas-parchment};
+  --el-table-current-row-bg-color: #{$color-semantic-info-bg};
 
-  border-radius: $radius-none;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  font-size: $font-size-small;
+
+  &::before {
+    display: none;
+  }
+
+  &::after {
+    display: none;
+  }
+
+  .el-table__inner-wrapper {
+    border-radius: $radius-lg;
+    overflow: hidden;
+  }
 
   th.el-table__cell {
     font-weight: $font-weight-semibold;
     color: $color-ink;
-    background-color: $color-surface-1;
+    background-color: $color-canvas-parchment;
+    font-size: $font-size-small;
+    letter-spacing: $letter-spacing-caption;
+    padding: 14px 0;
   }
 
   td.el-table__cell {
     color: $color-ink-secondary;
+    padding: 13px 0;
+  }
+
+  .el-table__row--striped td.el-table__cell {
+    background-color: $color-canvas-parchment;
   }
 }
 
-// Tag
+// Tag: Apple pill style
 .el-tag {
-  border-radius: $radius-xs;
+  border-radius: $radius-pill;
+  border: none;
+  font-weight: $font-weight-semibold;
+  letter-spacing: $letter-spacing-caption;
 }
 
-// Dialog
+// Dialog: Apple rounded style
 .el-dialog {
-  border-radius: $radius-none;
+  border-radius: $radius-lg;
+  overflow: hidden;
 
   .el-dialog__header {
     border-bottom: 1px solid $color-hairline;
-    padding: $spacing-md $spacing-lg;
+    padding: $spacing-lg $spacing-xl;
+  }
+
+  .el-dialog__body {
+    padding: $spacing-lg $spacing-xl;
   }
 
   .el-dialog__footer {
     border-top: 1px solid $color-hairline;
-    padding: $spacing-md $spacing-lg;
+    padding: $spacing-md $spacing-xl;
   }
 }
 
-// Menu (Sidebar)
+// Menu (Sidebar): Apple parchment style
 .el-menu {
   border-right: none;
   font-family: $font-family;
 
   .el-menu-item {
-    border-radius: $radius-none;
+    border-radius: $radius-md;
+    margin: 2px $spacing-xs;
+    transition: all 0.2s ease;
 
     &.is-active {
       background-color: $color-primary;
@@ -203,19 +247,30 @@
   }
 }
 
-// Pagination
+// Pagination: Apple rounded style
 .el-pagination {
   font-family: $font-family;
 
   .el-pager li {
-    border-radius: $radius-none;
+    border-radius: $radius-sm;
+    transition: all 0.2s ease;
+
+    &.is-active {
+      background-color: $color-primary;
+      color: $color-on-primary;
+    }
+  }
+
+  .btn-prev,
+  .btn-next {
+    border-radius: $radius-sm;
   }
 }
 
 // Breadcrumb
 .el-breadcrumb {
   font-family: $font-family;
-  font-size: $font-size-body;
+  font-size: $font-size-small;
 }
 
 // Form
@@ -223,14 +278,61 @@
   font-family: $font-family;
   font-weight: $font-weight-regular;
   color: $color-ink;
+  font-size: $font-size-small;
 }
 
-// Message
+// Message: Apple rounded style
 .el-message {
-  border-radius: $radius-none;
+  border-radius: $radius-md;
 }
 
-// Notification
+// Notification: Apple rounded style
 .el-notification {
-  border-radius: $radius-none;
+  border-radius: $radius-lg;
+}
+
+// Descriptions
+.el-descriptions {
+  .el-descriptions__label {
+    font-weight: $font-weight-semibold;
+    color: $color-ink;
+  }
+}
+
+// Dropdown
+.el-dropdown-menu {
+  border-radius: $radius-md;
+  padding: $spacing-xxs;
+}
+
+// DatePicker
+.el-date-editor {
+  .el-input__wrapper {
+    border-radius: $radius-sm;
+  }
+}
+
+// ---- Query Form Global Styles ----
+.el-form--inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs $spacing-md;
+  align-items: flex-end;
+
+  .el-form-item {
+    margin-right: 0;
+    margin-bottom: $spacing-xs;
+  }
+
+  .el-select {
+    width: $query-select-width;
+  }
+
+  .el-input {
+    width: $query-input-width;
+  }
+
+  .el-date-editor {
+    width: $query-date-width !important;
+  }
 }

@@ -197,29 +197,27 @@ function getStatusLabel(status: string): string {
 
 <style lang="scss" scoped>
 .flow-list {
-  padding: 16px;
+  @include page-container;
 
   &__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
+    @include flex-between;
+    margin-bottom: $spacing-md;
 
     h2 {
       margin: 0;
-      font-size: 18px;
-      font-weight: 500;
+      font-size: $font-size-tagline;
+      font-weight: $font-weight-semibold;
+      letter-spacing: $letter-spacing-headline;
     }
   }
 
   .filter-card {
-    margin-bottom: 16px;
+    margin-bottom: $spacing-md;
+    border-radius: $radius-lg;
   }
 
   .pagination {
-    margin-top: 16px;
-    display: flex;
-    justify-content: flex-end;
+    @include pagination-wrapper;
   }
 }
 </style>

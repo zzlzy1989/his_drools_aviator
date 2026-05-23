@@ -8,7 +8,7 @@
 import FlowEditor from '@/components/FlowEditor/FlowEditor.vue'
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .flow-editor-view {
   width: 100%;
   height: 100%;

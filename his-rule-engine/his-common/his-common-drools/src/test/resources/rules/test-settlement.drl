@@ -1,0 +1,43 @@
+/**
+ * 测试规则：身份校验
+ */
+package com.his.test.rules;
+
+import com.his.common.fact.SettlementFact;
+
+rule "1. 身份校验"
+    salience 100
+    when
+        $f: SettlementFact(patientType == null || patientType == "")
+    then
+        $f.setResultLevel("BLOCK");
+        System.out.println("身份校验失败");
+end
+
+rule "2. 起付线判断-职工"
+    salience 90
+    when
+        $f: SettlementFact(patientType == "employee", totalFee > new java.math.BigDecimal("1000"))
+    then
+        $f.setDeductible(new java.math.BigDecimal("1000"));
+        System.out.println("职工起付线: 1000");
+end
+
+rule "3. 起付线判断-居民"
+    salience 90
+    when
+        $f: SettlementFact(patientType == "resident", totalFee > new java.math.BigDecimal("500"))
+    then
+        $f.setDeductible(new java.math.BigDecimal("500"));
+        System.out.println("居民起付线: 500");
+end
+
+rule "4. 计算报销金额"
+    salience 10
+    when
+        $f: SettlementFact(deductible != null, ratio != null)
+    then
+        java.math.BigDecimal amount = $f.getTotalFee().subtract($f.getDeductible()).multiply($f.getRatio());
+        $f.setFinalAmount(amount);
+        System.out.println("报销金额: " + amount);
+end

@@ -31,7 +31,7 @@
         <el-button type="primary" :icon="Plus" @click="handleAdd">新增规则</el-button>
       </div>
 
-      <el-table v-loading="loading" :data="tableData" border style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" stripe style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="ruleKey" label="规则Key" width="220" />
         <el-table-column prop="ruleName" label="规则名称" />
@@ -280,39 +280,42 @@ onMounted(() => { loadData() })
 
 .his-rule-list {
   &__card {
-    background-color: $color-canvas;
-    border: 1px solid $color-hairline;
-    padding: $spacing-lg;
+    @include apple-card;
+    border-radius: $radius-lg;
   }
 
   &__search {
-    margin-bottom: $spacing-md;
+    @include search-form;
   }
 
   &__search-form {
     display: flex;
     flex-wrap: wrap;
-    gap: 0;
+    gap: $spacing-xs $spacing-md;
+    align-items: flex-end;
+
+    .el-form-item {
+      margin-right: 0;
+      margin-bottom: $spacing-xs;
+    }
   }
 
   &__toolbar {
-    margin-bottom: $spacing-md;
+    @include toolbar;
   }
 
   &__pagination {
-    margin-top: $spacing-md;
-    display: flex;
-    justify-content: flex-end;
+    @include pagination-wrapper;
   }
 
   &__category {
     display: inline-flex;
     align-items: center;
-    padding: 2px 8px;
-    border-radius: $radius-xs;
-    font-size: $font-size-body;
+    padding: 3px 10px;
+    border-radius: $radius-pill;
+    font-size: $font-size-caption;
     font-weight: $font-weight-semibold;
-    letter-spacing: $letter-spacing-body;
+    letter-spacing: $letter-spacing-caption;
 
     &--insurance {
       color: $color-semantic-info;

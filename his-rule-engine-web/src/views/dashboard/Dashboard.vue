@@ -159,8 +159,8 @@ onMounted(() => {
   }
 
   &__card {
-    background-color: $color-canvas;
-    border: 1px solid $color-hairline;
+    @include apple-card;
+    border-radius: $radius-lg;
     margin-bottom: $spacing-md;
   }
 

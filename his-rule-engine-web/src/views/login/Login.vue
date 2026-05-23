@@ -185,6 +185,7 @@ async function handleLogin() {
   height: 48px;
   background-color: $color-primary;
   color: $color-on-primary;
+  border-radius: $radius-md;
   font-size: $font-size-body-lg;
   font-weight: $font-weight-semibold;
   letter-spacing: 1px;

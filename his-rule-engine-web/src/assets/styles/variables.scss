@@ -1,97 +1,130 @@
 // ============================================================
 // HIS Design System - Design Tokens
-// Based on DESIGN.md (IBM Carbon + HIS Medical Extensions)
+// Based on DESIGN.md (Apple Design Language)
 // ============================================================
 
 // ---- Color System ----
 
-// Brand & Accent (Carbon)
-$color-primary: #0f62fe;
-$color-primary-hover: #0050e6;
-$color-primary-press: #0043ce;
-$color-primary-deep: #002d9c;
+// Brand & Accent (Apple)
+$color-primary: #0066cc;
+$color-primary-hover: #0071e3;
+$color-primary-press: #0055aa;
+$color-primary-deep: #004999;
+$color-primary-on-dark: #2997ff;
 $color-on-primary: #ffffff;
 
-// Text (Carbon)
-$color-ink: #161616;
-$color-ink-secondary: #525252;
-$color-ink-muted: #8c8c8c;
+// Text (Apple)
+$color-ink: #1d1d1f;
+$color-ink-secondary: #333333;
+$color-ink-muted: #7a7a7a;
 
-// Surface (Carbon)
+// Surface (Apple)
 $color-canvas: #ffffff;
-$color-surface-1: #f4f4f4;
+$color-canvas-parchment: #f5f5f7;
+$color-surface-pearl: #fafafc;
+$color-surface-1: #f5f5f7;
 $color-surface-2: #e0e0e0;
 
-// Inverse (Sidebar / Dark)
-$color-inverse-canvas: #161616;
-$color-inverse-surface-1: #262626;
+// Dark Surface (Apple)
+$color-surface-tile-1: #272729;
+$color-surface-tile-2: #2a2a2c;
+$color-surface-tile-3: #252527;
+$color-surface-black: #000000;
+
+// Inverse (Sidebar)
+$color-inverse-canvas: #1d1d1f;
+$color-inverse-surface-1: #272729;
 $color-inverse-ink: #ffffff;
-$color-inverse-ink-muted: #c6c6c6;
+$color-inverse-ink-muted: #8e8e93;
 
 // Border
 $color-hairline: #e0e0e0;
-$color-hairline-strong: #161616;
+$color-hairline-strong: #1d1d1f;
+$color-divider-soft: #f0f0f0;
 
 // ---- HIS Business Semantic Colors ----
 
 // Audit Result Levels (PASS/WARN/BLOCK)
-$color-semantic-pass: #24a148;
-$color-semantic-pass-bg: #defbe6;
-$color-semantic-warn: #b28600;
-$color-semantic-warn-bg: #fff8e1;
-$color-semantic-block: #da1e28;
-$color-semantic-block-bg: #fff1f1;
-$color-semantic-fail: #da1e28;
-$color-semantic-info: #0f62fe;
-$color-semantic-info-bg: #edf5ff;
+$color-semantic-pass: #34c759;
+$color-semantic-pass-bg: #e8f9ed;
+$color-semantic-warn: #ff9f0a;
+$color-semantic-warn-bg: #fff5e5;
+$color-semantic-block: #ff3b30;
+$color-semantic-block-bg: #ffe5e3;
+$color-semantic-fail: #ff3b30;
+$color-semantic-info: #0066cc;
+$color-semantic-info-bg: #e5f0ff;
 
 // Rule Status
-$color-status-draft: #8c8c8c;
-$color-status-draft-bg: #e0e0e0;
-$color-status-published: #24a148;
-$color-status-published-bg: #defbe6;
-$color-status-disabled: #525252;
-$color-status-disabled-bg: #f4f4f4;
-$color-status-validating: #0f62fe;
-$color-status-validating-bg: #edf5ff;
+$color-status-draft: #7a7a7a;
+$color-status-draft-bg: #f5f5f7;
+$color-status-published: #34c759;
+$color-status-published-bg: #e8f9ed;
+$color-status-disabled: #333333;
+$color-status-disabled-bg: #f5f5f7;
+$color-status-validating: #0066cc;
+$color-status-validating-bg: #e5f0ff;
 
 // Medical Brand
-$color-medical-blue: #0f62fe;
-$color-medical-blue-deep: #0043ce;
+$color-medical-blue: #0066cc;
+$color-medical-blue-deep: #004999;
 
-// ---- Monitor Theme (Sentry) ----
-$color-monitor-canvas-dark: #1f1633;
-$color-monitor-night: #150f23;
-$color-monitor-ink-deep: #1f1633;
-$color-monitor-accent-lime: #c2ef4e;
-$color-monitor-accent-pink: #fa7faa;
-$color-monitor-accent-violet: #6a5fc1;
-$color-monitor-accent-violet-deep: #422082;
-$color-monitor-on-dark-muted: #bdb8c0;
-$color-monitor-hairline-violet: #362d59;
+// ---- Monitor Theme (Apple Dark) ----
+$color-monitor-canvas-dark: #1d1d1f;
+$color-monitor-surface-card: #1c1c1e;
+$color-monitor-surface-elevated: #2c2c2e;
+$color-monitor-surface-elevated-2: #3a3a3c;
+$color-monitor-ink-deep: #1c1c1e;
+$color-monitor-night: #000000;
+$color-monitor-accent-lime: #30d158;
+$color-monitor-accent-green: #34c759;
+$color-monitor-accent-orange: #ff9f0a;
+$color-monitor-accent-pink: #ff375f;
+$color-monitor-accent-violet: #bf5af2;
+$color-monitor-accent-teal: #64d2ff;
+$color-monitor-on-dark: #ffffff;
+$color-monitor-on-dark-muted: #8e8e93;
+$color-monitor-hairline-dark: #38383a;
+$color-monitor-hairline-dark-subtle: #2c2c2e;
 
-// ---- Settlement Theme (Stripe) ----
-$color-settlement-primary: #533afd;
-$color-settlement-primary-deep: #4434d4;
-$color-settlement-primary-soft: #665efd;
-$color-settlement-ink: #0d253d;
-$color-settlement-ink-secondary: #273951;
-$color-settlement-canvas-soft: #f6f9fc;
-$color-settlement-hairline: #e3e8ee;
+// Monitor Semantic (translucent backgrounds)
+$color-monitor-semantic-pass: #30d158;
+$color-monitor-semantic-pass-bg: rgba(48, 209, 88, 0.15);
+$color-monitor-semantic-warn: #ff9f0a;
+$color-monitor-semantic-warn-bg: rgba(255, 159, 10, 0.15);
+$color-monitor-semantic-block: #ff453a;
+$color-monitor-semantic-block-bg: rgba(255, 69, 58, 0.15);
+$color-monitor-semantic-info: #2997ff;
+$color-monitor-semantic-info-bg: rgba(41, 151, 255, 0.15);
+
+// ---- Settlement Theme (Apple Financial) ----
+$color-settlement-primary: #0066cc;
+$color-settlement-primary-deep: #004999;
+$color-settlement-primary-soft: #3399ff;
+$color-settlement-ink: #1d1d1f;
+$color-settlement-ink-secondary: #333333;
+$color-settlement-canvas-soft: #f5f5f7;
+$color-settlement-hairline: #e0e0e0;
 
 // ---- Typography ----
-$font-family: "IBM Plex Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
-$font-family-mono: "IBM Plex Mono", Monaco, Menlo, "Courier New", monospace;
+$font-family: "SF Pro Display", "SF Pro Text", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+$font-family-mono: "SF Mono", Monaco, Menlo, "Courier New", monospace;
 
-$font-size-display-xl: 42px;
-$font-size-display-lg: 32px;
-$font-size-headline: 24px;
-$font-size-subhead: 20px;
-$font-size-subheading: $font-size-subhead;
-$font-size-body-lg: 16px;
-$font-size-body: 14px;
-$font-size-small: 13px;
-$font-size-caption: 12px;
+$font-size-hero-display: 56px;
+$font-size-display-lg: 40px;
+$font-size-display-md: 34px;
+$font-size-lead: 28px;
+$font-size-tagline: 21px;
+$font-size-body-strong: 17px;
+$font-size-body-lg: 17px;
+$font-size-body: 17px;
+$font-size-small: 14px;
+$font-size-caption: 14px;
+$font-size-fine-print: 12px;
+
+$font-size-headline: $font-size-tagline;
+$font-size-subheading: $font-size-body-strong;
+$font-size-subhead: $font-size-body-strong;
 
 $font-weight-light: 300;
 $font-weight-regular: 400;
@@ -99,40 +132,42 @@ $font-weight-medium: 500;
 $font-weight-semibold: 600;
 $font-weight-bold: 700;
 
-$line-height-tight: 1.20;
-$line-height-normal: 1.50;
-$line-height-relaxed: 1.50;
+$line-height-tight: 1.07;
+$line-height-normal: 1.47;
+$line-height-relaxed: 1.47;
 
-$letter-spacing-headline: 0px;
-$letter-spacing-body: 0.16px;
-$letter-spacing-caption: 0.32px;
+$letter-spacing-headline: -0.28px;
+$letter-spacing-body: -0.374px;
+$letter-spacing-caption: -0.224px;
 
-// ---- Border Radius (Carbon: square) ----
+// ---- Border Radius (Apple: rounded) ----
 $radius-none: 0px;
-$radius-xs: 2px;
-$radius-sm: 4px;
-$radius-md: 6px;
-$radius-lg: 8px;
+$radius-xs: 5px;
+$radius-sm: 8px;
+$radius-md: 11px;
+$radius-lg: 18px;
 $radius-pill: 9999px;
+$radius-full: 9999px;
 
 // ---- Spacing (4px grid) ----
 $spacing-xxs: 4px;
 $spacing-xs: 8px;
 $spacing-sm: 12px;
-$spacing-md: 16px;
+$spacing-md: 17px;
 $spacing-lg: 24px;
 $spacing-xl: 32px;
 $spacing-xxl: 48px;
-$spacing-section: 96px;
+$spacing-section: 80px;
 
 // ---- Layout ----
-$sidebar-width: 200px;
-$header-height: 48px;
+$sidebar-width: 220px;
+$header-height: 44px;
 
-// ---- Shadows (Carbon: none for marketing, minimal for app) ----
+// ---- Shadows (Apple: minimal) ----
 $shadow-none: none;
-$shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-$shadow-elevated: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
+$shadow-card: none;
+$shadow-elevated: none;
+$shadow-product: rgba(0, 0, 0, 0.22) 3px 5px 30px;
 
 // ---- Z-Index ----
 $z-sidebar: 100;
@@ -143,5 +178,11 @@ $z-tooltip: 500;
 
 // ---- Breakpoints ----
 $breakpoint-mobile: 768px;
-$breakpoint-tablet: 1200px;
+$breakpoint-tablet: 980px;
 $breakpoint-desktop: 1584px;
+
+// ---- Query Form ----
+$query-select-width: 180px;
+$query-input-width: 200px;
+$query-date-width: 160px;
+$query-gap: $spacing-md;

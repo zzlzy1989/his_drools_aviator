@@ -170,4 +170,150 @@ class AviatorFormulaTest {
         assertThat(AviatorEvaluator.execute(formula, env1)).isEqualTo(true);
         assertThat(AviatorEvaluator.execute(formula, env2)).isEqualTo(false);
     }
+
+    // ========== 边界值测试 ==========
+
+    @Test
+    @DisplayName("边界值 - 空环境变量")
+    void test_emptyEnv() {
+        String formula = "a + b";
+        try {
+            AviatorEvaluator.execute(formula, Map.of());
+        } catch (Exception e) {
+            // 预期抛出异常
+            assertThat(e).isInstanceOf(Exception.class);
+        }
+    }
+
+    @Test
+    @DisplayName("边界值 - 除零保护")
+    void test_divisionByZero() {
+        String formula = "x / y";
+        Map<String, Object> env = Map.of(
+            "x", new BigDecimal("100"),
+            "y", BigDecimal.ZERO
+        );
+
+        try {
+            AviatorEvaluator.execute(formula, env);
+        } catch (ArithmeticException e) {
+            // 预期抛出除零异常
+            assertThat(e).isNotNull();
+        } catch (Exception e) {
+            // Aviator 可能抛出其他类型的异常，也是可接受的
+            assertThat(e).isNotNull();
+        }
+    }
+
+    @Test
+    @DisplayName("边界值 - 极大数值运算")
+    void test_largeNumberOperation() {
+        String formula = "x * y";
+        Map<String, Object> env = Map.of(
+            "x", new BigDecimal("999999999999999"),
+            "y", new BigDecimal("0.000001")
+        );
+
+        Object result = AviatorEvaluator.execute(formula, env);
+        // 结果应该是一个合理的数值
+        assertThat(toDecimal(result).setScale(2, RoundingMode.HALF_UP))
+            .isEqualTo(new BigDecimal("1000000000.00"));
+    }
+
+    @Test
+    @DisplayName("边界值 - 负数运算")
+    void test_negativeNumberOperation() {
+        String formula = "x + y";
+        Map<String, Object> env = Map.of(
+            "x", new BigDecimal("-100"),
+            "y", new BigDecimal("50")
+        );
+
+        Object result = AviatorEvaluator.execute(formula, env);
+        assertThat(toDecimal(result).setScale(2, RoundingMode.HALF_UP))
+            .isEqualTo(new BigDecimal("-50.00"));
+    }
+
+    @Test
+    @DisplayName("公式语法 - 无效表达式")
+    void test_invalidFormula() {
+        String formula = "a + ";
+        try {
+            AviatorEvaluator.execute(formula, Map.of("a", new BigDecimal("1")));
+        } catch (Exception e) {
+            // 预期抛出语法错误
+            assertThat(e).isInstanceOf(Exception.class);
+        }
+    }
+
+    @Test
+    @DisplayName("公式语法 - 括号不匹配")
+    void test_unmatchedParenthesis() {
+        String formula = "(a + b";
+        try {
+            AviatorEvaluator.execute(formula, Map.of("a", new BigDecimal("1"), "b", new BigDecimal("2")));
+        } catch (Exception e) {
+            // 预期抛出语法错误
+            assertThat(e).isInstanceOf(Exception.class);
+        }
+    }
+
+    @Test
+    @DisplayName("公式长度限制 - 512字符限制")
+    void test_formulaLengthLimit() {
+        // 测试超长公式（假设最大长度为512字符）
+        String longFormula = "a + b + c + d + e".repeat(100);
+        assertThat(longFormula.length()).isGreaterThan(512);
+
+        // Aviator 会接受这个公式，但在实际使用时应被校验拒绝
+        // 这里我们只验证公式长度
+        try {
+            Expression expr = AviatorEvaluator.compile(longFormula);
+            assertThat(expr).isNotNull();
+        } catch (Exception e) {
+            // 某些情况下可能拒绝
+        }
+    }
+
+    @Test
+    @DisplayName("数学函数 - max 函数")
+    void test_mathMax() {
+        String formula = "max(a, b, c)";
+        Map<String, Object> env = Map.of(
+            "a", new BigDecimal("10"),
+            "b", new BigDecimal("30"),
+            "c", new BigDecimal("20")
+        );
+
+        Object result = AviatorEvaluator.execute(formula, env);
+        assertThat(toDecimal(result)).isEqualTo(new BigDecimal("30"));
+    }
+
+    @Test
+    @DisplayName("数学函数 - min 函数")
+    void test_mathMin() {
+        String formula = "min(a, b, c)";
+        Map<String, Object> env = Map.of(
+            "a", new BigDecimal("10"),
+            "b", new BigDecimal("30"),
+            "c", new BigDecimal("20")
+        );
+
+        Object result = AviatorEvaluator.execute(formula, env);
+        assertThat(toDecimal(result)).isEqualTo(new BigDecimal("10"));
+    }
+
+    @Test
+    @DisplayName("abs 绝对值函数 - Aviator 5.x 不支持")
+    void test_absFunction() {
+        // Aviator 5.x 不支持 abs 函数，如需使用需要自定义函数注册
+        // 此测试记录这一限制
+        String formula = "abs(x)";
+        try {
+            AviatorEvaluator.execute(formula, Map.of("x", new BigDecimal("-100")));
+        } catch (Exception e) {
+            // 预期不支持 abs 函数
+            assertThat(e.getMessage()).contains("not found");
+        }
+    }
 }

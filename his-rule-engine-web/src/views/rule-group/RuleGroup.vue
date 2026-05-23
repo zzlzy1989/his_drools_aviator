@@ -24,7 +24,7 @@
       </div>
 
       <!-- Table -->
-      <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" stripe style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="groupKey" label="组标识" width="200" />
         <el-table-column prop="groupName" label="规则组名称" />
@@ -232,25 +232,25 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .page-container {
-  padding: 16px;
+  @include page-container;
 }
+
 .page-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  @include apple-card;
+  border-radius: $radius-lg;
 }
+
 .search-form {
-  margin-bottom: 16px;
+  @include search-form;
 }
+
 .toolbar {
-  margin-bottom: 16px;
+  @include toolbar;
 }
+
 .pagination {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
+  @include pagination-wrapper;
 }
 </style>

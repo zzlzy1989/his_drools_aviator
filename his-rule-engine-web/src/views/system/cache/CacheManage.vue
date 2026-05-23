@@ -232,67 +232,68 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .cache-manage {
-  padding: 16px;
+  @include page-container;
 
   .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    @include flex-between;
   }
 
   .loading {
-    padding: 20px;
+    padding: $spacing-md;
   }
 
   .stats-container {
     .cache-section {
       h4 {
-        margin-bottom: 12px;
-        color: #333;
+        margin-bottom: $spacing-sm;
+        color: $color-ink;
+        font-weight: $font-weight-semibold;
       }
 
       .mt-16 {
-        margin-top: 16px;
+        margin-top: $spacing-md;
       }
     }
 
     .stat-card {
-      background: #f5f7fa;
-      border-radius: 8px;
-      padding: 20px;
+      background: $color-surface-1;
+      border-radius: $radius-md;
+      padding: $spacing-md;
       text-align: center;
 
       .stat-label {
-        font-size: 14px;
-        color: #666;
-        margin-bottom: 8px;
+        font-size: $font-size-caption;
+        color: $color-ink-muted;
+        margin-bottom: $spacing-xs;
       }
 
       .stat-value {
-        font-size: 28px;
-        font-weight: bold;
-        color: #333;
+        font-size: $font-size-headline;
+        font-weight: $font-weight-semibold;
+        color: $color-ink;
+        font-feature-settings: "tnum";
 
         .rate-high {
-          color: #67c23a;
+          color: $color-semantic-pass;
         }
 
         .rate-medium {
-          color: #e6a23c;
+          color: $color-semantic-warn;
         }
 
         .rate-low {
-          color: #f56c6c;
+          color: $color-semantic-block;
         }
       }
     }
 
     .actions {
-      margin-top: 20px;
+      margin-top: $spacing-md;
 
       h4 {
-        margin-bottom: 12px;
-        color: #333;
+        margin-bottom: $spacing-sm;
+        color: $color-ink;
+        font-weight: $font-weight-semibold;
       }
     }
   }

@@ -3,7 +3,7 @@
     <div class="page-card">
       <el-form :inline="true" :model="queryForm" class="search-form">
         <el-form-item label="操作类型">
-          <el-select v-model="queryForm.action" placeholder="请选择" clearable style="width: 120px">
+          <el-select v-model="queryForm.action" placeholder="请选择" clearable>
             <el-option label="创建" value="CREATE" />
             <el-option label="更新" value="UPDATE" />
             <el-option label="删除" value="DELETE" />
@@ -12,7 +12,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="对象类型">
-          <el-select v-model="queryForm.targetType" placeholder="请选择" clearable style="width: 120px">
+          <el-select v-model="queryForm.targetType" placeholder="请选择" clearable>
             <el-option label="规则" value="RULE" />
             <el-option label="公式" value="FORMULA" />
             <el-option label="规则流" value="FLOW" />
@@ -20,13 +20,13 @@
           </el-select>
         </el-form-item>
         <el-form-item label="操作人">
-          <el-input v-model="queryForm.operator" placeholder="请输入" clearable style="width: 120px" />
+          <el-input v-model="queryForm.operator" placeholder="请输入" clearable />
         </el-form-item>
         <el-form-item label="开始日期">
-          <el-date-picker v-model="queryForm.startDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 140px" />
+          <el-date-picker v-model="queryForm.startDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" />
         </el-form-item>
         <el-form-item label="结束日期">
-          <el-date-picker v-model="queryForm.endDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 140px" />
+          <el-date-picker v-model="queryForm.endDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="loadData">查询</el-button>
@@ -34,7 +34,7 @@
         </el-form-item>
       </el-form>
 
-      <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" stripe style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="action" label="操作类型" width="100">
           <template #default="{ row }">
@@ -157,9 +157,21 @@ function formatDetail(detail: string): string {
 onMounted(() => { loadData() })
 </script>
 
-<style scoped>
-.page-container { padding: 16px; }
-.page-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-.search-form { margin-bottom: 16px; }
-.pagination { margin-top: 16px; display: flex; justify-content: flex-end; }
+<style lang="scss" scoped>
+.page-container {
+  @include page-container;
+}
+
+.page-card {
+  @include apple-card;
+  border-radius: $radius-lg;
+}
+
+.search-form {
+  @include search-form;
+}
+
+.pagination {
+  @include pagination-wrapper;
+}
 </style>

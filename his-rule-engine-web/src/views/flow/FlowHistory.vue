@@ -45,7 +45,7 @@
         <el-divider />
         <div class="node-list">
           <div class="section-title">节点 ({{ previewData.flowDefinition?.nodes?.length || 0 }})</div>
-          <el-table :data="previewData.flowDefinition?.nodes || []" size="small" border>
+          <el-table :data="previewData.flowDefinition?.nodes || []" size="small" stripe>
             <el-table-column prop="nodeId" label="节点ID" width="120" />
             <el-table-column prop="type" label="类型" width="100">
               <template #default="{ row }">
@@ -58,7 +58,7 @@
         </div>
         <div class="edge-list" style="margin-top: 16px">
           <div class="section-title">连线 ({{ previewData.flowDefinition?.edges?.length || 0 }})</div>
-          <el-table :data="previewData.flowDefinition?.edges || []" size="small" border>
+          <el-table :data="previewData.flowDefinition?.edges || []" size="small" stripe>
             <el-table-column prop="source" label="源节点" width="120" />
             <el-table-column prop="target" label="目标节点" width="120" />
             <el-table-column prop="label" label="标签" />
@@ -76,7 +76,7 @@
       </div>
       <el-tabs v-model="compareTab">
         <el-tab-pane label="节点对比" name="nodes">
-          <el-table :data="nodeDiff" size="small" border>
+          <el-table :data="nodeDiff" size="small" stripe>
             <el-table-column prop="changeType" label="变更类型" width="100">
               <template #default="{ row }">
                 <el-tag :type="row.changeType === '新增' ? 'success' : row.changeType === '删除' ? 'danger' : 'warning'" size="small">
@@ -91,7 +91,7 @@
           </el-table>
         </el-tab-pane>
         <el-tab-pane label="连线对比" name="edges">
-          <el-table :data="edgeDiff" size="small" border>
+          <el-table :data="edgeDiff" size="small" stripe>
             <el-table-column prop="changeType" label="变更类型" width="100">
               <template #default="{ row }">
                 <el-tag :type="row.changeType === '新增' ? 'success' : row.changeType === '删除' ? 'danger' : 'warning'" size="small">
@@ -231,31 +231,30 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .flow-history {
-  padding: 16px;
+  @include page-container;
 
   &__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
+    @include flex-between;
+    margin-bottom: $spacing-md;
 
     h2 {
       margin: 0;
-      font-size: 18px;
-      font-weight: 500;
+      font-size: $font-size-tagline;
+      font-weight: $font-weight-semibold;
+      letter-spacing: $letter-spacing-headline;
     }
   }
 
   .section-title {
-    font-weight: 500;
-    margin-bottom: 8px;
-    color: #606266;
+    font-weight: $font-weight-medium;
+    margin-bottom: $spacing-xs;
+    color: $color-ink-secondary;
   }
 
   .compare-tip {
     display: flex;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: $spacing-md;
   }
 
   .preview-content {

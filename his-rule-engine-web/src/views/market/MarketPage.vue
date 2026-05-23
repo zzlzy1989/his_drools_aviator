@@ -3,7 +3,7 @@
     <div class="page-card">
       <el-form :inline="true" :model="queryForm" class="search-form">
         <el-form-item label="分类">
-          <el-select v-model="queryForm.category" placeholder="请选择" clearable style="width: 120px">
+          <el-select v-model="queryForm.category" placeholder="请选择" clearable>
             <el-option label="全部" value="" />
             <el-option label="医保报销" value="REIMBURSE" />
             <el-option label="合理用药" value="DRUG" />
@@ -31,7 +31,7 @@
         <el-tab-pane label="我的收藏" name="favorites" />
       </el-tabs>
 
-      <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" stripe style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="模板名称" width="200" />
         <el-table-column prop="category" label="分类" width="100">
@@ -464,85 +464,122 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+.page-container {
+  @include page-container;
+}
+
+.page-card {
+  @include apple-card;
+  border-radius: $radius-lg;
+}
+
+.search-form {
+  @include search-form;
+}
+
+.toolbar {
+  @include toolbar;
+}
+
+.pagination {
+  @include pagination-wrapper;
+}
+
 .content-item {
-  padding: 8px;
-  border-bottom: 1px solid #eee;
+  padding: $spacing-xs;
+  border-bottom: 1px solid $color-hairline;
+
+  code {
+    display: block;
+    margin-top: 4px;
+    font-size: $font-size-fine-print;
+    color: $color-ink-muted;
+  }
 }
-.content-item code {
-  display: block;
-  margin-top: 4px;
-  font-size: 12px;
-  color: #666;
-}
+
 .rule-key {
-  font-size: 12px;
-  color: #999;
+  font-size: $font-size-fine-print;
+  color: $color-ink-muted;
   margin: 4px 0 0 0;
 }
+
 .rating-text {
-  margin-left: 8px;
-  font-size: 12px;
-  color: #909399;
+  margin-left: $spacing-xs;
+  font-size: $font-size-fine-print;
+  color: $color-ink-muted;
 }
+
 .rating-section {
-  padding: 12px 0;
+  padding: $spacing-sm 0;
 }
+
 .rating-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-sm;
 }
+
 .rating-actions {
-  margin-top: 12px;
+  margin-top: $spacing-sm;
   display: flex;
-  gap: 12px;
+  gap: $spacing-sm;
 }
+
 .rating-distribution {
   display: flex;
   flex-direction: column-reverse;
   gap: 6px;
   max-width: 300px;
 }
+
 .rating-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #606266;
+  gap: $spacing-xs;
+  font-size: $font-size-fine-print;
+  color: $color-ink-secondary;
+
+  span:first-child {
+    width: 30px;
+  }
+
+  .el-progress {
+    flex: 1;
+  }
+
+  span:last-child {
+    width: 20px;
+    text-align: right;
+  }
 }
-.rating-bar span:first-child {
-  width: 30px;
-}
-.rating-bar .el-progress {
-  flex: 1;
-}
-.rating-bar span:last-child {
-  width: 20px;
-  text-align: right;
-}
+
 .comments-list {
   max-height: 400px;
   overflow-y: auto;
 }
+
 .comment-item {
-  padding: 12px 0;
-  border-bottom: 1px solid #eee;
+  padding: $spacing-sm 0;
+  border-bottom: 1px solid $color-hairline;
 }
+
 .comment-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: $spacing-xs;
 }
+
 .comment-time {
-  font-size: 12px;
-  color: #909399;
+  font-size: $font-size-fine-print;
+  color: $color-ink-muted;
 }
+
 .comment-text {
-  font-size: 14px;
-  color: #303133;
+  font-size: $font-size-body;
+  color: $color-ink;
   line-height: 1.5;
 }
 </style>

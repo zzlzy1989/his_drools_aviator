@@ -1,6 +1,6 @@
 // ============================================================
 // HIS Design System - Global Reset
-// Based on DESIGN.md Typography & Layout
+// Based on DESIGN.md (Apple Design Language)
 // ============================================================
 
 @use 'variables' as *;
@@ -40,7 +40,7 @@ body {
 a {
   color: $color-primary;
   text-decoration: none;
-  transition: color 0.15s ease;
+  transition: color 0.2s ease;
 
   &:hover {
     color: $color-primary-hover;
@@ -53,35 +53,36 @@ a {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: $font-family;
-  font-weight: $font-weight-light;
+  font-weight: $font-weight-semibold;
   color: $color-ink;
+  letter-spacing: $letter-spacing-headline;
 }
 
 h1 {
-  font-size: $font-size-display-xl;
+  font-size: $font-size-display-md;
   line-height: $line-height-tight;
 }
 
 h2 {
-  font-size: $font-size-display-lg;
-  line-height: 1.25;
+  font-size: $font-size-lead;
+  line-height: 1.12;
 }
 
 h3 {
-  font-size: $font-size-headline;
-  font-weight: $font-weight-regular;
-  line-height: 1.33;
+  font-size: $font-size-tagline;
+  font-weight: $font-weight-semibold;
+  line-height: 1.19;
 }
 
 h4 {
-  font-size: $font-size-subhead;
-  font-weight: $font-weight-regular;
-  line-height: 1.40;
+  font-size: $font-size-body-strong;
+  font-weight: $font-weight-semibold;
+  line-height: 1.24;
 }
 
 code, pre {
   font-family: $font-family-mono;
-  font-size: $font-size-body;
+  font-size: $font-size-small;
   line-height: $line-height-normal;
 }
 
@@ -92,11 +93,11 @@ code, pre {
 
 ::-webkit-scrollbar-thumb {
   background: $color-surface-2;
-  border-radius: 3px;
+  border-radius: $radius-pill;
 }
 
 ::-webkit-scrollbar-track {
-  background: $color-surface-1;
+  background: transparent;
 }
 
 ::selection {

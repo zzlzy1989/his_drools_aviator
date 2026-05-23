@@ -44,21 +44,21 @@ const label = computed(() => props.label ?? labelMap[props.type])
 .his-status-tag {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  border-radius: $radius-xs;
+  gap: 5px;
+  border-radius: $radius-pill;
   font-weight: $font-weight-semibold;
   line-height: 1.29;
-  letter-spacing: $letter-spacing-body;
+  letter-spacing: $letter-spacing-caption;
   white-space: nowrap;
 
   &--small {
-    padding: 1px 6px;
-    font-size: 12px;
+    padding: 2px 8px;
+    font-size: $font-size-fine-print;
   }
 
   &--default {
-    padding: 2px 8px;
-    font-size: $font-size-body;
+    padding: 3px 10px;
+    font-size: $font-size-caption;
   }
 
   &--pass {
@@ -104,7 +104,7 @@ const label = computed(() => props.label ?? labelMap[props.type])
 
   &--draft {
     color: $color-ink-muted;
-    background-color: $color-surface-2;
+    background-color: $color-surface-1;
   }
 
   &--disabled {

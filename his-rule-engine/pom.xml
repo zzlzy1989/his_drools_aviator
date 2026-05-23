@@ -115,6 +115,11 @@
                 <artifactId>drools-decisiontables</artifactId>
                 <version>${drools.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.drools</groupId>
+                <artifactId>drools-mvel</artifactId>
+                <version>${drools.version}</version>
+            </dependency>
 
             <!-- Aviator -->
             <dependency>

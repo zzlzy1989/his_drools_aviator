@@ -13,7 +13,7 @@
       <!-- Search Form -->
       <el-form :inline="true" class="search-form">
         <el-form-item label="执行状态">
-          <el-select v-model="queryParams.status" placeholder="请选择" clearable style="width: 120px">
+          <el-select v-model="queryParams.status" placeholder="请选择" clearable>
             <el-option label="全部" value="" />
             <el-option label="通过" value="PASS" />
             <el-option label="失败" value="FAILED" />
@@ -38,7 +38,7 @@
       </el-form>
 
       <!-- Table -->
-      <el-table :data="tableData" v-loading="loading" stripe border>
+      <el-table :data="tableData" v-loading="loading" stripe>
         <el-table-column prop="caseName" label="用例名称" min-width="150" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
@@ -232,40 +232,38 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .execution-log-list {
+  @include page-container;
+
   .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    @include flex-between;
   }
 
   .search-form {
-    margin-bottom: 16px;
+    @include search-form;
   }
 
   .pagination {
-    margin-top: 16px;
-    display: flex;
-    justify-content: flex-end;
+    @include pagination-wrapper;
   }
 
   .detail-content {
     .json-content {
-      background: #f5f7fa;
-      padding: 12px;
-      border-radius: 4px;
-      font-size: 12px;
+      background: $color-surface-1;
+      padding: $spacing-sm;
+      border-radius: $radius-sm;
+      font-size: $font-size-fine-print;
       max-height: 200px;
       overflow: auto;
-      font-family: 'Courier New', monospace;
+      font-family: $font-family-mono;
 
       &.diff {
-        border: 1px solid #f56c6c;
+        border: 1px solid $color-semantic-block;
       }
 
       &.error {
-        background: #fef0f0;
-        color: #f56c6c;
-        border: 1px solid #f56c6c;
+        background: rgba($color-semantic-block, 0.06);
+        color: $color-semantic-block;
+        border: 1px solid $color-semantic-block;
       }
     }
   }

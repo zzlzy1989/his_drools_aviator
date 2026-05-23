@@ -47,6 +47,7 @@ withDefaults(defineProps<{
   padding: $spacing-md $spacing-lg;
   background-color: $color-canvas;
   border: 1px solid $color-hairline;
+  border-radius: $radius-lg;
   margin-bottom: $spacing-md;
 
   &--bordered {
@@ -60,10 +61,11 @@ withDefaults(defineProps<{
   }
 
   &__title {
-    font-size: $font-size-headline;
-    font-weight: $font-weight-regular;
+    font-size: $font-size-tagline;
+    font-weight: $font-weight-semibold;
     color: $color-ink;
     margin: 0;
+    letter-spacing: $letter-spacing-headline;
   }
 
   &__right {
@@ -77,6 +79,7 @@ withDefaults(defineProps<{
   &--card {
     background-color: $color-canvas;
     border: 1px solid $color-hairline;
+    border-radius: $radius-lg;
     padding: $spacing-lg;
   }
 }

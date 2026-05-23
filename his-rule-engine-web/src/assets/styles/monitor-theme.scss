@@ -1,5 +1,5 @@
 // ============================================================
-// HIS Design System - Monitor Theme (Sentry Dark)
+// HIS Design System - Monitor Theme (Apple Dark)
 // Based on DESIGN.md Monitor Section
 // ============================================================
 
@@ -12,55 +12,55 @@
   --monitor-accent-lime: #{$color-monitor-accent-lime};
   --monitor-accent-pink: #{$color-monitor-accent-pink};
   --monitor-accent-violet: #{$color-monitor-accent-violet};
-  --monitor-text: #{$color-inverse-ink};
+  --monitor-text: #{$color-monitor-on-dark};
   --monitor-text-muted: #{$color-monitor-on-dark-muted};
-  --monitor-border: #{$color-monitor-hairline-violet};
+  --monitor-border: #{$color-monitor-hairline-dark};
 
   background-color: $color-monitor-canvas-dark;
-  color: $color-inverse-ink;
+  color: $color-monitor-on-dark;
   min-height: 100vh;
 
-  // Override Element Plus for dark theme
   --el-bg-color: #{$color-monitor-canvas-dark};
   --el-bg-color-page: #{$color-monitor-canvas-dark};
-  --el-text-color-primary: #{$color-inverse-ink};
+  --el-text-color-primary: #{$color-monitor-on-dark};
   --el-text-color-regular: #{$color-monitor-on-dark-muted};
   --el-text-color-secondary: #{$color-monitor-on-dark-muted};
-  --el-border-color: #{$color-monitor-hairline-violet};
-  --el-fill-color: #{$color-monitor-ink-deep};
+  --el-border-color: #{$color-monitor-hairline-dark};
+  --el-fill-color: #{$color-monitor-surface-card};
 
   .el-card {
-    background-color: $color-monitor-ink-deep;
-    border-color: $color-monitor-hairline-violet;
-    color: $color-inverse-ink;
+    background-color: $color-monitor-surface-card;
+    border-color: $color-monitor-hairline-dark;
+    color: $color-monitor-on-dark;
     border-radius: $radius-md;
 
     .el-card__header {
-      border-bottom-color: $color-monitor-hairline-violet;
-      color: $color-inverse-ink;
+      border-bottom-color: $color-monitor-hairline-dark;
+      color: $color-monitor-on-dark;
     }
   }
 
   .el-table {
-    --el-table-border-color: #{$color-monitor-hairline-violet};
-    --el-table-header-bg-color: #{$color-monitor-ink-deep};
-    --el-table-row-hover-bg-color: #{$color-monitor-night};
-    --el-table-bg-color: #{$color-monitor-ink-deep};
-    --el-table-text-color: #{$color-inverse-ink};
+    --el-table-border-color: #{$color-monitor-hairline-dark};
+    --el-table-header-bg-color: #{$color-monitor-surface-card};
+    --el-table-row-hover-bg-color: #{$color-monitor-surface-elevated};
+    --el-table-bg-color: #{$color-monitor-surface-card};
+    --el-table-text-color: #{$color-monitor-on-dark};
     --el-table-header-text-color: #{$color-monitor-on-dark-muted};
   }
 
   .el-input__wrapper {
-    background-color: $color-monitor-night;
-    box-shadow: 0 0 0 1px $color-monitor-hairline-violet inset;
-    color: $color-inverse-ink;
+    background-color: $color-monitor-surface-elevated;
+    box-shadow: 0 0 0 1px $color-monitor-hairline-dark inset;
+    color: $color-monitor-on-dark;
   }
 
   .monitor-stat-value {
     font-size: $font-size-display-lg;
     font-weight: $font-weight-light;
     color: $color-monitor-accent-lime;
-    line-height: 1.25;
+    line-height: 1.12;
+    letter-spacing: $letter-spacing-headline;
   }
 
   .monitor-stat-label {
@@ -72,13 +72,13 @@
   }
 
   .monitor-code-block {
-    background-color: $color-monitor-night;
-    border: 1px solid $color-monitor-hairline-violet;
+    background-color: $color-monitor-surface-elevated;
+    border: 1px solid $color-monitor-hairline-dark;
     border-radius: $radius-sm;
     padding: $spacing-md;
     font-family: $font-family-mono;
-    font-size: $font-size-body;
-    color: $color-inverse-ink;
+    font-size: $font-size-small;
+    color: $color-monitor-on-dark;
     overflow-x: auto;
   }
 

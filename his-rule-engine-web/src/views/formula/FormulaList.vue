@@ -31,7 +31,7 @@
         <el-button type="primary" :icon="Plus" @click="handleAdd">新增公式</el-button>
       </div>
 
-      <el-table v-loading="loading" :data="tableData" border style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" stripe style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="formulaKey" label="公式Key" width="200" />
         <el-table-column prop="formulaName" label="公式名称" />
@@ -299,46 +299,49 @@ onMounted(() => { loadData() })
 
 .his-formula-list {
   &__card {
-    background-color: $color-canvas;
-    border: 1px solid $color-hairline;
-    padding: $spacing-lg;
+    @include apple-card;
+    border-radius: $radius-lg;
   }
 
   &__search {
-    margin-bottom: $spacing-md;
+    @include search-form;
   }
 
   &__search-form {
     display: flex;
     flex-wrap: wrap;
-    gap: 0;
+    gap: $spacing-xs $spacing-md;
+    align-items: flex-end;
+
+    .el-form-item {
+      margin-right: 0;
+      margin-bottom: $spacing-xs;
+    }
   }
 
   &__toolbar {
-    margin-bottom: $spacing-md;
+    @include toolbar;
   }
 
   &__pagination {
-    margin-top: $spacing-md;
-    display: flex;
-    justify-content: flex-end;
+    @include pagination-wrapper;
   }
 
   &__expression {
     font-family: $font-family-mono;
-    font-size: 13px;
+    font-size: $font-size-fine-print;
     color: $color-primary-deep;
     background-color: $color-surface-1;
-    padding: 1px 4px;
+    padding: 2px 6px;
     border-radius: $radius-xs;
   }
 
   &__return-type {
     display: inline-flex;
     align-items: center;
-    padding: 2px 8px;
-    border-radius: $radius-xs;
-    font-size: $font-size-body;
+    padding: 3px 10px;
+    border-radius: $radius-pill;
+    font-size: $font-size-caption;
     font-weight: $font-weight-semibold;
     color: $color-ink-secondary;
     background-color: $color-surface-1;

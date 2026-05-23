@@ -3,7 +3,7 @@
     <div class="his-monitor__header">
       <h2 class="his-monitor__title">HIS 规则引擎监控大屏</h2>
       <div class="his-monitor__actions">
-        <el-select v-model="refreshInterval" size="default" style="width: 120px">
+        <el-select v-model="refreshInterval" size="default">
           <el-option :value="0" label="关闭自动刷新" />
           <el-option :value="5000" label="5秒" />
           <el-option :value="10000" label="10秒" />
@@ -77,7 +77,7 @@
     <div class="his-monitor__panel his-monitor__panel--full">
       <h3 class="his-monitor__panel-title">历史数据查询</h3>
       <div class="his-monitor__filters">
-        <el-select v-model="historyQuery.metricName" placeholder="选择指标" size="default" style="width: 180px">
+        <el-select v-model="historyQuery.metricName" placeholder="选择指标" size="default">
           <el-option value="rule_hit" label="规则触发" />
           <el-option value="execution_time" label="执行耗时" />
           <el-option value="success_rate" label="成功率" />
@@ -89,7 +89,6 @@
           start-placeholder="开始时间"
           end-placeholder="结束时间"
           size="default"
-          style="width: 340px"
         />
         <el-button @click="loadHistory" :loading="historyLoading">查询</el-button>
       </div>
@@ -117,7 +116,7 @@
     <div class="his-monitor__panel his-monitor__panel--full">
       <h3 class="his-monitor__panel-title">规则触发热力图</h3>
       <div class="his-monitor__filters">
-        <el-select v-model="heatmapDays" placeholder="查询天数" size="default" style="width: 120px">
+        <el-select v-model="heatmapDays" placeholder="查询天数" size="default">
           <el-option :value="7" label="近7天" />
           <el-option :value="14" label="近14天" />
           <el-option :value="30" label="近30天" />
@@ -388,9 +387,8 @@ onUnmounted(() => {
   }
 
   &__panel {
-    background-color: $color-canvas;
-    border: 1px solid $color-hairline;
-    padding: $spacing-lg;
+    @include apple-card;
+    border-radius: $radius-lg;
 
     &--wide {
       grid-column: span 2;

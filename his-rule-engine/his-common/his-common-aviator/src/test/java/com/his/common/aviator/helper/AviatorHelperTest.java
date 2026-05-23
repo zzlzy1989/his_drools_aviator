@@ -1,5 +1,6 @@
 package com.his.common.aviator.helper;
 
+import com.googlecode.aviator.Expression;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -200,6 +201,191 @@ class AviatorHelperTest {
     @DisplayName("init - 初始化方法")
     void test_init() {
         AviatorHelper.init(); // 应无异常
+    }
+
+    // ========== 边界值测试 ==========
+
+    @Test
+    @DisplayName("边界值 - 零值运算")
+    void test_zeroValue() {
+        // 零作为被除数
+        Map<String, Object> env1 = Map.of("x", new BigDecimal("0"), "y", new BigDecimal("10"));
+        Object r1 = AviatorHelper.execute("x + y", env1);
+        assertThat(toDecimal(r1)).isEqualByComparingTo(new BigDecimal("10"));
+
+        // 零作为减数
+        Map<String, Object> env2 = Map.of("x", new BigDecimal("100"), "y", new BigDecimal("0"));
+        Object r2 = AviatorHelper.execute("x - y", env2);
+        assertThat(toDecimal(r2)).isEqualByComparingTo(new BigDecimal("100"));
+
+        // 零作为乘数
+        Map<String, Object> env3 = Map.of("x", new BigDecimal("1000"), "y", new BigDecimal("0"));
+        Object r3 = AviatorHelper.execute("x * y", env3);
+        assertThat(toDecimal(r3)).isEqualByComparingTo(new BigDecimal("0"));
+    }
+
+    @Test
+    @DisplayName("边界值 - 除零错误")
+    void test_divisionByZero() {
+        Map<String, Object> env = Map.of(
+            "x", new BigDecimal("100"),
+            "y", new BigDecimal("0")
+        );
+        assertThatThrownBy(() -> AviatorHelper.executeDecimal("x / y", env))
+            .isInstanceOf(ArithmeticException.class);
+    }
+
+    @Test
+    @DisplayName("边界值 - 负数运算")
+    void test_negativeNumbers() {
+        Map<String, Object> env = Map.of(
+            "income", new BigDecimal("-1000"),
+            "expense", new BigDecimal("500"),
+            "ratio", new BigDecimal("-0.5")
+        );
+
+        // 加法：负数 + 正数
+        Object r1 = AviatorHelper.execute("income + expense", env);
+        assertThat(toDecimal(r1)).isEqualByComparingTo(new BigDecimal("-500"));
+
+        // 乘法：负数 * 负数 = 正数
+        Object r2 = AviatorHelper.execute("income * ratio", env);
+        assertThat(toDecimal(r2)).isEqualByComparingTo(new BigDecimal("500"));
+    }
+
+    @Test
+    @DisplayName("边界值 - 超大数值运算")
+    void test_largeNumbers() {
+        // 1亿 * 0.000001 = 100
+        Map<String, Object> env = Map.of(
+            "population", new BigDecimal("100000000"),
+            "rate", new BigDecimal("0.000001")
+        );
+        Object result = AviatorHelper.execute("population * rate", env);
+        assertThat(toDecimal(result)).isEqualByComparingTo(new BigDecimal("100"));
+    }
+
+    @Test
+    @DisplayName("边界值 - 科学计数法表示")
+    void test_scientificNotation() {
+        // Aviator 5.x 会将浮点数字面量解析为 BigDecimal
+        Map<String, Object> env = Map.of("x", new BigDecimal("1E6"));
+        Object result = AviatorHelper.execute("x * 0.01", env);
+        assertThat(toDecimal(result)).isEqualByComparingTo(new BigDecimal("10000"));
+    }
+
+    @Test
+    @DisplayName("边界值 - 精度舍入 HALF_UP")
+    void test_roundingHALFUP() {
+        // Aviator 5.x 不支持 round 函数，使用 math.round 或自行处理
+        // 这里测试 Aviator 的基本数学运算精度
+        Map<String, Object> env = Map.of("x", new BigDecimal("1.235"), "y", new BigDecimal("100"));
+        Object result = AviatorHelper.execute("x * y", env);
+        // 1.235 * 100 = 123.5
+        assertThat(toDecimal(result)).isEqualByComparingTo(new BigDecimal("123.50"));
+    }
+
+    @Test
+    @DisplayName("边界值 - 空环境变量")
+    void test_emptyEnv() {
+        assertThatThrownBy(() -> AviatorHelper.execute("a + b", new HashMap<>()))
+            .isInstanceOf(Exception.class);
+    }
+
+    @Test
+    @DisplayName("边界值 - 缺失参数")
+    void test_missingParameter() {
+        Map<String, Object> env = Map.of("x", new BigDecimal("10"));
+        assertThatThrownBy(() -> AviatorHelper.execute("x + y", env))
+            .isInstanceOf(Exception.class);
+    }
+
+    @Test
+    @DisplayName("边界值 - 空表达式")
+    void test_emptyExpression() {
+        assertThatThrownBy(() -> AviatorHelper.compile(""))
+            .isInstanceOf(Exception.class);
+    }
+
+    @Test
+    @DisplayName("边界值 - null 环境变量")
+    void test_nullEnv() {
+        // null 环境抛出 ExpressionRuntimeException 而非 NullPointerException
+        assertThatThrownBy(() -> AviatorHelper.execute("a + b", null))
+            .isInstanceOf(Exception.class);
+    }
+
+    @Test
+    @DisplayName("边界值 - 多位数小数精度")
+    void test_precisionMultiDigit() {
+        // 验证多位小数的精确计算
+        Map<String, Object> env = Map.of(
+            "price", new BigDecimal("0.1"),
+            "quantity", new BigDecimal("3")
+        );
+        Object result = AviatorHelper.execute("price * quantity", env);
+        // 0.1 * 3 = 0.3 (精确)
+        assertThat(toDecimal(result)).isEqualByComparingTo(new BigDecimal("0.3"));
+    }
+
+    @Test
+    @DisplayName("边界值 - 金额常用场景")
+    void test_commonMonetaryScenarios() {
+        // 场景1：起付线以下返回0
+        Map<String, Object> env1 = Map.of(
+            "totalFee", new BigDecimal("300"),
+            "deductible", new BigDecimal("500"),
+            "ratio", new BigDecimal("0.85")
+        );
+        Object result1 = AviatorHelper.execute(
+            "totalFee > deductible ? (totalFee - deductible) * ratio : 0",
+            env1
+        );
+        assertThat(toDecimal(result1)).isEqualByComparingTo(new BigDecimal("0"));
+
+        // 场景2：超过封顶线取封顶值
+        Map<String, Object> env2 = Map.of(
+            "amount", new BigDecimal("100000"),
+            "cap", new BigDecimal("50000")
+        );
+        Object result2 = AviatorHelper.execute("amount > cap ? cap : amount", env2);
+        assertThat(toDecimal(result2)).isEqualByComparingTo(new BigDecimal("50000"));
+    }
+
+    @Test
+    @DisplayName("compile - 带缓存编译多次调用同一表达式")
+    void test_compileCached() {
+        Expression expr1 = AviatorHelper.compile("a + b", true);
+        Expression expr2 = AviatorHelper.compile("a + b", true);
+        // 带缓存时，多次编译应返回相同实例
+        assertThat(expr1).isSameAs(expr2);
+    }
+
+    @Test
+    @DisplayName("executeDecimal - 结果精度验证")
+    void test_executeDecimalPrecision() {
+        Map<String, Object> env = Map.of(
+            "total", new BigDecimal("10000"),
+            "deductible", new BigDecimal("1000"),
+            "ratio", new BigDecimal("0.853")
+        );
+        BigDecimal result = AviatorHelper.executeDecimal("(total - deductible) * ratio", env);
+        // (10000 - 1000) * 0.853 = 7677，但应四舍五入到 7677.00
+        assertThat(result).isEqualByComparingTo(new BigDecimal("7677.00"));
+    }
+
+    @Test
+    @DisplayName("containsDangerousFunctions - 其他危险模式")
+    void test_dangerousEdgeCases() {
+        // 嵌套括号
+        assertThat(AviatorHelper.containsDangerousFunctions("system(system())")).isTrue();
+        // 大小写混合
+        assertThat(AviatorHelper.containsDangerousFunctions("SYSTEM(exit)")).isTrue();
+        assertThat(AviatorHelper.containsDangerousFunctions("RUNTIME(exec)")).isTrue();
+        // 正常表达式
+        assertThat(AviatorHelper.containsDangerousFunctions("max(a, b, c)")).isFalse();
+        assertThat(AviatorHelper.containsDangerousFunctions("min(a, b)")).isFalse();
+        assertThat(AviatorHelper.containsDangerousFunctions("abs(-100)")).isFalse();
     }
 
     private BigDecimal toDecimal(Object result) {

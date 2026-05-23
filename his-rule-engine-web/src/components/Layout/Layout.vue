@@ -69,7 +69,7 @@
       </el-menu>
     </el-aside>
     <el-container class="his-layout__main-container">
-      <el-header class="his-layout__header" height="48px">
+      <el-header class="his-layout__header" height="44px">
         <div class="his-layout__header-left">
           <el-breadcrumb separator="/">
             <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
@@ -114,7 +114,7 @@ import {
 const router = useRouter()
 const route = useRoute()
 
-const sidebarWidth = '200px'
+const sidebarWidth = '220px'
 const activeMenu = computed(() => route.path)
 const currentUser = computed(() => localStorage.getItem('userId') || 'admin')
 
@@ -152,8 +152,11 @@ function handleCommand(command: string) {
     .el-menu-item {
       height: 40px;
       line-height: 40px;
-      font-size: $font-size-body;
-      letter-spacing: $letter-spacing-body;
+      font-size: $font-size-small;
+      letter-spacing: $letter-spacing-caption;
+      border-radius: $radius-md;
+      margin: 2px $spacing-xs;
+      transition: all 0.2s ease;
 
       &:hover {
         background-color: $color-inverse-surface-1;
@@ -171,6 +174,8 @@ function handleCommand(command: string) {
         height: 40px;
         line-height: 40px;
         color: $color-inverse-ink-muted;
+        border-radius: $radius-md;
+        margin: 2px $spacing-xs;
 
         &:hover {
           background-color: $color-inverse-surface-1;
@@ -202,14 +207,15 @@ function handleCommand(command: string) {
   font-size: $font-size-caption;
   font-weight: $font-weight-semibold;
   letter-spacing: 0.5px;
+  border-radius: $radius-xs;
 }
 
 .his-layout__logo-text {
   color: $color-inverse-ink;
   margin: 0;
-  font-size: $font-size-body-lg;
-  font-weight: $font-weight-regular;
-  letter-spacing: $letter-spacing-body;
+  font-size: $font-size-body-strong;
+  font-weight: $font-weight-semibold;
+  letter-spacing: $letter-spacing-caption;
 }
 
 .his-layout__main-container {
@@ -219,7 +225,7 @@ function handleCommand(command: string) {
 .his-layout__header {
   background-color: $color-canvas;
   border-bottom: 1px solid $color-hairline;
-  padding: 0 $spacing-md;
+  padding: 0 $spacing-lg;
   height: $header-height;
   display: flex;
   align-items: center;
@@ -241,8 +247,8 @@ function handleCommand(command: string) {
   align-items: center;
   gap: $spacing-xxs;
   color: $color-ink-secondary;
-  font-size: $font-size-body;
-  letter-spacing: $letter-spacing-body;
+  font-size: $font-size-small;
+  letter-spacing: $letter-spacing-caption;
 
   &:hover {
     color: $color-ink;
@@ -255,10 +261,9 @@ function handleCommand(command: string) {
   overflow-y: auto;
 }
 
-/* 路由切换动画 - 内容区过渡 */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
-  transition: opacity 0.15s ease;
+  transition: opacity 0.2s ease;
 }
 
 .fade-slide-enter-from {

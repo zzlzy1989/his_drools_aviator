@@ -1,5 +1,5 @@
 // ============================================================
-// HIS Design System - Settlement Theme (Stripe)
+// HIS Design System - Settlement Theme (Apple Financial)
 // Based on DESIGN.md Settlement Section
 // ============================================================
 
@@ -85,7 +85,6 @@
     @include status-tag($color-semantic-block, $color-semantic-block-bg);
   }
 
-  // Override Element Plus for settlement
   .el-card {
     border-radius: $radius-lg;
     border-color: $color-settlement-hairline;
@@ -96,6 +95,6 @@
     --el-button-border-color: #{$color-settlement-primary};
     --el-button-hover-bg-color: #{$color-settlement-primary-soft};
     --el-button-hover-border-color: #{$color-settlement-primary-soft};
-    border-radius: $radius-lg;
+    border-radius: $radius-pill;
   }
 }

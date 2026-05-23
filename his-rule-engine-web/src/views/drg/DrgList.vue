@@ -28,7 +28,7 @@
         <el-button type="primary" :icon="Plus" @click="handleAdd">新增DRG</el-button>
       </div>
 
-      <el-table v-loading="loading" :data="tableData" border stripe style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" stripe style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="drgCode" label="DRG编码" width="180" />
         <el-table-column prop="drgName" label="DRG名称" />
@@ -224,10 +224,25 @@ function resetForm() {
 onMounted(() => { loadData() })
 </script>
 
-<style scoped>
-.page-container { padding: 16px; }
-.page-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-.search-form { margin-bottom: 16px; }
-.toolbar { margin-bottom: 16px; }
-.pagination { margin-top: 16px; display: flex; justify-content: flex-end; }
+<style lang="scss" scoped>
+.page-container {
+  @include page-container;
+}
+
+.page-card {
+  @include apple-card;
+  border-radius: $radius-lg;
+}
+
+.search-form {
+  @include search-form;
+}
+
+.toolbar {
+  @include toolbar;
+}
+
+.pagination {
+  @include pagination-wrapper;
+}
 </style>

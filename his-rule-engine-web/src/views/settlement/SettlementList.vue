@@ -18,15 +18,15 @@
             </el-select>
           </el-form-item>
           <el-form-item label="开始日期">
-            <el-date-picker v-model="queryForm.startDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 140px" />
+            <el-date-picker v-model="queryForm.startDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" />
           </el-form-item>
           <el-form-item label="结束日期">
-            <el-date-picker v-model="queryForm.endDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 140px" />
+            <el-date-picker v-model="queryForm.endDate" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" />
           </el-form-item>
           <el-form-item label="金额范围">
-            <el-input v-model="queryForm.minAmount" placeholder="最小" style="width: 100px" />
-            <span style="padding: 0 4px">-</span>
-            <el-input v-model="queryForm.maxAmount" placeholder="最大" style="width: 100px" />
+            <el-input v-model="queryForm.minAmount" placeholder="最小" style="width: 90px" />
+            <span style="padding: 0 4px; color: #7a7a7a">-</span>
+            <el-input v-model="queryForm.maxAmount" placeholder="最大" style="width: 90px" />
           </el-form-item>
           <el-form-item>
             <el-button type="primary" :icon="Search" @click="loadData">查询</el-button>
@@ -39,7 +39,7 @@
         <el-button type="primary" :icon="Plus" @click="handleAdd">新建结算</el-button>
       </div>
 
-      <el-table v-loading="loading" :data="tableData" border style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" stripe style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="settlementNo" label="结算单号" width="200" />
         <el-table-column prop="patientId" label="患者ID" width="150" />
@@ -309,36 +309,40 @@ onMounted(() => { loadData() })
 
 .his-settlement {
   &__card {
-    background-color: $color-canvas;
-    border: 1px solid $color-hairline;
-    padding: $spacing-lg;
+    @include apple-card;
+    border-radius: $radius-lg;
   }
 
   &__search {
-    margin-bottom: $spacing-md;
+    @include search-form;
   }
 
   &__search-form {
     display: flex;
     flex-wrap: wrap;
-    gap: 0;
+    gap: $spacing-xs $spacing-md;
+    align-items: flex-end;
+
+    .el-form-item {
+      margin-right: 0;
+      margin-bottom: $spacing-xs;
+    }
   }
 
   &__toolbar {
-    margin-bottom: $spacing-md;
+    @include toolbar;
   }
 
   &__pagination {
-    margin-top: $spacing-md;
-    display: flex;
-    justify-content: flex-end;
+    @include pagination-wrapper;
   }
 
   &__amount {
     font-family: $font-family-mono;
     font-weight: $font-weight-semibold;
-    font-size: 13px;
+    font-size: $font-size-fine-print;
     color: $color-ink;
+    font-feature-settings: "tnum";
 
     &--reimburse {
       color: $color-semantic-pass;
