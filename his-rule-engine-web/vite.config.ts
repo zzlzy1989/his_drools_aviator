@@ -45,33 +45,34 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Vue 核心单独 chunk
-          if (id.includes('node_modules/vue')) {
+          if (id.includes('node_modules/vue') || id.includes('node_modules/@vue')) {
             return 'vue-vendor'
           }
-          // Element Plus 单独 chunk
-          if (id.includes('element-plus')) {
+          if (id.includes('node_modules/element-plus') || id.includes('node_modules/@element-plus')) {
             return 'element-plus-vendor'
           }
-          // AntV X6 单独 chunk
-          if (id.includes('@antv/x6') || id.includes('@antv/x6-vue-shape')) {
+          if (id.includes('node_modules/@antv/x6') || id.includes('node_modules/@antv/x6-')) {
             return 'antv-x6-vendor'
           }
-          // Monaco Editor 单独 chunk
-          if (id.includes('monaco-editor')) {
+          if (id.includes('node_modules/monaco-editor')) {
             return 'monaco-vendor'
           }
-          // 其他 node_modules 打包为 vendors
+          if (id.includes('node_modules/echarts')) {
+            return 'echarts-vendor'
+          }
+          if (id.includes('node_modules/dagre')) {
+            return 'antv-x6-vendor'
+          }
           if (id.includes('node_modules')) {
             return 'vendors'
           }
         },
       },
     },
-    chunkSizeWarningLimit: 1000, // 提高阈值避免警告
+    chunkSizeWarningLimit: 1000,
   },
   optimizeDeps: {
-    include: ['vue', 'vue-router', 'pinia', 'element-plus'],
+    include: ['vue', 'vue-router', 'pinia', 'element-plus', 'echarts/core'],
   },
   test: {
     globals: true,

@@ -250,8 +250,10 @@ dependencies: []
 | 时间 | 操作 | 状态变更 | 备注 |
 |------|------|---------|------|
 | 2026-05-23 08:00 | 创建测试方案 | in_progress | 初始创建 |
-| 2026-05-23 23:50 | Phase A 完成 | in_progress | 后端单元测试全部通过，前端 Vitest 56个测试通过 |
+| 2026-05-23 23:50 | Phase A 完成 | completed | 后端单元测试全部通过，前端 Vitest 56个测试通过 |
 | 2026-05-23 23:54 | Step 1-6 完成 | completed | 环境验证通过，Aviator 32/Drools 7/Settlement 20/Formula 20/前端 56 共135个测试 |
+| 2026-05-24 00:20 | Phase B 启动 | in_progress | Step 8-10 完成，Playwright 环境搭建，5条链路测试用例编写 |
+| 2026-05-24 00:25 | Step 8-10 完成 | completed | 登录测试通过 3/3，其他链路需后端 API 联调 |
 
 ---
 

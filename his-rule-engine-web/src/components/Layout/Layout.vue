@@ -94,9 +94,31 @@
       </el-header>
       <el-main class="his-layout__content">
         <router-view v-slot="{ Component, route }">
-          <transition name="fade-slide" mode="out-in">
-            <component :is="Component" :key="route.path" />
-          </transition>
+          <suspense>
+            <template #default>
+              <transition name="fade-slide" mode="out-in">
+                <component :is="Component" :key="route.path" />
+              </transition>
+            </template>
+            <template #fallback>
+              <div class="his-layout__loading">
+                <div class="his-layout__skeleton">
+                  <div class="skeleton-header">
+                    <div class="skeleton-line skeleton-line--title" />
+                    <div class="skeleton-line skeleton-line--subtitle" />
+                  </div>
+                  <div class="skeleton-cards">
+                    <div class="skeleton-card" v-for="i in 4" :key="i" />
+                  </div>
+                  <div class="skeleton-body">
+                    <div class="skeleton-line skeleton-line--long" />
+                    <div class="skeleton-line skeleton-line--medium" />
+                    <div class="skeleton-line skeleton-line--short" />
+                  </div>
+                </div>
+              </div>
+            </template>
+          </suspense>
         </router-view>
       </el-main>
     </el-container>
@@ -263,14 +285,97 @@ function handleCommand(command: string) {
 
 .fade-slide-enter-active,
 .fade-slide-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 .fade-slide-enter-from {
   opacity: 0;
+  transform: translateY(4px);
 }
 
 .fade-slide-leave-to {
   opacity: 0;
+  transform: translateY(-4px);
+}
+
+.his-layout__loading {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: $spacing-lg;
+}
+
+.his-layout__skeleton {
+  width: 100%;
+  max-width: 1200px;
+}
+
+.skeleton-header {
+  margin-bottom: $spacing-lg;
+}
+
+.skeleton-line {
+  height: 16px;
+  background: linear-gradient(90deg, #e8e8ed 25%, #f0f0f5 50%, #e8e8ed 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: $radius-xs;
+  margin-bottom: $spacing-xs;
+
+  &--title {
+    width: 40%;
+    height: 24px;
+  }
+
+  &--subtitle {
+    width: 60%;
+    height: 14px;
+  }
+
+  &--long {
+    width: 100%;
+  }
+
+  &--medium {
+    width: 75%;
+  }
+
+  &--short {
+    width: 40%;
+  }
+}
+
+.skeleton-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.skeleton-card {
+  height: 100px;
+  background: linear-gradient(90deg, #e8e8ed 25%, #f0f0f5 50%, #e8e8ed 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: $radius-md;
+}
+
+.skeleton-body {
+  background: linear-gradient(90deg, #e8e8ed 25%, #f0f0f5 50%, #e8e8ed 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: $radius-md;
+  height: 200px;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 </style>

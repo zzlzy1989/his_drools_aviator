@@ -130,7 +130,26 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import * as echarts from 'echarts'
+import * as echarts from 'echarts/core'
+import { BarChart, LineChart, HeatmapChart } from 'echarts/charts'
+import {
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  VisualMapComponent,
+} from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+
+echarts.use([
+  BarChart,
+  LineChart,
+  HeatmapChart,
+  TitleComponent,
+  TooltipComponent,
+  GridComponent,
+  VisualMapComponent,
+  CanvasRenderer,
+])
 import { monitorApi } from '@/api/monitor'
 import { StatCard, StatusTag } from '@/components/HIS'
 

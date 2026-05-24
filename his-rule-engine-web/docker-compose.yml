@@ -12,7 +12,7 @@ services:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
     networks:
-      - his-net
+      - docker_his-net
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8999/health"]
       interval: 10s
@@ -20,5 +20,5 @@ services:
       retries: 3
 
 networks:
-  his-net:
+  docker_his-net:
     external: true
