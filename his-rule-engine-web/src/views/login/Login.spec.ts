@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Test Login.vue form validation and auth flow logic without importing Vue component
 // (avoids element-plus CSS import issues in vitest)
@@ -9,13 +9,13 @@ describe('Login.vue', () => {
     localStorage.clear()
   })
 
-  it('should have default credentials admin/admin', () => {
+  it('should have default credentials admin/admin123', () => {
     const loginForm = {
       username: 'admin',
-      password: 'admin',
+      password: 'admin123',
     }
     expect(loginForm.username).toBe('admin')
-    expect(loginForm.password).toBe('admin')
+    expect(loginForm.password).toBe('admin123')
   })
 
   it('should validate required fields', () => {

@@ -254,6 +254,11 @@ dependencies: []
 | 2026-05-23 23:54 | Step 1-6 完成 | completed | 环境验证通过，Aviator 32/Drools 7/Settlement 20/Formula 20/前端 56 共135个测试 |
 | 2026-05-24 00:20 | Phase B 启动 | in_progress | Step 8-10 完成，Playwright 环境搭建，5条链路测试用例编写 |
 | 2026-05-24 00:25 | Step 8-10 完成 | completed | 登录测试通过 3/3，其他链路需后端 API 联调 |
+| 2026-05-25 07:30 | Step 10 继续 | in_progress | 修复 Gateway 容器问题，重建 auth 路由，确认登录凭据问题 |
+| 2026-05-25 07:45 | 登录 API 修复 | completed | 密码重置为 admin123，登录返回 token |
+| 2026-05-28 15:30 | Nginx 代理修复 | completed | 修复 host.docker.internal → 172.17.0.1:9000，API 路由正常 |
+| 2026-05-28 15:35 | 登录测试完成 | completed | 登录模块 3/3 测试通过 |
+| 2026-05-28 15:40 | 剩余 E2E 测试 | in_progress | dashboard/rule/formula/settlement/flow 链路导航超时，需修复前端路由 |
 
 ---
 

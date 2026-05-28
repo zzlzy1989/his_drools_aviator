@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 test.describe('规则流设计', () => {
   test.beforeEach(async ({ page }) => {

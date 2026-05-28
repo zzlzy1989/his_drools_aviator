@@ -47,3 +47,4 @@ coverage/
 *.gcno
 his-rule-engine-web/node_modules/
 his-rule-engine-web/dist/
+test-results/

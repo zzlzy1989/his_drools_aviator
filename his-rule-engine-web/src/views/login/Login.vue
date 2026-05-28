@@ -72,12 +72,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import type { FormInstance } from 'element-plus'
-import { useUserStore } from '@/stores/user'
 import { loginApi } from '@/api/auth'
+import { useUserStore } from '@/stores/user'
+import type { FormInstance } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -86,7 +86,7 @@ const loading = ref(false)
 
 const loginForm = reactive({
   username: 'admin',
-  password: 'admin',
+  password: 'admin123',
 })
 
 const loginRules = {

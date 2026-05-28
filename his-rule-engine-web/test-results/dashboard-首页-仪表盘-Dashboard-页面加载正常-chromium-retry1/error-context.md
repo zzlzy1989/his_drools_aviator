@@ -12,11 +12,11 @@
 # Error details
 
 ```
-Test timeout of 60000ms exceeded while running "beforeEach" hook.
+Test timeout of 30000ms exceeded while running "beforeEach" hook.
 ```
 
 ```
-Error: locator.click: Test timeout of 60000ms exceeded.
+Error: locator.click: Test timeout of 30000ms exceeded.
 Call log:
   - waiting for locator('button[type="submit"], button:has-text("登录")')
 
@@ -72,7 +72,7 @@ Call log:
   16 |     // 点击登录
   17 |     const loginButton = page.locator('button[type="submit"], button:has-text("登录")')
 > 18 |     await loginButton.click()
-     |                       ^ Error: locator.click: Test timeout of 60000ms exceeded.
+     |                       ^ Error: locator.click: Test timeout of 30000ms exceeded.
   19 | 
   20 |     // 等待跳转到 dashboard
   21 |     await page.waitForURL('**/dashboard**', { timeout: 10000 })

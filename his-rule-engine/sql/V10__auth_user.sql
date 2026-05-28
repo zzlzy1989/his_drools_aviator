@@ -38,14 +38,14 @@ CREATE TABLE IF NOT EXISTS `his_auth_user` (
 
 -- ------------------------------------------------------------
 -- 初始管理员账户
--- 密码: admin (BCrypt hash, rounds=10)
+-- 密码: admin123 (BCrypt hash, rounds=10)
 -- ------------------------------------------------------------
 INSERT INTO `his_auth_user` (`username`, `password`, `real_name`, `role`, `tenant_id`, `status`, `create_by`)
-VALUES ('admin', '$2b$10$fkgw/tQq0oVRPqDqorstPutBhHWAamt/5RgMqPvEPO6xz3EFIp/im', '系统管理员', 'super_admin', 'T001', 'active', 'system');
+VALUES ('admin', '$2b$10$40wlhYHXyh.tMUe9r/azz.nPJC1.Pw3w6kHBHyKqiSHt5VLRNUwM6', '系统管理员', 'super_admin', 'T001', 'active', 'system');
 
 -- ------------------------------------------------------------
 -- 演示用户
 -- 密码: admin123 (BCrypt hash, rounds=10)
 -- ------------------------------------------------------------
 INSERT INTO `his_auth_user` (`username`, `password`, `real_name`, `role`, `tenant_id`, `status`, `create_by`)
-VALUES ('operator01', '$2b$10$fkgw/tQq0oVRPqDqorstPutBhHWAamt/5RgMqPvEPO6xz3EFIp/im', '操作员01', 'operator', 'T001', 'active', 'system');
+VALUES ('operator01', '$2b$10$40wlhYHXyh.tMUe9r/azz.nPJC1.Pw3w6kHBHyKqiSHt5VLRNUwM6', '操作员01', 'operator', 'T001', 'active', 'system');
