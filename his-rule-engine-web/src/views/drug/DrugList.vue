@@ -1,31 +1,33 @@
 <template>
-  <div class="page-container">
-    <div class="page-card">
-      <el-form :inline="true" :model="queryForm" class="search-form">
-        <el-form-item label="药品名称">
-          <el-input v-model="queryForm.drugName" placeholder="请输入" clearable />
-        </el-form-item>
-        <el-form-item label="药品类型">
-          <el-select v-model="queryForm.drugType" placeholder="请选择" clearable>
-            <el-option label="西药" value="western" />
-            <el-option label="中药" value="chinese" />
-            <el-option label="生物制品" value="biological" />
-            <el-option label="医疗器械" value="device" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="queryForm.status" placeholder="请选择" clearable>
-            <el-option label="启用" value="active" />
-            <el-option label="停用" value="inactive" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="loadData">查询</el-button>
-          <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
-        </el-form-item>
-      </el-form>
+  <div class="his-drug-list">
+    <div class="his-drug-list__card">
+      <div class="his-drug-list__search">
+        <el-form :inline="true" :model="queryForm" class="his-drug-list__search-form">
+          <el-form-item label="药品名称">
+            <el-input v-model="queryForm.drugName" placeholder="请输入" clearable />
+          </el-form-item>
+          <el-form-item label="药品类型">
+            <el-select v-model="queryForm.drugType" placeholder="请选择" clearable>
+              <el-option label="西药" value="western" />
+              <el-option label="中药" value="chinese" />
+              <el-option label="生物制品" value="biological" />
+              <el-option label="医疗器械" value="device" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select v-model="queryForm.status" placeholder="请选择" clearable>
+              <el-option label="启用" value="active" />
+              <el-option label="停用" value="inactive" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :icon="Search" @click="loadData">查询</el-button>
+            <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
 
-      <div class="toolbar">
+      <div class="his-drug-list__toolbar">
         <el-button type="primary" :icon="Plus" @click="handleAdd">新增药品</el-button>
       </div>
 
@@ -37,31 +39,26 @@
         <el-table-column prop="specification" label="规格" width="120" />
         <el-table-column prop="drugType" label="类型" width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.drugType === 'western'" type="primary" size="small">西药</el-tag>
-            <el-tag v-else-if="row.drugType === 'chinese'" type="success" size="small">中药</el-tag>
-            <el-tag v-else-if="row.drugType === 'biological'" type="warning" size="small">生物制品</el-tag>
-            <el-tag v-else type="info" size="small">器械</el-tag>
+            <span :class="['his-drug-list__type', `his-drug-list__type--${row.drugType}`]">{{ drugTypeLabel(row.drugType) }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="insuranceType" label="医保类型" width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.insuranceType === 'jia'" type="danger" size="small">甲类</el-tag>
-            <el-tag v-else-if="row.insuranceType === 'yi'" type="warning" size="small">乙类</el-tag>
-            <el-tag v-else-if="row.insuranceType === 'bing'" size="small">丙类</el-tag>
-            <el-tag v-else type="info" size="small">自费</el-tag>
+            <span :class="['his-drug-list__insurance', `his-drug-list__insurance--${row.insuranceType}`]">{{ insuranceTypeLabel(row.insuranceType) }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="unitPrice" label="单价" width="100" align="right">
-          <template #default="{ row }">¥{{ row.unitPrice?.toFixed(2) }}</template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">
-              {{ row.status === 'active' ? '启用' : '停用' }}
-            </el-tag>
+            <span class="his-drug-list__price">¥{{ row.unitPrice?.toFixed(2) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <StatusTag :type="row.status === 'active' ? 'published' : 'disabled'" show-dot size="small" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="createTime" label="创建时间" width="180" />
+        <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
             <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
@@ -69,7 +66,7 @@
         </el-table-column>
       </el-table>
 
-      <div class="pagination">
+      <div class="his-drug-list__pagination">
         <el-pagination
           v-model:current-page="page"
           v-model:page-size="pageSize"
@@ -142,6 +139,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance } from 'element-plus'
 import { Search, Refresh, Plus } from '@element-plus/icons-vue'
+import { StatusTag } from '@/components/HIS'
 import {
   getDrugPage,
   createDrug,
@@ -192,6 +190,16 @@ const rules = {
   drugType: [{ required: true, message: '请选择药品类型', trigger: 'change' }],
   insuranceType: [{ required: true, message: '请选择医保类型', trigger: 'change' }],
   unitPrice: [{ required: true, message: '请输入单价', trigger: 'blur' }],
+}
+
+function drugTypeLabel(type: string) {
+  const map: Record<string, string> = { western: '西药', chinese: '中药', biological: '生物制品', device: '器械' }
+  return map[type] || type
+}
+
+function insuranceTypeLabel(type: string) {
+  const map: Record<string, string> = { jia: '甲类', yi: '乙类', bing: '丙类', self: '自费' }
+  return map[type] || type
 }
 
 async function loadData() {
@@ -281,24 +289,103 @@ onMounted(() => { loadData() })
 </script>
 
 <style lang="scss" scoped>
-.page-container {
-  @include page-container;
-}
 
-.page-card {
-  @include apple-card;
-  border-radius: $radius-lg;
-}
+.his-drug-list {
+  &__card {
+    @include apple-card;
+    border-radius: $radius-lg;
+  }
 
-.search-form {
-  @include search-form;
-}
+  &__search {
+    @include search-form;
+  }
 
-.toolbar {
-  @include toolbar;
-}
+  &__search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-xs $spacing-md;
+    align-items: flex-end;
 
-.pagination {
-  @include pagination-wrapper;
+    .el-form-item {
+      margin-right: 0;
+      margin-bottom: $spacing-xs;
+    }
+  }
+
+  &__toolbar {
+    @include toolbar;
+  }
+
+  &__pagination {
+    @include pagination-wrapper;
+  }
+
+  &__type {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: $radius-pill;
+    font-size: $font-size-caption;
+    font-weight: $font-weight-semibold;
+    letter-spacing: $letter-spacing-caption;
+
+    &--western {
+      color: $color-semantic-info;
+      background-color: $color-semantic-info-bg;
+    }
+
+    &--chinese {
+      color: $color-semantic-pass;
+      background-color: $color-semantic-pass-bg;
+    }
+
+    &--biological {
+      color: $color-semantic-warn;
+      background-color: $color-semantic-warn-bg;
+    }
+
+    &--device {
+      color: $color-ink-secondary;
+      background-color: $color-surface-1;
+    }
+  }
+
+  &__insurance {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: $radius-pill;
+    font-size: $font-size-caption;
+    font-weight: $font-weight-semibold;
+    letter-spacing: $letter-spacing-caption;
+
+    &--jia {
+      color: $color-semantic-block;
+      background-color: $color-semantic-block-bg;
+    }
+
+    &--yi {
+      color: $color-semantic-warn;
+      background-color: $color-semantic-warn-bg;
+    }
+
+    &--bing {
+      color: $color-semantic-info;
+      background-color: $color-semantic-info-bg;
+    }
+
+    &--self {
+      color: $color-ink-secondary;
+      background-color: $color-surface-1;
+    }
+  }
+
+  &__price {
+    font-family: $font-family-mono;
+    font-weight: $font-weight-semibold;
+    font-size: $font-size-fine-print;
+    color: $color-ink;
+    font-feature-settings: "tnum";
+  }
 }
 </style>

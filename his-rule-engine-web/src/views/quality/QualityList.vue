@@ -1,31 +1,33 @@
 <template>
-  <div class="page-container">
-    <div class="page-card">
-      <el-form :inline="true" :model="queryForm" class="search-form">
-        <el-form-item label="质控项目">
-          <el-input v-model="queryForm.itemName" placeholder="请输入" clearable />
-        </el-form-item>
-        <el-form-item label="质控类型">
-          <el-select v-model="queryForm.category" placeholder="请选择" clearable>
-            <el-option label="合理用药" value="rational_drug" />
-            <el-option label="诊疗规范" value="diagnosis" />
-            <el-option label="费用控制" value="cost_control" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="等级">
-          <el-select v-model="queryForm.level" placeholder="请选择" clearable>
-            <el-option label="提示" value="info" />
-            <el-option label="警告" value="warning" />
-            <el-option label="拦截" value="error" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="loadData">查询</el-button>
-          <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
-        </el-form-item>
-      </el-form>
+  <div class="his-quality-list">
+    <div class="his-quality-list__card">
+      <div class="his-quality-list__search">
+        <el-form :inline="true" :model="queryForm" class="his-quality-list__search-form">
+          <el-form-item label="质控项目">
+            <el-input v-model="queryForm.itemName" placeholder="请输入" clearable />
+          </el-form-item>
+          <el-form-item label="质控类型">
+            <el-select v-model="queryForm.category" placeholder="请选择" clearable>
+              <el-option label="合理用药" value="rational_drug" />
+              <el-option label="诊疗规范" value="diagnosis" />
+              <el-option label="费用控制" value="cost_control" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="等级">
+            <el-select v-model="queryForm.level" placeholder="请选择" clearable>
+              <el-option label="提示" value="info" />
+              <el-option label="警告" value="warning" />
+              <el-option label="拦截" value="error" />
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :icon="Search" @click="loadData">查询</el-button>
+            <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
 
-      <div class="toolbar">
+      <div class="his-quality-list__toolbar">
         <el-button type="primary" :icon="Plus" @click="handleAdd">新增质控</el-button>
       </div>
 
@@ -35,23 +37,17 @@
         <el-table-column prop="itemName" label="质控项目" />
         <el-table-column prop="category" label="类型" width="120">
           <template #default="{ row }">
-            <el-tag v-if="row.category === 'rational_drug'" type="primary" size="small">合理用药</el-tag>
-            <el-tag v-else-if="row.category === 'diagnosis'" type="success" size="small">诊疗规范</el-tag>
-            <el-tag v-else type="warning" size="small">费用控制</el-tag>
+            <span :class="['his-quality-list__category', `his-quality-list__category--${row.category}`]">{{ categoryLabel(row.category) }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="level" label="等级" width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.level === 'error'" type="danger" size="small">拦截</el-tag>
-            <el-tag v-else-if="row.level === 'warning'" type="warning" size="small">警告</el-tag>
-            <el-tag v-else type="info" size="small">提示</el-tag>
+            <StatusTag :type="qualityLevelType(row.level)" show-dot size="small" />
           </template>
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">
-              {{ row.status === 'active' ? '启用' : '停用' }}
-            </el-tag>
+            <StatusTag :type="row.status === 'active' ? 'published' : 'disabled'" show-dot size="small" />
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="180" />
@@ -63,7 +59,7 @@
         </el-table-column>
       </el-table>
 
-      <div class="pagination">
+      <div class="his-quality-list__pagination">
         <el-pagination
           v-model:current-page="page"
           v-model:page-size="pageSize"
@@ -119,6 +115,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance } from 'element-plus'
 import { Search, Refresh, Plus } from '@element-plus/icons-vue'
+import { StatusTag } from '@/components/HIS'
 import {
   getQualityPage,
   createQuality,
@@ -163,6 +160,16 @@ const rules = {
   itemName: [{ required: true, message: '请输入质控项目', trigger: 'blur' }],
   category: [{ required: true, message: '请选择类型', trigger: 'change' }],
   level: [{ required: true, message: '请选择等级', trigger: 'change' }],
+}
+
+function categoryLabel(cat: string) {
+  const map: Record<string, string> = { rational_drug: '合理用药', diagnosis: '诊疗规范', cost_control: '费用控制' }
+  return map[cat] || cat
+}
+
+function qualityLevelType(level: string): 'info' | 'warn' | 'block' {
+  const map: Record<string, 'info' | 'warn' | 'block'> = { info: 'info', warning: 'warn', error: 'block' }
+  return map[level] || 'info'
 }
 
 async function loadData() {
@@ -244,24 +251,60 @@ onMounted(() => { loadData() })
 </script>
 
 <style lang="scss" scoped>
-.page-container {
-  @include page-container;
-}
 
-.page-card {
-  @include apple-card;
-  border-radius: $radius-lg;
-}
+.his-quality-list {
+  &__card {
+    @include apple-card;
+    border-radius: $radius-lg;
+  }
 
-.search-form {
-  @include search-form;
-}
+  &__search {
+    @include search-form;
+  }
 
-.toolbar {
-  @include toolbar;
-}
+  &__search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-xs $spacing-md;
+    align-items: flex-end;
 
-.pagination {
-  @include pagination-wrapper;
+    .el-form-item {
+      margin-right: 0;
+      margin-bottom: $spacing-xs;
+    }
+  }
+
+  &__toolbar {
+    @include toolbar;
+  }
+
+  &__pagination {
+    @include pagination-wrapper;
+  }
+
+  &__category {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: $radius-pill;
+    font-size: $font-size-caption;
+    font-weight: $font-weight-semibold;
+    letter-spacing: $letter-spacing-caption;
+
+    &--rational_drug {
+      color: $color-semantic-info;
+      background-color: $color-semantic-info-bg;
+    }
+
+    &--diagnosis {
+      color: $color-semantic-pass;
+      background-color: $color-semantic-pass-bg;
+    }
+
+    &--cost_control {
+      color: $color-semantic-warn;
+      background-color: $color-semantic-warn-bg;
+    }
+  }
 }
 </style>

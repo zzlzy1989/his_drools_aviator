@@ -1,26 +1,28 @@
 <template>
-  <div class="page-container">
-    <div class="page-card">
-      <el-form :inline="true" :model="queryForm" class="search-form">
-        <el-form-item label="分类">
-          <el-select v-model="queryForm.category" placeholder="请选择" clearable>
-            <el-option label="全部" value="" />
-            <el-option label="医保报销" value="REIMBURSE" />
-            <el-option label="合理用药" value="DRUG" />
-            <el-option label="质量控制" value="QUALITY" />
-            <el-option label="DRG分组" value="DRG" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="关键词">
-          <el-input v-model="queryForm.keyword" placeholder="搜索模板名称/标签" clearable />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="loadData">搜索</el-button>
-          <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
-        </el-form-item>
-      </el-form>
+  <div class="his-market">
+    <div class="his-market__card">
+      <div class="his-market__search">
+        <el-form :inline="true" :model="queryForm" class="his-market__search-form">
+          <el-form-item label="分类">
+            <el-select v-model="queryForm.category" placeholder="请选择" clearable>
+              <el-option label="全部" value="" />
+              <el-option label="医保报销" value="REIMBURSE" />
+              <el-option label="合理用药" value="DRUG" />
+              <el-option label="质量控制" value="QUALITY" />
+              <el-option label="DRG分组" value="DRG" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="关键词">
+            <el-input v-model="queryForm.keyword" placeholder="搜索模板名称/标签" clearable />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" :icon="Search" @click="loadData">搜索</el-button>
+            <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
 
-      <div class="toolbar">
+      <div class="his-market__toolbar">
         <el-button type="primary" :icon="Plus" @click="handlePublish">发布模板</el-button>
       </div>
 
@@ -36,29 +38,35 @@
         <el-table-column prop="name" label="模板名称" width="200" />
         <el-table-column prop="category" label="分类" width="100">
           <template #default="{ row }">
-            <el-tag size="small">{{ categoryLabel(row.category) }}</el-tag>
+            <span :class="['his-market__category', `his-market__category--${row.category?.toLowerCase()}`]">{{ categoryLabel(row.category) }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="tags" label="标签" width="150">
           <template #default="{ row }">
-            <el-tag v-for="tag in (row.tags || '').split(',').filter(t => t)" :key="tag" size="small" type="info" style="margin-right: 4px">
-              {{ tag }}
-            </el-tag>
+            <span
+              v-for="tag in (row.tags || '').split(',').filter((t: string) => t)"
+              :key="tag"
+              class="his-market__tag"
+            >{{ tag }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="providerName" label="提供者" width="120" />
-        <el-table-column prop="installCount" label="安装数" width="80" />
+        <el-table-column prop="installCount" label="安装数" width="80" align="center" />
         <el-table-column prop="ratingSummary" label="评分" width="120">
           <template #default="{ row }">
             <template v-if="row.ratingSummary?.count > 0">
               <el-rate v-model="row.ratingSummary.avgRating" disabled text-size="12" />
-              <span class="rating-text">{{ row.ratingSummary.avgRating.toFixed(1) }} ({{ row.ratingSummary.count }})</span>
+              <span class="his-market__rating-text">{{ row.ratingSummary.avgRating.toFixed(1) }} ({{ row.ratingSummary.count }})</span>
             </template>
-            <span v-else style="color: #909399">暂无评分</span>
+            <span v-else class="his-market__rating-text his-market__rating-text--empty">暂无评分</span>
           </template>
         </el-table-column>
-        <el-table-column prop="version" label="版本" width="80" />
-        <el-table-column label="收藏" width="70">
+        <el-table-column prop="version" label="版本" width="80">
+          <template #default="{ row }">
+            <span class="his-market__version">{{ row.version }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="收藏" width="70" align="center">
           <template #default="{ row }">
             <el-button link type="warning" @click.stop="handleFavorite(row)">
               <el-icon><Star /></el-icon>
@@ -79,7 +87,7 @@
         </el-table-column>
       </el-table>
 
-      <div class="pagination">
+      <div class="his-market__pagination">
         <el-pagination
           v-model:current-page="page"
           v-model:page-size="pageSize"
@@ -92,9 +100,8 @@
       </div>
     </div>
 
-    <!-- Preview Dialog -->
     <el-dialog v-model="previewVisible" title="模板预览" width="800px">
-      <div v-if="previewData" class="preview-content">
+      <div v-if="previewData" class="his-market__preview">
         <el-descriptions :column="2" border>
           <el-descriptions-item label="模板名称">{{ previewData.name }}</el-descriptions-item>
           <el-descriptions-item label="版本">{{ previewData.version }}</el-descriptions-item>
@@ -105,23 +112,23 @@
         </el-descriptions>
 
         <el-divider content-position="left">模板评分</el-divider>
-        <div class="rating-section">
+        <div class="his-market__rating-section">
           <template v-if="previewData.ratingSummary?.count > 0">
-            <div class="rating-header">
+            <div class="his-market__rating-header">
               <el-rate v-model="previewData.ratingSummary.avgRating" disabled show-score />
-              <span class="rating-text">{{ previewData.ratingSummary.avgRating.toFixed(1) }} / 5 ({{ previewData.ratingSummary.count }}人评分)</span>
+              <span class="his-market__rating-text">{{ previewData.ratingSummary.avgRating.toFixed(1) }} / 5 ({{ previewData.ratingSummary.count }}人评分)</span>
             </div>
-            <div class="rating-distribution">
-              <div v-for="star in [5,4,3,2,1]" :key="star" class="rating-bar">
+            <div class="his-market__rating-distribution">
+              <div v-for="star in [5,4,3,2,1]" :key="star" class="his-market__rating-bar">
                 <span>{{ star }}星</span>
                 <el-progress :percentage="getStarPercentage(previewData.ratingSummary.distribution, star)" :show-text="false" />
                 <span>{{ previewData.ratingSummary.distribution[star] || 0 }}</span>
               </div>
             </div>
           </template>
-          <span v-else style="color: #909399">暂无评分</span>
+          <span v-else class="his-market__rating-text his-market__rating-text--empty">暂无评分</span>
 
-          <div class="rating-actions">
+          <div class="his-market__rating-actions">
             <el-button link type="primary" @click="showRatingDialog">评分 / 评论</el-button>
             <el-button link type="primary" @click="loadRatings">查看评论</el-button>
           </div>
@@ -131,19 +138,19 @@
         <h4>模板内容</h4>
         <el-tabs>
           <el-tab-pane v-if="previewData.rules?.length" label="规则">
-            <div v-for="rule in previewData.rules" :key="rule.ruleKey" class="content-item">
+            <div v-for="rule in previewData.rules" :key="rule.ruleKey" class="his-market__content-item">
               <strong>{{ rule.ruleName || rule.ruleKey }}</strong>
-              <p class="rule-key">{{ rule.ruleKey }}</p>
+              <p class="his-market__content-key">{{ rule.ruleKey }}</p>
             </div>
           </el-tab-pane>
           <el-tab-pane v-if="previewData.formulas?.length" label="公式">
-            <div v-for="f in previewData.formulas" :key="f.formulaKey" class="content-item">
+            <div v-for="f in previewData.formulas" :key="f.formulaKey" class="his-market__content-item">
               <strong>{{ f.formulaName || f.formulaKey }}</strong>
-              <code>{{ f.formulaText }}</code>
+              <code class="his-market__content-code">{{ f.formulaText }}</code>
             </div>
           </el-tab-pane>
           <el-tab-pane v-if="previewData.flows?.length" label="规则流">
-            <div v-for="flow in previewData.flows" :key="flow.flowKey" class="content-item">
+            <div v-for="flow in previewData.flows" :key="flow.flowKey" class="his-market__content-item">
               <strong>{{ flow.flowName || flow.flowKey }}</strong>
             </div>
           </el-tab-pane>
@@ -151,7 +158,6 @@
       </div>
     </el-dialog>
 
-    <!-- Publish Dialog -->
     <el-dialog v-model="publishVisible" :title="isEdit ? '编辑模板' : '发布模板'" width="700px" @close="resetForm">
       <el-form ref="formRef" :model="form" label-width="100px">
         <el-form-item label="模板名称" prop="name">
@@ -181,7 +187,6 @@
       </template>
     </el-dialog>
 
-    <!-- Rating Dialog -->
     <el-dialog v-model="ratingVisible" title="评分 / 评论" width="500px">
       <el-form :model="ratingForm" label-width="80px">
         <el-form-item label="评分">
@@ -197,16 +202,15 @@
       </template>
     </el-dialog>
 
-    <!-- Comments Dialog -->
     <el-dialog v-model="commentsVisible" title="用户评论" width="600px">
-      <div v-if="ratingsList.length > 0" class="comments-list">
-        <div v-for="r in ratingsList" :key="r.id" class="comment-item">
-          <div class="comment-header">
+      <div v-if="ratingsList.length > 0" class="his-market__comments-list">
+        <div v-for="r in ratingsList" :key="r.id" class="his-market__comment-item">
+          <div class="his-market__comment-header">
             <el-rate v-model="r.rating" disabled size="small" />
-            <span class="comment-time">{{ r.createTime }}</span>
+            <span class="his-market__comment-time">{{ r.createTime }}</span>
           </div>
-          <div v-if="r.comment" class="comment-text">{{ r.comment }}</div>
-          <div v-else style="color: #909399; font-size: 12px">该用户未留下评论</div>
+          <div v-if="r.comment" class="his-market__comment-text">{{ r.comment }}</div>
+          <div v-else class="his-market__rating-text his-market__rating-text--empty">该用户未留下评论</div>
         </div>
       </div>
       <el-empty v-else description="暂无评论" />
@@ -300,11 +304,9 @@ async function handleRateSubmit() {
     await marketApi.rateTemplate(previewData.value.id, { rating: ratingForm.rating, comment: ratingForm.comment })
     ElMessage.success('评分成功')
     ratingVisible.value = false
-    // 刷新预览数据
     const res = await marketApi.getTemplate(previewData.value.id)
     if (res.code === '0') {
       previewData.value = res.data
-      // 同步更新列表中的数据
       const idx = tableData.value.findIndex(t => t.id === previewData.value?.id)
       if (idx !== -1) {
         tableData.value[idx] = { ...tableData.value[idx], ...res.data }
@@ -465,121 +467,193 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.page-container {
-  @include page-container;
-}
 
-.page-card {
-  @include apple-card;
-  border-radius: $radius-lg;
-}
+.his-market {
+  &__card {
+    @include apple-card;
+    border-radius: $radius-lg;
+  }
 
-.search-form {
-  @include search-form;
-}
+  &__search {
+    @include search-form;
+  }
 
-.toolbar {
-  @include toolbar;
-}
+  &__search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-xs $spacing-md;
+    align-items: flex-end;
 
-.pagination {
-  @include pagination-wrapper;
-}
+    .el-form-item {
+      margin-right: 0;
+      margin-bottom: $spacing-xs;
+    }
+  }
 
-.content-item {
-  padding: $spacing-xs;
-  border-bottom: 1px solid $color-hairline;
+  &__toolbar {
+    @include toolbar;
+  }
 
-  code {
+  &__pagination {
+    @include pagination-wrapper;
+  }
+
+  &__category {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: $radius-pill;
+    font-size: $font-size-caption;
+    font-weight: $font-weight-semibold;
+    letter-spacing: $letter-spacing-caption;
+
+    &--reimburse {
+      color: $color-semantic-info;
+      background-color: $color-semantic-info-bg;
+    }
+
+    &--drug {
+      color: $color-semantic-pass;
+      background-color: $color-semantic-pass-bg;
+    }
+
+    &--quality {
+      color: $color-semantic-warn;
+      background-color: $color-semantic-warn-bg;
+    }
+
+    &--drg {
+      color: $color-semantic-block;
+      background-color: $color-semantic-block-bg;
+    }
+  }
+
+  &__tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    margin-right: 4px;
+    border-radius: $radius-pill;
+    font-size: $font-size-fine-print;
+    font-weight: $font-weight-medium;
+    color: $color-ink-secondary;
+    background-color: $color-surface-1;
+  }
+
+  &__version {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: $radius-pill;
+    font-size: $font-size-fine-print;
+    font-weight: $font-weight-semibold;
+    font-family: $font-family-mono;
+    color: $color-ink-secondary;
+    background-color: $color-surface-1;
+  }
+
+  &__rating-text {
+    margin-left: $spacing-xs;
+    font-size: $font-size-fine-print;
+    color: $color-ink-muted;
+
+    &--empty {
+      color: $color-ink-muted;
+    }
+  }
+
+  &__rating-section {
+    padding: $spacing-sm 0;
+  }
+
+  &__rating-header {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    margin-bottom: $spacing-sm;
+  }
+
+  &__rating-actions {
+    margin-top: $spacing-sm;
+    display: flex;
+    gap: $spacing-sm;
+  }
+
+  &__rating-distribution {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 6px;
+    max-width: 300px;
+  }
+
+  &__rating-bar {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    font-size: $font-size-fine-print;
+    color: $color-ink-secondary;
+
+    span:first-child {
+      width: 30px;
+    }
+
+    .el-progress {
+      flex: 1;
+    }
+
+    span:last-child {
+      width: 20px;
+      text-align: right;
+    }
+  }
+
+  &__preview {
+  }
+
+  &__content-item {
+    padding: $spacing-xs;
+    border-bottom: 1px solid $color-hairline;
+  }
+
+  &__content-key {
+    font-size: $font-size-fine-print;
+    color: $color-ink-muted;
+    margin: 4px 0 0 0;
+  }
+
+  &__content-code {
     display: block;
     margin-top: 4px;
     font-size: $font-size-fine-print;
     color: $color-ink-muted;
   }
-}
 
-.rule-key {
-  font-size: $font-size-fine-print;
-  color: $color-ink-muted;
-  margin: 4px 0 0 0;
-}
-
-.rating-text {
-  margin-left: $spacing-xs;
-  font-size: $font-size-fine-print;
-  color: $color-ink-muted;
-}
-
-.rating-section {
-  padding: $spacing-sm 0;
-}
-
-.rating-header {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-  margin-bottom: $spacing-sm;
-}
-
-.rating-actions {
-  margin-top: $spacing-sm;
-  display: flex;
-  gap: $spacing-sm;
-}
-
-.rating-distribution {
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 6px;
-  max-width: 300px;
-}
-
-.rating-bar {
-  display: flex;
-  align-items: center;
-  gap: $spacing-xs;
-  font-size: $font-size-fine-print;
-  color: $color-ink-secondary;
-
-  span:first-child {
-    width: 30px;
+  &__comments-list {
+    max-height: 400px;
+    overflow-y: auto;
   }
 
-  .el-progress {
-    flex: 1;
+  &__comment-item {
+    padding: $spacing-sm 0;
+    border-bottom: 1px solid $color-hairline;
   }
 
-  span:last-child {
-    width: 20px;
-    text-align: right;
+  &__comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $spacing-xs;
   }
-}
 
-.comments-list {
-  max-height: 400px;
-  overflow-y: auto;
-}
+  &__comment-time {
+    font-size: $font-size-fine-print;
+    color: $color-ink-muted;
+  }
 
-.comment-item {
-  padding: $spacing-sm 0;
-  border-bottom: 1px solid $color-hairline;
-}
-
-.comment-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: $spacing-xs;
-}
-
-.comment-time {
-  font-size: $font-size-fine-print;
-  color: $color-ink-muted;
-}
-
-.comment-text {
-  font-size: $font-size-body;
-  color: $color-ink;
-  line-height: 1.5;
+  &__comment-text {
+    font-size: $font-size-body;
+    color: $color-ink;
+    line-height: 1.5;
+  }
 }
 </style>
